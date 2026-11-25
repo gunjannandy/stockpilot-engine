@@ -9,15 +9,15 @@ jobs:
       - name: probe sources
         run: |
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
-          t() { r=$(curl -s -o /tmp/out -w '%{http_code} %{size_download}B %{time_total}s' -A "$UA" -H 'Accept: */*' -H 'Referer: https://www.nseindia.com/' --max-time 30 "$2"); echo "$1 -> $r $(file -b /tmp/out | cut -c1-30)"; }
+          t() { r=$(curl -sL -o /tmp/out -w '%{http_code} %{size_download}B %{time_total}s' -A "$UA" -H 'Accept: */*' -H 'Referer: https://www.nseindia.com/' --max-time 30 "$2"); echo "$1 -> $r $(file -b /tmp/out | cut -c1-30)"; }
           echo "cores $(nproc)"; free -g | sed -n 2p
-          t nse-udiff-20261124  "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_20261124_F_0000.csv.zip"
+          t nse-udiff-20261123  "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_20261123_F_0000.csv.zip"
           t nse-legacy-2010     "https://nsearchives.nseindia.com/content/historical/EQUITIES/2010/JAN/cm04JAN2010bhav.csv.zip"
           t nse-legacy-1995     "https://nsearchives.nseindia.com/content/historical/EQUITIES/1995/NOV/cm01NOV1995bhav.csv.zip"
           t nse-equity-list     "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
           curl -s -c /tmp/cj -A "$UA" https://www.nseindia.com/ -o /dev/null --max-time 20
-          r=$(curl -s -b /tmp/cj -A "$UA" -H 'Referer: https://www.nseindia.com/' -o /tmp/a -w '%{http_code} %{size_download}B' --max-time 30 'https://www.nseindia.com/api/corporate-announcements?index=equities'); echo "nse-api-announcements -> $r"
-          t bse-udiff  "https://www.bseindia.com/download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20261124_F_0000.CSV"
+          r=$(curl -sL -b /tmp/cj -A "$UA" -H 'Referer: https://www.nseindia.com/' -o /tmp/a -w '%{http_code} %{size_download}B' --max-time 30 'https://www.nseindia.com/api/corporate-announcements?index=equities'); echo "nse-api-announcements -> $r"
+          t bse-udiff  "https://www.bseindia.com/download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20261123_F_0000.CSV"
           t bse-ann-rss "https://www.bseindia.com/data/xml/announcements.xml"
           t gnews  "https://news.google.com/rss/search?q=Nifty+when:1d&hl=en-IN&gl=IN&ceid=IN:en"
           t et-rss "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"
