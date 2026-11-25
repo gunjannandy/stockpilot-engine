@@ -154,3 +154,54 @@ describe("other marks", () => {
     expect(L.healthCount(3, "father")).toBe(0);
   });
 });
+
+describe("near-live price with its age (T15)", () => {
+  const q = (age, extra = {}) => ({ symbol: "FIXB", exchange: "NSE", price: 104.5, prev_close: 101, as_of: "x", source: "yahoo", age_seconds: age, ...extra });
+  it("always says how old the price is, in plain words", () => {
+    expect(L.priceLabel(q(20))).toBe("price just now");
+    expect(L.priceLabel(q(14 * 60 + 5))).toBe("price 14 min old");
+    expect(L.priceLabel(q(14 * 60), true)).toBe("price 14 min old · refreshing");
+    expect(L.priceLabel(q(3 * 3600))).toBe("price 3 h old");
+    expect(L.priceLabel(q(2 * 86400))).toBe("price 2 days old");
+    expect(L.priceLabel(null, true)).toBe("price not available yet · refreshing");
+    expect(L.priceLabel(null)).toBe("price not available yet");
+  });
+  function priceWorld(ages) {
+    const w = world(); const calls = [];
+    const base = w.fetch;
+    w.fetch = async (url, o) => {
+      if (!url.startsWith("/api/v2/quotes")) return base(url, o);
+      w.calls.push({ url, t: w.t });
+      const refresh = url.includes("refresh=1");
+      return { ok: true, status: 200, json: async () => ({ quotes: [q(refresh ? ages.fresh : ages.stored)] }) };
+    };
+    return w;
+  }
+  it("opening a stock shows the stored price at once as refreshing, then swaps in the refreshed one", async () => {
+    const w = priceWorld({ stored: 14 * 60, fresh: 30 }); const c = mk(w); const seen = [];
+    c.on(e => { if (e.type === "quote") seen.push([L.priceLabel(e.quote, e.refreshing), e.refreshing]); });
+    c.openQuote("FIXB"); await flush();
+    expect(seen).toEqual([["price 14 min old · refreshing", true], ["price just now", false]]);
+    expect(w.calls.filter(x => x.url.includes("refresh=1")).length).toBe(1);
+  });
+  it("keeps the old price and says so when the refresh fails", async () => {
+    const w = priceWorld({ stored: 600, fresh: 600 }); const f = w.fetch;
+    w.fetch = async (u, o) => u.includes("refresh=1") ? { ok: false, status: 500, json: async () => ({}) } : f(u, o);
+    const c = mk(w); const seen = []; c.on(e => { if (e.type === "quote") seen.push([L.priceLabel(e.quote, e.refreshing), e.refreshing]); });
+    c.openQuote("FIXB"); await flush();
+    expect(seen.at(-1)).toEqual(["price 10 min old", false]);
+  });
+  it("asks again every 5 minutes while the stock stays open and the tab is visible, and stops when closed or hidden", async () => {
+    const w = priceWorld({ stored: 60, fresh: 30 }); const c = mk(w);
+    c.openQuote("FIXB"); await flush();
+    const n0 = w.calls.filter(x => x.url.includes("refresh=1")).length;
+    await w.advance(5 * 60 * 1000); await flush();
+    expect(w.calls.filter(x => x.url.includes("refresh=1")).length).toBe(n0 + 1);
+    w.hide(); await w.advance(20 * 60 * 1000);
+    expect(w.calls.filter(x => x.url.includes("refresh=1")).length).toBe(n0 + 1);
+    w.show(); await flush();
+    expect(w.calls.filter(x => x.url.includes("refresh=1")).length).toBe(n0 + 2);
+    c.closeQuote(); await w.advance(10 * 60 * 1000);
+    expect(w.calls.filter(x => x.url.includes("refresh=1")).length).toBe(n0 + 2);
+  });
+});

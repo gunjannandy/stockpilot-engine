@@ -1,0 +1,4 @@
+{"entries":[{"symbol":"FIXA","exchange":"NSE","name":"Fixture Alpha Ltd","aliases":["fixture alpha"]},
+{"symbol":"FIXB","exchange":"NSE","name":"Fixture Beta Limited","aliases":["fixture beta"]},
+{"symbol":"FIXC","exchange":"NSE","name":"Fixture Gamma Ltd","aliases":["fixture gamma"]},
+{"symbol":"FIXD","exchange":"BSE","name":"Fixture Delta Industries","aliases":["fixture delta"]}]}

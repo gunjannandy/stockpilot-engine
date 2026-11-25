@@ -3,7 +3,7 @@
 (function (root) {
   "use strict";
   const MIN = 60 * 1000, DAY = 24 * 60 * MIN;
-  const JOB_POLL_MS = 3000, IDLE_POLL_MS = 5 * MIN, TOAST_MS = 8000, STRIP_DAYS = 7;
+  const JOB_POLL_MS = 3000, IDLE_POLL_MS = 5 * MIN, QUOTE_POLL_MS = 5 * MIN, TOAST_MS = 8000, STRIP_DAYS = 7;
   // N: which nav tab a kind of change belongs to. Anything else earns no dot.
   const NAV_OF = { call_changed: "calls", chance_moved: "calls", level_crossed: "calls", forecast_ready: "calls", list_entered: "lists", list_left: "lists", ask_status: "feedback" };
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -56,6 +56,19 @@
     return `<div class="job-progress" data-state="${esc(job.status)}"><ul>${rows}</ul>${tail}</div>`;
   }
 
+  // T15: "price 14 min old · refreshing". The age is always shown; null means we hold no price yet.
+  function priceLabel(quote, refreshing) {
+    let base = "price not available yet";
+    if (quote) {
+      const sec = Math.max(0, quote.age_seconds | 0);
+      base = sec < 60 ? "price just now"
+        : sec < 3600 ? `price ${Math.floor(sec / 60)} min old`
+        : sec < 86400 ? `price ${Math.floor(sec / 3600)} h old`
+        : `price ${Math.floor(sec / 86400)} day${Math.floor(sec / 86400) > 1 ? "s" : ""} old`;
+    }
+    return refreshing ? base + " · refreshing" : base;
+  }
+
   // ---- the client
   function createClient(o) {
     const F = o.fetch, doc = o.document, ST = o.setTimeout, CT = o.clearTimeout, now = o.now || Date.now;
@@ -97,6 +110,29 @@
         if (visible()) { self.refreshChanges(); schedule(); }
       },
     };
+    // T15: an open stock shows the stored price with its age at once, asks the server to refresh it, swaps the new one in,
+    // and asks again every 5 minutes while the tab is visible. If the refresh fails the old price stays, with its age.
+    let quoteSym = null, quoteTimer = null, quoteWired = false;
+    async function pollQuote() {
+      CT(quoteTimer); quoteTimer = null;
+      const sym = quoteSym; if (!sym || !visible()) return;
+      const url = "/api/v2/quotes?symbols=" + encodeURIComponent(sym);
+      let cur = null;
+      try { cur = ((await j(url)).quotes || [])[0] || null; } catch (e) { /* keep what we have */ }
+      if (quoteSym !== sym) return;
+      emit({ type: "quote", symbol: sym, quote: cur, refreshing: true });
+      try { cur = ((await j(url + "&refresh=1")).quotes || [])[0] || cur; } catch (e) { /* the old price stays */ }
+      if (quoteSym !== sym) return;
+      emit({ type: "quote", symbol: sym, quote: cur, refreshing: false });
+      if (visible()) quoteTimer = ST(pollQuote, QUOTE_POLL_MS);
+    }
+    self.openQuote = sym => {
+      quoteSym = sym;
+      if (!quoteWired) { quoteWired = true; doc.addEventListener("visibilitychange", () => { if (!quoteSym) return; if (visible()) pollQuote(); else { CT(quoteTimer); quoteTimer = null; } }); }
+      return pollQuote();
+    };
+    self.closeQuote = () => { quoteSym = null; CT(quoteTimer); quoteTimer = null; };
+
     function paint() { doc.title = tabTitleOf(base, unseen(items).length); setHref(badgeHref(unseen(items).length)); }
     function schedule() {
       CT(idleTimer); idleTimer = null;
@@ -124,6 +160,6 @@
     return self;
   }
 
-  const API = { createClient, navCountsOf, stripItems, tabTitleOf, badgeHref, rowMarks, changeFor: undefined, changeBandHtml, staleChip, healthCount, jobProgressHtml, NAV_OF, JOB_POLL_MS, IDLE_POLL_MS };
+  const API = { createClient, priceLabel, navCountsOf, stripItems, tabTitleOf, badgeHref, rowMarks, changeFor: undefined, changeBandHtml, staleChip, healthCount, jobProgressHtml, NAV_OF, JOB_POLL_MS, IDLE_POLL_MS };
   root.SPLive = API;
 })(typeof window !== "undefined" ? window : globalThis);

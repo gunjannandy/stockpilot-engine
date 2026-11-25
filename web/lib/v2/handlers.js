@@ -4,6 +4,7 @@
 import { json, readJson } from "../http.js";
 import { knownPerson, ingestAllowed } from "../auth.js";
 import contract from "../../../schemas/live-contract.json";
+import { marketOpen, refreshQuotes } from "./quotes.js";
 
 const IST_MS = 5.5 * 3600 * 1000;
 const istISO = (d) => new Date(d.getTime() + IST_MS).toISOString().replace(/\.\d+Z$/, "+05:30");
@@ -132,8 +133,22 @@ export async function quotesGet(ctx) {
   const { fail } = needPerson(ctx); if (fail) return fail;
   const symbols = [...new Set((q(ctx).get("symbols") || "").split(",").map((s) => s.trim()).filter(Boolean))].slice(0, 100);
   if (!symbols.length) return json({ quotes: [] });
-  const { results } = await ctx.env.DB.prepare(`select * from quotes where symbol in (${symbols.map(() => "?").join(",")}) order by symbol, exchange`).bind(...symbols).all();
-  const now = nowOf(ctx).getTime();
+  const db = ctx.env.DB, date = nowOf(ctx);
+  const read = () => db.prepare(`select * from quotes where symbol in (${symbols.map(() => "?").join(",")}) order by symbol, exchange`).bind(...symbols).all();
+  let { results } = await read();
+  // T15: opening a stock asks for refresh=1. Quotes older than 5 minutes are refetched while the market is open,
+  // at most 3 stocks per call and never one fetched in the last minute. The page shows the stored price and its age
+  // first, then swaps in the new one; if the source fails the old row is simply returned.
+  if (q(ctx).get("refresh") === "1" && marketOpen(date)) {
+    const age = (r) => (date.getTime() - Date.parse(r.as_of)) / 1000;
+    const known = new Map(results.map((r) => [r.symbol, r]));
+    const todo = symbols.filter((s) => !known.has(s) || age(known.get(s)) > 300).slice(0, 3)
+      .map((s) => ({ symbol: s, exchange: known.get(s)?.exchange ?? "NSE" }));
+    if (todo.length) {
+      try { await refreshQuotes({ db, symbols: todo, fetch: ctx.fetch ?? fetch, now: date, sleep: ctx.sleep, minAgeSeconds: 60 }); ({ results } = await read()); } catch { /* keep the stored rows */ }
+    }
+  }
+  const now = date.getTime();
   return json({ quotes: results.map((r) => ({ ...r, age_seconds: Math.max(0, Math.floor((now - Date.parse(r.as_of)) / 1000)) })) });
 }
 

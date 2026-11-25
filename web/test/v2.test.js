@@ -346,3 +346,32 @@ it("every route in the contract has a handler and a test above", () => {
   expect(CONTRACT.routes.map((r) => r.id).sort()).toEqual(Object.keys(names).sort());
   for (const fn of Object.values(names)) expect(typeof v2[fn]).toBe("function");
 });
+
+describe("quotes_get refresh on open (T15)", () => {
+  const sec = Math.floor(NOW.getTime() / 1000) - 30;
+  const yahoo = async () => ({ ok: true, status: 200, json: async () => ({ chart: { result: [{ meta: { regularMarketPrice: 321, chartPreviousClose: 300, regularMarketTime: sec } }] } }), headers: { getSetCookie: () => [] } });
+  const stale = () => env.DB.db.prepare("update quotes set as_of = '2026-11-25T09:20:00+05:30' where symbol = 'FIXB'").run();
+
+  it("refetches a quote older than 5 minutes while the market is open, and answers with the fresh one", async () => {
+    stale();
+    const r = await call(v2.quotesGet, "/api/v2/quotes?symbols=FIXB&refresh=1", { extra: { fetch: yahoo, sleep: async () => {} } });
+    ok("quotes_get", r.body);
+    expect(r.body.quotes[0]).toMatchObject({ symbol: "FIXB", price: 321, age_seconds: 30 });
+  });
+  it("does not fetch when refresh is not asked, the quote is fresh, or the market is shut", async () => {
+    let n = 0; const f = async (...a) => { n++; return yahoo(...a); };
+    stale(); await call(v2.quotesGet, "/api/v2/quotes?symbols=FIXB", { extra: { fetch: f } });
+    env.DB.db.prepare("update quotes set as_of = '2026-11-25T09:58:00+05:30' where symbol = 'FIXB'").run();
+    await call(v2.quotesGet, "/api/v2/quotes?symbols=FIXB&refresh=1", { extra: { fetch: f, sleep: async () => {} } });
+    stale();
+    const shut = new Date("2026-11-25T20:00:00+05:30");
+    await call(v2.quotesGet, "/api/v2/quotes?symbols=FIXB&refresh=1", { extra: { fetch: f, sleep: async () => {}, now: shut } });
+    expect(n).toBe(0);
+  });
+  it("refreshes at most 3 symbols per open and a person must be signed in", async () => {
+    const urls = []; const f = async (u) => { urls.push(u); return yahoo(); };
+    await call(v2.quotesGet, "/api/v2/quotes?symbols=A1,A2,A3,A4,A5&refresh=1", { extra: { fetch: f, sleep: async () => {} } });
+    expect(urls.length).toBeLessThanOrEqual(3);
+    expect((await call(v2.quotesGet, "/api/v2/quotes?symbols=A1&refresh=1", { person: null, extra: { fetch: f } })).status).toBe(401);
+  });
+});

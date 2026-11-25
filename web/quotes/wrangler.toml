@@ -1,0 +1,14 @@
+# Quote Worker (T15). Deploy from the VM, where the Cloudflare token lives: `npx wrangler deploy -c quotes/wrangler.toml` (from web/).
+# Cron is UTC: 03:45 to 10:00 UTC is 09:15 to 15:30 IST. The Worker also checks the clock itself.
+name = "stockpilot-quotes"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+[triggers]
+crons = ["*/5 3-10 * * 1-5"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stockpilot"
+database_id = "REPLACE_WITH_D1_ID_ON_DEPLOY"
