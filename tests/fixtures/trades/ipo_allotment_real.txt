@@ -1,0 +1,15 @@
+ANONYMISED copy of a real Zerodha mail (name and application number replaced).
+<https://zerodha.com> 
+Hi Test User, 
+
+You have been allotted 12 shares of the Jio Platforms (JPL) IPO at a price 
+of ₹1119/-. This allotment has been made against your application number 
+NZ000000000000 on Zerodha.
+
+To find out more about the trading hours for this stock on its listing day, 
+please click here 
+<https://support.zerodha.com/category/trading-and-markets/trading-faqs/market-sessions/articles/what-are-the-trading-hours-for-a-stock-on-its-listing-day>. 
+
+
+Regards,
+Team Zerodha

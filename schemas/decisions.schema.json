@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "required": ["market_view", "market_view_bn", "items"],
+  "properties": {
+    "market_view": {"type": "string", "description": "One plain sentence on today's market for the father."},
+    "market_view_bn": {"type": "string", "description": "The same sentence in plain Bengali."},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["symbol", "probability", "moved_by", "risks", "summary", "summary_bn", "level_flag", "change_reason",
+                     "would_buy_if", "news_used"],
+        "properties": {
+          "symbol": {"type": "string"},
+          "probability": {"type": "number", "minimum": 0, "maximum": 1,
+                          "description": "Chance this stock beats the Nifty 50 by more than its hurdle over about three months."},
+          "moved_by": {"type": "array", "items": {"type": "object", "required": ["reason", "points"],
+            "properties": {"reason": {"type": "string"}, "points": {"type": "number",
+              "description": "Percentage points this reason moved the probability from the base rate; negative lowers it."}}}},
+          "risks": {"type": "array", "items": {"type": "string"}},
+          "summary": {"type": "string", "description": "One short plain-English sentence the father can act on."},
+          "summary_bn": {"type": "string", "description": "The same sentence in plain Bengali."},
+          "level_flag": {"type": ["string", "null"],
+                         "description": "One sentence on why the code's entry, stop or target looks wrong for this stock; null when they look fine. You never set the levels."},
+          "change_reason": {"type": ["string", "null"],
+                            "description": "One plain sentence on what changed since the previous call; null when nothing did or there is no previous call."},
+          "would_buy_if": {"type": ["string", "null"],
+                           "description": "One line: what would make you buy this stock; null when you would buy it tonight."},
+          "news_used": {"type": "array", "items": {"type": "string"}, "description": "ids of dossier news items that mattered"},
+          "for": {"type": "array", "description": "Optional. Up to 3 plain reasons this stock may beat the Nifty, each resting on the brief. Every number in `text` must be in the brief or the item is dropped.",
+            "items": {"type": "object", "required": ["text", "area"], "properties": {
+              "text": {"type": "string", "description": "One short plain sentence."},
+              "area": {"type": "string", "enum": ["trend", "value", "quality", "growth", "risk", "news", "owners", "results", "flow", "sector", "tax", "size"]},
+              "news_used": {"type": "array", "items": {"type": "string"}, "description": "ids of the dossier news items it rests on"},
+              "points": {"type": "number", "description": "Optional. Percentage points this reason moved the probability; always positive here."}}}},
+          "against": {"type": "array", "description": "Optional. Up to 3 plain reasons it may not, same shape as `for`; `points` is the size of the push down, written positive.",
+            "items": {"type": "object", "required": ["text", "area"], "properties": {
+              "text": {"type": "string"},
+              "area": {"type": "string", "enum": ["trend", "value", "quality", "growth", "risk", "news", "owners", "results", "flow", "sector", "tax", "size"]},
+              "news_used": {"type": "array", "items": {"type": "string"}},
+              "points": {"type": "number"}}}},
+          "what_we_do_not_know": {"type": "array", "items": {"type": "string"},
+            "description": "Optional. Owner-only: what you could not tell from the brief. Never shown to the father."},
+          "broken_reason": {"type": ["string", "null"],
+                            "description": "Holdings only. One plain sentence on why the reason for owning this stock has broken for good; null when it has not. A low chance, a weak quarter or a falling price is not a broken reason."}
+        }
+      }
+    }
+  }
+}

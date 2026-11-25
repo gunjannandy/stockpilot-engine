@@ -1,0 +1,18 @@
+CONTRACT NOTE CUM TAX INVOICE
+Settlement No: 2026151Trade Date: 12/08/2026
+Annexure A
+Equity
+Order No. Order Time Trade No. Trade Time Security / Contract Description Buy(B) /
+Sell(S)
+Exchange Quantity Brokerage 
+(₹)
+Net Rate per 
+Unit (₹)
+Closing Rate 
+per Unit (only 
+for Derivatives) 
+(₹)
+Net Total (Before 
+Levies) (₹)
+Remarks
+1300000050321042 12:30:14 607396242 13:56:03 VIKRAN-EQ/INE01R501028 B NSE 300 0.0000 67.10 (20130.00)

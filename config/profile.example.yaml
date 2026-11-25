@@ -1,0 +1,49 @@
+# stockpilot investor profile.
+# The real copy lives in private/profile.yaml (gitignored). Never commit real values here.
+# The weekly review and every daily run read it. Change it when life changes.
+
+person:
+  age: null                 # years
+  dependents: 0
+  city_tier: null           # metro | tier2 | other (cost of living context)
+
+income:
+  monthly_take_home: null   # INR, after tax
+  income_stability: null    # salaried-stable | salaried-variable | business | freelance
+  tax_regime: null          # new | old
+
+safety_net:
+  emergency_fund_months: null   # months of expenses held in savings/liquid funds
+  health_insurance_cover: null  # INR, self + family
+  term_life_cover: null         # INR; null if none
+  loans: []                     # - {type: home|car|personal|education, outstanding: INR, emi: INR, rate_pct: 0.0}
+
+goals:                      # goals do not change often; list each with a target year
+  - name: null              # e.g. retirement, house down payment, child education
+    target_amount: null     # INR in today's money
+    target_year: null
+    priority: null          # must | want
+
+risk:
+  max_drawdown_ok_pct: null   # the deepest fall (%) you would sit through without selling
+  experience_years: null
+
+investing:
+  monthly_budget_default: 100000  # INR you can usually invest in a month; resets each month
+  budget_split:                   # how the monthly budget divides; must sum to 1.0
+    mutual_funds: null
+    stocks: null
+  carry_over_unused: false        # does unspent budget roll into next month?
+  position_sizing:
+    max_loss_per_trade_pct: 1.0   # stop-loss hit costs at most this % of the portfolio
+    max_single_stock_pct: 10.0
+
+outside_zerodha:            # everything not visible through Kite, so allocation sees the whole picture
+  epf: null                 # INR balance
+  ppf: null
+  nps: null
+  fixed_deposits: null
+  savings_cash: null
+  gold_physical_or_sgb: null
+  real_estate_value: null
+  other: []                 # - {name: , value: INR, asset_class: equity|debt|gold|real_estate|cash}

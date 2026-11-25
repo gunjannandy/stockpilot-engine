@@ -1,0 +1,10 @@
+SYNTHETIC: built from the format in docs/status/grilling-2026-11-23.md item 5. NEEDS A REAL SAMPLE.
+Your smallcase order for Value & Momentum
+Order date: 08 Nov 2026
+
+Stock | Type | Quantity | Avg. price
+INFOSYS LIMITED | BUY | 10 | ₹1,500.50
+TATA STEEL | SELL | 100 | ₹150.25
+ITC LIMITED | BUY | 4 | Rs. 1,020.00
+
+Thanks for investing with smallcase.

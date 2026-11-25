@@ -1,0 +1,11 @@
+Coin by Zerodha - Allotment Report -  02-07-2025
+ 
+<https://coin.zerodha.com> 
+Hi <name> (<UCC>), 
+Your mutual fund order has been allotted successfully. 
+Allotment details are as below: 
+Date Fund Folio no. Amount Stamp Duty NAV Units 
+2025-07-01 PARAG PARIKH FLEXI CAP FUND - DIRECT PLAN GROWTH 13330130 Rs. 
+19999.0 Rs. 1.0 92.68 215.789 
+© Zerodha 
+All rights reserved.

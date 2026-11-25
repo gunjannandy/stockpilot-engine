@@ -1,0 +1,8 @@
+# Cloudflare Pages project for the dashboard and its API (docs/build-lanes.md, Contracts).
+name = "stockpilotgn"
+pages_build_output_dir = "../site"
+compatibility_date = "2026-11-01"
+
+[[kv_namespaces]]
+binding = "SP"
+id = "d5ce7ac77b0b41dfb3f83d7422d96a73"

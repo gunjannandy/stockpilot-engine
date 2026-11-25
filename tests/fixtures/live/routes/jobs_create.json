@@ -1,0 +1,13 @@
+{
+  "request": {
+    "kind": "analyse",
+    "payload": {
+      "symbol": "FIXA",
+      "exchange": "NSE"
+    }
+  },
+  "response": {
+    "id": "job_002",
+    "status": "queued"
+  }
+}

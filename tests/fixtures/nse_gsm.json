@@ -1,0 +1,22 @@
+[
+{
+"companyName": "AGS Transact Technologies Limited",
+"gsmStage": "LXII",
+"gsmTime": "20-Nov-2026 08:10:03",
+"isin": "INE583L01014",
+"survCode": "IBC - Receipt & GSM 0 (62)",
+"survDesc": "Insolvency and Bankruptcy Code (IBC) - Receipt of Disclosure or Recommenced scrip and GSM stage 0",
+"symbol": "AGSTRA",
+"srno": 1
+},
+{
+"companyName": "Ankit Metal & Power Limited",
+"gsmStage": "LVIII",
+"gsmTime": "20-Nov-2026 08:10:03",
+"isin": "INE106I01010",
+"survCode": "IBC I & GSM 0 (58)",
+"survDesc": "ASM IBC Stage I and GSM Stage 0",
+"symbol": "ANKITMETAL",
+"srno": 2
+}
+]

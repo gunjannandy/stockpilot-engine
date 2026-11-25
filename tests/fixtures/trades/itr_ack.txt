@@ -1,0 +1,54 @@
+Acknowledgement Number:000000000000000
+Date of filing :
+11-Jul-2026*
+INDIAN INCOME TAX RETURN ACKNOWLEDGEMENT
+[Where the data of the Return of Income in Form ITR-1(SAHAJ), ITR-2, ITR-3,
+ITR-4(SUGAM), ITR-5, ITR-6, ITR-7
+filed and verified]
+(Please see Rule 12 of the Income-tax Rules, 1962)
+Assessment
+Year
+2026-27
+PAN
+AAAAA0000A
+Name
+TEST
+PERSON
+Status
+Individual
+Form Number
+ITR-2
+Filed u/s
+139(1)-On or before due date
+e-Filing Acknowledgement Number
+000000000000000
+Current Year business loss, if any
+1
+0
+Total Income
+1A
+26,12,465
+Book Profit under MAT, where applicable
+2
+0
+Adjusted Total Income under AMT, where applicable
+3
+0
+Net tax payable
+4
+6,53,617
+Interest and Fee Payable
+5
+609
+Total tax, interest and Fee payable
+6
+6,54,226
+Taxes Paid
+7
+6,54,225
+(+) Tax Payable /(-) Refundable (6-7)
+8
+0
+Accreted Income as per section 115TD
+9
+0

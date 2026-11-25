@@ -1,0 +1,44 @@
+{
+ "id": "fixture-flexi-cap-fund-a1b2c3",
+ "name": "Fixture Flexi Cap Fund",
+ "amc": "Fixture Mutual Fund",
+ "category": "Equity Scheme - Flexi Cap Fund",
+ "as_of": "2026-11-20",
+ "variants": [
+  {
+   "code": 900001,
+   "isin": "INF000FIX001",
+   "plan": "Direct",
+   "option": "Growth",
+   "label": "Growth",
+   "nav": 95.1,
+   "nav_date": "2026-11-20"
+  },
+  {
+   "code": 900002,
+   "isin": null,
+   "plan": "Regular",
+   "option": "IDCW",
+   "label": "Monthly IDCW",
+   "nav": null,
+   "nav_date": "2026-11-20"
+  }
+ ],
+ "costs": {
+  "ter_regular": 1.5,
+  "ter_direct": 0.6,
+  "aum_cr": 1200.5
+ },
+ "nav": {
+  "code": 900001,
+  "dates": [
+   "2026-11-19",
+   "2026-11-20"
+  ],
+  "nav": [
+   94.0,
+   95.1
+  ]
+ },
+ "not_available": []
+}

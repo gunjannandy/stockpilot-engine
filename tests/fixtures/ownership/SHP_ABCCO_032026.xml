@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Invented sample in the documented shape of an NSE/BSE shareholding-pattern XBRL file. Not a real filing. -->
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:xbrldi="http://xbrl.org/2006/xbrldi" xmlns:in-bse-shp="http://www.bseindia.com/xbrl/shp/2020">
+ <xbrli:context id="Promoter"><xbrli:entity><xbrli:identifier scheme="http://www.example.test">ABCCO</xbrli:identifier>
+  <xbrli:segment><xbrldi:explicitMember dimension="in-bse-shp:ShareholderCategoryAxis">in-bse-shp:PromoterAndPromoterGroupMember</xbrldi:explicitMember></xbrli:segment></xbrli:entity>
+  <xbrli:period><xbrli:instant>2026-03-31</xbrli:instant></xbrli:period></xbrli:context>
+ <xbrli:context id="Public"><xbrli:entity><xbrli:identifier scheme="http://www.example.test">ABCCO</xbrli:identifier>
+  <xbrli:segment><xbrldi:explicitMember dimension="in-bse-shp:ShareholderCategoryAxis">in-bse-shp:PublicShareholdingMember</xbrldi:explicitMember></xbrli:segment></xbrli:entity>
+  <xbrli:period><xbrli:instant>2026-03-31</xbrli:instant></xbrli:period></xbrli:context>
+ <in-bse-shp:ShareholdingAsAPercentageOfTotalNumberOfShares contextRef="Promoter" unitRef="pure" decimals="2">61.0</in-bse-shp:ShareholdingAsAPercentageOfTotalNumberOfShares>
+ <in-bse-shp:ShareholdingAsAPercentageOfTotalNumberOfShares contextRef="Public" unitRef="pure" decimals="2">39.00</in-bse-shp:ShareholdingAsAPercentageOfTotalNumberOfShares>
+</xbrli:xbrl>

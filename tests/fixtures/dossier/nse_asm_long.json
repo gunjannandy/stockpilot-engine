@@ -1,0 +1,120 @@
+{
+ "longterm": {
+  "data": [
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "AAA Technologies Limited",
+    "isin": "INE0D0U01013",
+    "series": null,
+    "survCode": "LTASM - I (13)",
+    "survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+    "symbol": "AAATECH",
+    "srno": 1
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Aaa Technologies Limited",
+    "isin": "INE0D0U01013",
+    "series": null,
+    "survCode": "LTASM - I (13)",
+    "survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+    "symbol": "AAATECH",
+    "srno": 2
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Aarey Drugs & Pharmaceuticals Limited",
+    "isin": "INE198H01019",
+    "series": null,
+    "survCode": "LTASM - I (13)",
+    "survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+    "symbol": "AAREYDRUGS",
+    "srno": 3
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Aastha Spintex Limited",
+    "isin": "INE2FMX01012",
+    "series": null,
+    "survCode": "LTASM - I (13)",
+    "survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+    "symbol": "AASTHA",
+    "srno": 4
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Aatmaj Healthcare Limited",
+    "isin": "INE0OB201016",
+    "series": null,
+    "survCode": "LTASM - I (13)",
+    "survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+    "symbol": "AATMAJ",
+    "srno": 5
+   }
+  ]
+ },
+ "shortterm": {
+  "data": [
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Agi Infra Limited",
+    "isin": "INE976R01033",
+    "series": null,
+    "survCode": "STASM - I (11)",
+    "survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+    "symbol": "AGIIL",
+    "srno": 1
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Allcargo Global Limited",
+    "isin": "INE1YPB01014",
+    "series": null,
+    "survCode": "STASM - I (11)",
+    "survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+    "symbol": "AGL",
+    "srno": 2
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Abhishek Integrations Limited",
+    "isin": "INE0CAJ01017",
+    "series": null,
+    "survCode": "STASM - I (11)",
+    "survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+    "symbol": "AILIMITED",
+    "srno": 3
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Amanta Healthcare Limited",
+    "isin": "INE084K01015",
+    "series": null,
+    "survCode": "STASM - I (11)",
+    "survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+    "symbol": "AMANTA",
+    "srno": 4
+   },
+   {
+    "asmSurvIndicator": "Stage I",
+    "asmTime": "23-Nov-2026",
+    "companyName": "Antarctica Limited",
+    "isin": "INE414B01021",
+    "series": null,
+    "survCode": "STASM - I (11)",
+    "survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+    "symbol": "ANTGRAPHIC",
+    "srno": 5
+   }
+  ]
+ }
+}

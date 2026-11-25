@@ -1,0 +1,17 @@
+# GitHub turns scheduled workflows off after 60 quiet days. Every code copy is a commit and resets the clock;
+# this monthly run re-enables ci.yml as well, so a quiet spell cannot switch the schedules off.
+name: keep-alive
+on:
+  schedule:
+    - cron: "17 3 1 * *"
+  workflow_dispatch:
+permissions:
+  actions: write
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/ci.yml/enable"

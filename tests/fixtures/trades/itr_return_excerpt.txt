@@ -1,0 +1,100 @@
+FORM
+ITR-2
+INDIAN INCOME TAX RETURN
+[For Individuals and HUFs not having income from profits and gains of business or profession]
+Assessment Year
+2026-27
+PART A-GENERAL
+(A4) PAN
+AAAAA0000A
+(a1i) Filed u/s
+139(1)-On or before due
+date
+SCHEDULE CG CAPITAL GAINS
+A(I)
+Short-term Capital Gains (STCG) (Sub-items 3 and 4 are not applicable for residents)
+2
+From sale of equity share or unit of equity oriented Mutual Fund (MF) or unit of a business trust on which STT is paid
+a
+Full value of consideration
+A2a
+14,81,556
+e
+Short-term capital gain on equity share or equity oriented MF (STT paid) (2c + 2d)
+A2e
+-50,202
+9
+Total Short-term Capital Gain (A1e+ A2e+ A3a+ A3b+ A4e+ A5e+A6 + A7 - A8a + A(A))
+A9
+-45,202
+B(I)
+Long-term capital gain (LTCG) (Sub-items 4, 5, 6, & 7 are not applicable for residents)
+3a
+LTCG u/s 112A (column 14 of Schedule 112A)
+B3a
+58,188
+12
+Total long term capital gain chargeable under I.T. Act
+(B1g + B2e + B3c + B4c + B5e + B6c +
+B7c + B8e + B9 +B10 - B11a + B(A))
+B12
+60,188
+C1
+Sum of Capital Gain Incomes (8ii + 8iii + 8iv + 8v + 8vi + 8vii of table E below)
+C1
+14,986
+C2
+Income from transfer of Virtual Digital Assets (Col. 7 of
+Schedule VDA)
+C2
+0
+C3
+Income chargeable under the head "CAPITAL GAINS"(C1 + C2)
+C3
+14,986
+12
+Total income (9 - 11)
+12
+26,12,465
+SCHEDULE FA - DETAILS OF FOREIGN ASSETS AND INCOME FROM ANY SOURCE OUTSIDE INDIA
+A1
+Details of Foreign Depository Accounts held (including any beneficial interest) at any time during the calendar year ended
+December, 2025
+Sl.
+No.
+Country
+A3
+Details of Foreign Equity and Debt Interest held (including any beneficial interest) in any entity a
+on 31st December, 2025
+Sl.
+No.
+Country
+SCHEDULE 5A - INFORMATION REGARDING APPORTIONMENT OF INCOME BETWEEN SPOUSES GOVERNED BY PORTUGUESE CIVIL CODE
+14
+Aggregate liability (12+13e)
+14
+6,54,226
+Net tax liability (10-11d) (enter zero if negative)
+12
+6,53,617
+Total Interest and Fee Payable (13a+13b+13c+13d+13da)
+13e
+609
+15
+Taxes Paid
+b
+TDS (total of column 5 of 20B and column 9 of 20C)
+15b
+6,46,865
+e
+Total Taxes Paid (15a+15b+15c+15d)
+15e
+6,54,225
+16
+Amount payable (Enter if 14 is greater than 15e, else enter 0)
+16
+0
+17
+Refund (If 15e is greater than 14) (Refund, if any, will be directly credited into the bank account)
+17
+0

@@ -1,0 +1,86 @@
+{
+ "_note": "REAL, trimmed from https://www.amfiindia.com/api/average-aum-schemewise?strType=Categorywise&fyId=1&periodId=1&MF_ID=0 (July-September 2026, Rs in lakh).",
+ "data": [
+  {
+   "strMFId": "0",
+   "Mfname": "360 ONE Mutual Fund",
+   "SchemeCat_Desc": "Index Funds - Equity Funds",
+   "schemes": [
+    {
+     "SchemeNAVName": "360 ONE ELSS Tax Saver Nifty 50 Index Fund - Direct Plan - Growth",
+     "AMFI_Code": 151165,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 5044.28,
+      "FundOfFundsDomestic": 0
+     }
+    },
+    {
+     "SchemeNAVName": "360 ONE ELSS Tax Saver Nifty 50 Index Fund - Direct Plan - IDCW Payout",
+     "AMFI_Code": 151166,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 118.81,
+      "FundOfFundsDomestic": 0
+     }
+    }
+   ],
+   "totalAUM": {
+    "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 6873.84,
+    "FundOfFundsDomestic": 0
+   }
+  },
+  {
+   "strMFId": "0",
+   "Mfname": "Axis Mutual Fund",
+   "SchemeCat_Desc": "Equity Schemes - ELSS- Tax Saver Fund",
+   "schemes": [
+    {
+     "SchemeNAVName": "Axis ELSS Tax Saver Fund - Direct Plan - Growth Option",
+     "AMFI_Code": 120503,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 963579.63,
+      "FundOfFundsDomestic": 0
+     }
+    },
+    {
+     "SchemeNAVName": "Axis ELSS Tax Saver Fund - Direct Plan - IDCW",
+     "AMFI_Code": 120502,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 11788.45,
+      "FundOfFundsDomestic": 0
+     }
+    }
+   ],
+   "totalAUM": {
+    "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 3214375.7,
+    "FundOfFundsDomestic": 0
+   }
+  },
+  {
+   "strMFId": "0",
+   "Mfname": "Aditya Birla Sun Life Mutual Fund",
+   "SchemeCat_Desc": "Other Scheme - FoF Domestic",
+   "schemes": [
+    {
+     "SchemeNAVName": "Aditya Birla Sun Life Aggressive Hybrid Omni FOF-  Regular -  IDCW",
+     "AMFI_Code": 132175,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 0,
+      "FundOfFundsDomestic": 469.91
+     }
+    },
+    {
+     "SchemeNAVName": "Aditya Birla Sun Life Aggressive Hybrid Omni FOF- Direct - IDCW",
+     "AMFI_Code": 132189,
+     "AverageAumForTheMonth": {
+      "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 0,
+      "FundOfFundsDomestic": 13.7
+     }
+    }
+   ],
+   "totalAUM": {
+    "ExcludingFundOfFundsDomesticButIncludingFundOfFundsOverseas": 0,
+    "FundOfFundsDomestic": 362252.32
+   }
+  }
+ ]
+}

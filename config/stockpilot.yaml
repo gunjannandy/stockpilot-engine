@@ -1,0 +1,86 @@
+# stockpilot settings. Secrets live in .env (see `secrets` below for what each one is).
+runner: claude            # claude | agy
+
+universe:
+  liquidity_floor_cr: 1   # average daily traded value (₹ crore) to enter the full screen
+
+budget:
+  monthly_default_inr: 100000
+
+worker:
+  url: https://stockpilotgn.pages.dev
+  project: stockpilotgn
+
+vault:
+  remote: origin
+  paths: [private, .env]   # not the DB: rebuilt from public data, and too big to gzip in RAM
+
+store:
+  path: data/stockpilot.duckdb
+
+secrets:
+  VAULT_PASSWORD: the owner's vault password
+  CLAUDE_CODE_OAUTH_TOKEN: from `claude setup-token`, lasts about a year
+  GOOGLE_BRIDGE_URL: the Apps Script web app URL
+  GOOGLE_BRIDGE_KEY: the key pasted into google/bridge.gs
+  CLOUDFLARE_ACCOUNT_ID: the Cloudflare account (auth is wrangler OAuth in ~/.config/.wrangler, made by ~/.config/sp/cf_login.py; no API token)
+  OWNER_PAN: the account holder's PAN, the password on contract notes and the CDSL CAS
+  KITE_API_KEY: Kite Connect Personal app (stage 4)
+  KITE_API_SECRET: Kite Connect Personal app (stage 4)
+  SP_VM_KEY: shared with the Worker (Pages secret SP_VM_KEY); lets the VM call /api/vm/*
+
+# Ops: `sp doctor` counts these down and opens a self-heal issue 14 days before expiry.
+# Uncomment with the real issue date once known (the Claude setup token lasts about a year).
+# tokens:
+#   CLAUDE_CODE_OAUTH_TOKEN: {issued: "YYYY-MM-DD", lifetime_days: 365}
+
+# Ops: hours a job may go without a good run before `sp doctor` opens an issue. Each writes a `runs` row.
+freshness:
+  nav: 30          # nightly
+  kite: 36         # daily; "login needed" still counts, the job ran
+  queue: 12        # every 10 minutes, but not overnight
+  weekly: 192      # Saturdays
+
+# Deploy from web/ (where functions/ lives). Absolute wrangler path: timers do not get ~/.npm-global/bin on PATH.
+# --branch main makes it the production deploy; without it wrangler names the git branch and makes a preview.
+deploy:
+  command: [/home/ubuntu/.npm-global/bin/wrangler, pages, deploy, ../site, --project-name, stockpilotgn, --branch, main, --commit-dirty=true]
+
+# Fund costs from AMFI (TER and average AUM, CSV). Left empty until the official file URLs are checked from the VM:
+# see docs/research/amfi-ter-aum.md. `sp weekly` skips the step quietly while both are empty.
+funds:
+  ter_url: ""
+  aum_url: ""
+
+# The forecaster's one rule set (R4). Changed only through chat; nothing in the dashboard or a prompt overrides it.
+rules:
+  buy_at: 0.57              # buy or add a stock at or above this chance of beating the Nifty
+  sell_at: 0.40             # sell a holding at or below this
+  max_single: 0.08          # at most this share of the portfolio in one stock
+  risk_per_trade: 0.01      # a stop-loss hit costs at most this share of the portfolio
+  follow_count: 10          # stocks worth following below the buy line
+  watch_cap: 8              # triggered watchlist stocks analysed in one evening (the best by trigger, then screen score)
+  setaside_limit: 3         # set-asides in one sector within 30 days that cap it at one buy a week
+  setaside_days: 30
+  sector_warn_at: 0.20      # a buy that takes a sector to this share of the portfolio gets a warning line
+  stops_from: "2026-11-24"  # code stops apply only to positions opened from a call on or after this day
+  nifty_3m: 0.03            # the Nifty's assumed three-month return, for the hurdle
+  behind_sector: 0.20       # thesis break: this far behind its sector index over 3 months
+  results_miss: 0.25        # thesis break: latest quarter net profit down this much on the same quarter a year ago
+  passive: [NIFTYBEES, GOLDBEES, GOLDCASE]   # index and gold funds: kept on purpose, never sold for a low chance (names ending BEES or ETF count too)
+
+# NSE industry (stocks.industry) -> the sector index in index_levels. An industry not listed is shown as unmapped.
+# Index names are NSE's own; the integrator checks them against `select distinct name from index_levels`.
+sector_index:
+  Financial Services: Nifty Financial Services
+  Information Technology: Nifty IT
+  Healthcare: Nifty Healthcare Index
+  Fast Moving Consumer Goods: Nifty FMCG
+  Automobile and Auto Components: Nifty Auto
+  Metals & Mining: Nifty Metal
+  Oil Gas & Consumable Fuels: Nifty Oil & Gas
+  Realty: Nifty Realty
+  Consumer Durables: Nifty Consumer Durables
+  Media Entertainment & Publication: Nifty Media
+  Power: Nifty Energy
+  Construction: Nifty Infrastructure

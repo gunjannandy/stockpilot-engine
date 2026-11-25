@@ -1,0 +1,65 @@
+{
+"longterm": {
+"data": [
+{
+"asmSurvIndicator": "Stage I",
+"asmTime": "20-Nov-2026",
+"companyName": "AAA Technologies Limited",
+"isin": "INE0D0U01013",
+"series": null,
+"survCode": "LTASM - I (13)",
+"survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+"symbol": "AAATECH",
+"srno": 1
+},
+{
+"asmSurvIndicator": "Stage I",
+"asmTime": "20-Nov-2026",
+"companyName": "Aaa Technologies Limited",
+"isin": "INE0D0U01013",
+"series": null,
+"survCode": "LTASM - I (13)",
+"survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+"symbol": "AAATECH",
+"srno": 2
+},
+{
+"asmSurvIndicator": "Stage I",
+"asmTime": "20-Nov-2026",
+"companyName": "Aarey Drugs & Pharmaceuticals Limited",
+"isin": "INE198H01019",
+"series": null,
+"survCode": "LTASM - I (13)",
+"survDesc": "Long Term Additional Surveillance Measure (LTASM) - Stage I",
+"symbol": "AAREYDRUGS",
+"srno": 3
+}
+]
+},
+"shortterm": {
+"data": [
+{
+"asmSurvIndicator": "Stage I",
+"asmTime": "20-Nov-2026",
+"companyName": "Agi Infra Limited",
+"isin": "INE976R01033",
+"series": null,
+"survCode": "STASM - I (11)",
+"survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+"symbol": "AGIIL",
+"srno": 1
+},
+{
+"asmSurvIndicator": "Stage I",
+"asmTime": "20-Nov-2026",
+"companyName": "Allcargo Global Limited",
+"isin": "INE1YPB01014",
+"series": null,
+"survCode": "STASM - I (11)",
+"survDesc": "Short Term Additional Surveillance Measure (STASM) - Stage I",
+"symbol": "AGL",
+"srno": 2
+}
+]
+}
+}

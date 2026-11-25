@@ -1,0 +1,18 @@
+Fidelity Stock Plan Services
+Participant Trust
+Dec-31-2025 06:05 AM ET
+  6 transactions · Total $5.34 USD
+Custom transaction summary
+Participant number (last 4): *****0000
+Your account summary From Mar-31-2024 to Mar-29-2025
+Stock sales
+Total amount $32.43 USD
+Detailed breakdown From Mar-31-2024 to Mar-29-2025
+Stock sales
+These transactions represent proﬁt or loss from the stock you sold throughout your chosen time period.
+NOW: SERVICENOW INC COM USD0.001
+Date sold or transferred Date acquired Quantity Cost basis Proceeds Gain/loss Stock source*
+May-20-2024 May-17-2024 2.0000 $1,400.00 $1,412.43 + $12.43 USD RS
+Aug-19-2024 Aug-17-2024 2.0000 $1,660.00 $1,657.93 -$2.07 USD RS
+*SP: Employee stock purchase plan (ESPP) | RS: Restricted stock units (RSU) | RS: Performance award (PSU) | RS: Restricted Stock Award (RSA) | SA:
+4 / 7

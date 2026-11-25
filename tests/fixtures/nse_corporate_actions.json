@@ -1,0 +1,8 @@
+[
+ {"symbol": "RELIANCE", "isin": "INE002A01018", "exDate": "01-Dec-2026", "faceVal": "10",
+  "subject": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 5/- Per Share", "recDate": "02-Dec-2026"},
+ {"symbol": "INFY", "isin": "INE009A01021", "exDate": "05-Dec-2026", "faceVal": "5",
+  "subject": "Bonus 1:1", "recDate": "06-Dec-2026"},
+ {"symbol": "ITC", "isin": "INE154A01025", "exDate": "28-Nov-2026", "faceVal": "1",
+  "subject": "Dividend - Rs 6.50 Per Share", "recDate": "29-Nov-2026"}
+]

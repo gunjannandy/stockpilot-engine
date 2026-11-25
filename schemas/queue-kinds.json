@@ -1,0 +1,21 @@
+{
+  "note": "Every request kind the dashboard may queue, with its payload keys. web/lib/queue.js and src/stockpilot/vmqueue.py both read this file; a test on each side checks they match.",
+  "kinds": {
+    "watchlist_add": ["symbol", "exchange"],
+    "watchlist_remove": ["symbol", "exchange"],
+    "budget_set": ["month", "amount"],
+    "allocation_approve": ["target"],
+    "refresh_docs": [],
+    "rerun": ["job"],
+    "build_tax_pack": [],
+    "not_now": ["symbol", "scope", "for"],
+    "snooze": ["symbol", "scope"],
+    "dismiss": ["symbol", "scope"],
+    "not_now_undo": ["id"],
+    "feedback": ["text", "kind"],
+    "feedback_decide": ["id", "decision"],
+    "learned_forget": ["pattern"],
+    "long_term_mark": ["symbol", "on"],
+    "ask_analyst": ["symbol"]
+  }
+}

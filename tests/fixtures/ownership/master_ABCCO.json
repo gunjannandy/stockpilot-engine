@@ -1,0 +1,86 @@
+[
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED30-SEP-2026",
+  "date": "30-SEP-2026",
+  "pr_and_prgrp": "62.50",
+  "public_val": "37.50",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_092026.xml",
+  "submissionDate": "03-Nov-2026 18:22:10"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED30-JUN-2026",
+  "date": "30-JUN-2026",
+  "pr_and_prgrp": "62.10",
+  "public_val": "37.90",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_062026.xml",
+  "submissionDate": "08-Aug-2026 17:05:00"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED30-JUN-2026",
+  "date": "30-JUN-2026",
+  "pr_and_prgrp": "62.10",
+  "public_val": "37.90",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "Revised",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_062026_rev.xml",
+  "submissionDate": "20-Aug-2026 11:00:00"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED31-MAR-2026",
+  "date": "31-MAR-2026",
+  "pr_and_prgrp": "61.00",
+  "public_val": "39.00",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_032026.xml",
+  "submissionDate": "10-May-2026 16:00:00"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED31-DEC-2025",
+  "date": "31-DEC-2025",
+  "pr_and_prgrp": "61.00",
+  "public_val": "39.00",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_122025.xml",
+  "submissionDate": "12-Feb-2026 16:00:00"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED30-SEP-2025",
+  "date": "30-SEP-2025",
+  "pr_and_prgrp": "60.00",
+  "public_val": "40.00",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "https://example.test/xbrl/SHP_ABCCO_092025.xml",
+  "submissionDate": "05-Nov-2025 16:00:00"
+ },
+ {
+  "symbol": "ABCCO",
+  "name": "ABC Example Industries Ltd",
+  "recordId": "INVENTED30-JUN-2025",
+  "date": "30-JUN-2025",
+  "pr_and_prgrp": "60.00",
+  "public_val": "40.00",
+  "employeeTrusts": "0.00",
+  "revisedStatus": "",
+  "xbrl": "",
+  "submissionDate": "05-Aug-2025 16:00:00"
+ }
+]

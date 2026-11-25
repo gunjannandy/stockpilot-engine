@@ -1,0 +1,51 @@
+{
+  "request": null,
+  "response": {
+    "jobs": [
+      {
+        "id": "job_001",
+        "kind": "sync",
+        "payload": {},
+        "asked_by": "father",
+        "status": "done",
+        "result": "Done, 3 changes",
+        "error": null,
+        "error_bn": null,
+        "created_at": "2026-11-25T09:15:00+05:30",
+        "started_at": "2026-11-25T09:15:00+05:30",
+        "finished_at": "2026-11-25T09:16:10+05:30"
+      },
+      {
+        "id": "job_002",
+        "kind": "analyse",
+        "payload": {
+          "symbol": "FIXA",
+          "exchange": "NSE"
+        },
+        "asked_by": "father",
+        "status": "running",
+        "result": null,
+        "error": null,
+        "error_bn": null,
+        "created_at": "2026-11-25T09:15:00+05:30",
+        "started_at": "2026-11-25T09:15:00+05:30",
+        "finished_at": null
+      },
+      {
+        "id": "job_003",
+        "kind": "news_tag",
+        "payload": {
+          "batch": "b1"
+        },
+        "asked_by": "system",
+        "status": "failed",
+        "result": null,
+        "error": "No model is available. Usage is used up; try again in about an hour.",
+        "error_bn": "মডেল পাওয়া যাচ্ছে না। প্রায় এক ঘণ্টা পরে আবার চেষ্টা করুন।",
+        "created_at": "2026-11-25T09:15:00+05:30",
+        "started_at": "2026-11-25T09:15:00+05:30",
+        "finished_at": "2026-11-25T09:16:10+05:30"
+      }
+    ]
+  }
+}

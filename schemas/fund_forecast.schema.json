@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "probability", "stance", "moved_by", "risks", "reason"],
+        "properties": {
+          "id": {"type": "string", "description": "The fund's id from the brief, for example F1."},
+          "probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1,
+                          "description": "Chance the fund stays above its category's middle fund over the next 12 months. Null when the brief has no base rate."},
+          "stance": {"type": "string", "description": "What you would do: keep, add, stop_adding, switch or review."},
+          "moved_by": {"type": "array", "items": {"type": "object", "required": ["reason", "points"],
+            "properties": {"reason": {"type": "string"}, "points": {"type": "number",
+              "description": "Percentage points this reason moved the chance from the base rate; negative lowers it."}}}},
+          "risks": {"type": "array", "items": {"type": "string"}},
+          "reason": {"type": "string", "description": "One short plain-English sentence for the father. No digits: code states every number."}
+        }
+      }
+    }
+  }
+}

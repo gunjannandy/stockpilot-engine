@@ -1,0 +1,20 @@
+[
+  {
+    "item_id": "n1",
+    "symbol": "FIXB",
+    "exchange": "NSE",
+    "relation": "self",
+    "direction": "good",
+    "size": "medium",
+    "changes_call": true
+  },
+  {
+    "item_id": "n1",
+    "symbol": "FIXA",
+    "exchange": "NSE",
+    "relation": "rival",
+    "direction": "bad",
+    "size": "small",
+    "changes_call": false
+  }
+]

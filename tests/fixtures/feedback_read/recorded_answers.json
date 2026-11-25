@@ -1,0 +1,174 @@
+{
+ "5": {
+  "asks": [
+   {
+    "original": "Bangla translation er por o onek english sentence dekhachhe",
+    "line_en": "Many English sentences still show in Bengali mode.",
+    "line_bn": "বাংলা করার পরেও অনেক ইংরেজি বাক্য দেখাচ্ছে।",
+    "tag": "wording",
+    "size": "medium",
+    "plan": "Translate the model-written and code-written sentences, or show the stored Bengali line.",
+    "touches_money_or_rules": false
+   }
+  ]
+ },
+ "6": {
+  "asks": [
+   {
+    "original": "Feedback likhle seta queue te dekhachhe na",
+    "line_en": "Posted feedback does not show in the queue.",
+    "line_bn": "ফিডব্যাক লিখলে সেটা কিউতে দেখাচ্ছে না।",
+    "tag": "bug",
+    "size": "medium",
+    "plan": "Show a posted message at once as Received.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "UI ta bhalo na ekhane, track korar jonno",
+    "line_en": "The screen is poor for tracking feedback.",
+    "line_bn": "ট্র্যাক করার জন্য এখানকার স্ক্রিনটা ভালো না।",
+    "tag": "wording",
+    "size": "medium",
+    "plan": "Give each ask its own row with a status.",
+    "touches_money_or_rules": false
+   }
+  ]
+ },
+ "7": {
+  "asks": [
+   {
+    "original": "kono list update hole amake yellow notification e dekhabe",
+    "line_en": "Show a yellow mark when a list changes.",
+    "line_bn": "কোনো তালিকা বদলালে হলুদ চিহ্নে দেখাবে।",
+    "tag": "data",
+    "size": "medium",
+    "plan": "Add a yellow dot per changed list.",
+    "touches_money_or_rules": true
+   },
+   {
+    "original": "prediction change hole amake yellow notification e dekhabe",
+    "line_en": "Show a yellow mark when a prediction changes.",
+    "line_bn": "পূর্বাভাস বদলালে হলুদ চিহ্নে দেখাবে।",
+    "tag": "forecast",
+    "size": "medium",
+    "plan": "Mark the stock yellow and show the old and new call.",
+    "touches_money_or_rules": true
+   }
+  ]
+ },
+ "8": {
+  "asks": [
+   {
+    "original": "chart guiote historical data nei",
+    "line_en": "The charts have no full history.",
+    "line_bn": "চার্টে পুরোনো সব তথ্য নেই।",
+    "tag": "chart",
+    "size": "large",
+    "plan": "Load the full price history into the chart.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "zoom in zoom out",
+    "line_en": "The chart needs zoom in and zoom out.",
+    "line_bn": "চার্টে জুম ইন আর জুম আউট দরকার।",
+    "tag": "chart",
+    "size": "medium",
+    "plan": "Add zoom and pan.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "puro kite er moton o nei",
+    "line_en": "The chart should look like Kite's.",
+    "line_bn": "পুরো কাইটের মতো চার্ট নেই।",
+    "tag": "chart",
+    "size": "large",
+    "plan": "Candles, time ranges, volume and a crosshair like Kite's.",
+    "touches_money_or_rules": false
+   }
+  ]
+ },
+ "9": {
+  "asks": [
+   {
+    "original": "sob stock er lifetime chart laagbe",
+    "line_en": "Every stock needs a chart since it was listed.",
+    "line_bn": "সব স্টকের লাইফটাইম চার্ট চাই।",
+    "tag": "chart",
+    "size": "large",
+    "plan": "Chart every stock from its listing date.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "onek bugs aache buttons e, ogulo think koro",
+    "line_en": "Many buttons have bugs; find them yourselves.",
+    "line_bn": "বোতামগুলোতে অনেক ভুল আছে, নিজেরা খুঁজে ঠিক করো।",
+    "tag": "bug",
+    "size": "large",
+    "plan": "Walk every button and fix what breaks.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "full view te chart boro dekhao",
+    "line_en": "Show the chart bigger in full view.",
+    "line_bn": "ফুল ভিউতে চার্ট বড় দেখাও।",
+    "tag": "chart",
+    "size": "medium",
+    "plan": "Add a full-screen chart view.",
+    "touches_money_or_rules": false
+   }
+  ]
+ },
+ "10": {
+  "asks": [
+   {
+    "original": "NSE er sathe BSE and SME stock o thakbe",
+    "line_en": "Include BSE and SME stocks along with NSE.",
+    "line_bn": "এনএসইর সাথে বিএসই আর এসএমই স্টকও থাকবে।",
+    "tag": "data",
+    "size": "large",
+    "plan": "Search every NSE, BSE and SME stock.",
+    "touches_money_or_rules": true
+   },
+   {
+    "original": "ANAWIL stock ta ami khuje pelam na",
+    "line_en": "He could not find ANAWIL in search.",
+    "line_bn": "আনাউইল স্টকটা আমি খুঁজে পাইনি।",
+    "tag": "bug",
+    "size": "small",
+    "plan": "Add ANAWIL to the search list and forgive misspellings.",
+    "touches_money_or_rules": false
+   },
+   {
+    "original": "TO amar sob stock chai",
+    "line_en": "He wants every stock.",
+    "line_bn": "আমার সব স্টক চাই।",
+    "tag": "data",
+    "size": "large",
+    "plan": "Cover the whole market.",
+    "touches_money_or_rules": true
+   }
+  ]
+ },
+ "11": {
+  "asks": [
+   {
+    "original": "market news sobsomoy live ar update thakte hobe",
+    "line_en": "Market news must always be live.",
+    "line_bn": "বাজারের খবর সবসময় লাইভ থাকতে হবে।",
+    "tag": "news",
+    "size": "large",
+    "plan": "Refresh news through the day.",
+    "touches_money_or_rules": true
+   },
+   {
+    "original": "saathe saathe special stocks er list o",
+    "line_en": "Also a list of stocks picked because of the news.",
+    "line_bn": "সাথে সাথে বিশেষ স্টকের তালিকাও চাই।",
+    "tag": "news",
+    "size": "large",
+    "plan": "Keep a news-picked stock list updated with the news.",
+    "touches_money_or_rules": true
+   }
+  ]
+ }
+}

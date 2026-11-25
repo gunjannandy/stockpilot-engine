@@ -1,0 +1,42 @@
+Income Tax Department
+ Bengaluru
+ITR Form Type
+ITR2 Original
+Status
+Individual
+Intimation Order Date
+11/10/2025
+Date of Filing
+11/10/2025
+Total Income
+25,12,270
+25,12,270
+Tax Liability after relief
+6,31,561
+6,31,561
+Total Interest And Fee ( 234A, 234B, 234C & 234F )
+1,354
+1,354
+Your Return for A.Y. 2025-26 has been processed.
+There is no payment due.
+Total Taxes Paid ( Advance Tax, TDS, TCS, Self Assessment Tax )
+6,32,916
+6,32,916
+Balance
+0
+0
+Net Amount Payable / Refundable
+0
+0
+Intimation u/s 143(1)
+Page 4 of 6
+Name
+TEST PERSON
+PAN
+AAAAA0000A
+AY
+2025-26
+01 HEADS OF INCOME Salaries 24,97,567 24,97,567
+02 Income from house property 0 0
+03 Capital gains 0 0
+04 Income from other sources 14,704 14,704

@@ -1,0 +1,4 @@
+- Lead with the one reason that matters most; put the number in the same sentence.
+- Say "sell", never "exit" or "book profits". Say "buy", never "accumulate".
+- Name a company once, then say "it".
+- If you do not know, say so. Do not fill a gap with a guess.

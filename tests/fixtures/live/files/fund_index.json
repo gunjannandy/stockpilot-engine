@@ -1,0 +1,34 @@
+{
+ "built_at": "2026-11-25T09:15:00+05:30",
+ "entries": [
+  {
+   "id": "fixture-flexi-cap-fund-a1b2c3",
+   "name": "Fixture Flexi Cap Fund",
+   "amc": "Fixture Mutual Fund",
+   "category": "Equity Scheme - Flexi Cap Fund",
+   "group": "Flexi cap",
+   "variants": 4,
+   "primary_code": 900001,
+   "isin": "INF000FIX001",
+   "ter_direct": 0.6,
+   "ter_regular": 1.5,
+   "aum_cr": 1200.5,
+   "aliases": [
+    "fixture flexi cap fund",
+    "fixture fixture flexi cap fund"
+   ]
+  }
+ ],
+ "counts": {
+  "funds": 1,
+  "schemes": 4,
+  "schemes_mapped": 4,
+  "ter_pct": 100.0,
+  "aum_pct": 100.0,
+  "nav_history": {
+   "funds_with_history": 1,
+   "pct": 100.0,
+   "rows": 2
+  }
+ }
+}

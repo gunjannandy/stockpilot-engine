@@ -1,0 +1,9 @@
+# Write-only ingest Worker (T12). Deploy from the private side; INGEST_KEY is a Worker secret.
+name = "stockpilot-ingest"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stockpilot"
+database_id = "REPLACE_WITH_D1_ID_ON_DEPLOY"

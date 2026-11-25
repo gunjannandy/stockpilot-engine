@@ -1,0 +1,15 @@
+Order No. Order
+time
+Trade No. Trade
+Time
+Exchange Quantity Gross
+Remarks
+1300000016613928 14:06:43 80078999 14:06:43 RELIANCE -
+EQ /
+INE002A01018
+B NSE 3 2184.80 2184.80 (6554.40)
+Sub total 3 (6554.40)
+Net total (6554.40)
+Contract note cum tax invoice
+Contract note no.: CNT-21/22-54076955
+Trade date 24/06/2021

@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "required": ["asks"],
+  "properties": {
+    "asks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["original", "line_en", "line_bn", "tag", "size", "plan"],
+        "properties": {
+          "original": {"type": "string", "description": "The exact words from the message that hold this one wish, copied letter for letter."},
+          "line_en": {"type": "string"},
+          "line_bn": {"type": "string"},
+          "tag": {"type": "string", "enum": ["chart", "data", "news", "forecast", "bug", "wording"]},
+          "size": {"type": "string", "enum": ["small", "medium", "large"]},
+          "plan": {"type": "string"},
+          "touches_money_or_rules": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

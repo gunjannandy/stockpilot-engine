@@ -1,0 +1,142 @@
+{
+ "RELIANCE.NS": {
+  "info": {
+   "trailingPE": 22.701056,
+   "priceToBook": 1.9737332,
+   "returnOnEquity": 0.08759,
+   "debtToEquity": 44.325,
+   "profitMargins": 0.06848,
+   "operatingMargins": 0.1122,
+   "marketCap": 18640980148224,
+   "heldPercentInsiders": 0.51798,
+   "sector": "Energy",
+   "industry": "Oil & Gas Refining & Marketing",
+   "currency": "INR"
+  },
+  "income": {
+   "2026-03-31": {
+    "Total Revenue": 10572190000000.0,
+    "Net Income": 807750000000.0,
+    "EBIT": 1472180000000.0,
+    "Operating Income": 1213770000000.0
+   },
+   "2025-03-31": {
+    "Total Revenue": 9646930000000.0,
+    "Net Income": 696480000000.0,
+    "EBIT": 1281380000000.0,
+    "Operating Income": 1124620000000.0
+   },
+   "2024-03-31": {
+    "Total Revenue": 9010640000000.0,
+    "Net Income": 696210000000.0,
+    "EBIT": 1261120000000.0,
+    "Operating Income": 1116660000000.0
+   },
+   "2023-03-31": {
+    "Total Revenue": 8778350000000.0,
+    "Net Income": 667020000000.0,
+    "EBIT": 1130040000000.0,
+    "Operating Income": 1020150000000.0
+   },
+   "2022-03-31": {
+    "Total Revenue": null,
+    "Net Income": null,
+    "EBIT": null,
+    "Operating Income": null
+   }
+  },
+  "balance": {
+   "2026-03-31": {
+    "Total Assets": 21781400000000.0,
+    "Current Liabilities": 5412540000000.0,
+    "Total Debt": 3980000000000.0,
+    "Stockholders Equity": 9040300000000.0
+   },
+   "2025-03-31": {
+    "Total Assets": 19501210000000.0,
+    "Current Liabilities": 4537370000000.0,
+    "Total Debt": 3695750000000.0,
+    "Stockholders Equity": 8432000000000.0
+   },
+   "2024-03-31": {
+    "Total Assets": 17559860000000.0,
+    "Current Liabilities": 3973670000000.0,
+    "Total Debt": 3461420000000.0,
+    "Stockholders Equity": 7934810000000.0
+   },
+   "2023-03-31": {
+    "Total Assets": 16074310000000.0,
+    "Current Liabilities": 3957430000000.0,
+    "Total Debt": 3343920000000.0,
+    "Stockholders Equity": 7158720000000.0
+   }
+  }
+ },
+ "MHHL.NS": {
+  "info": {
+   "trailingPE": null,
+   "priceToBook": 1.1089728,
+   "returnOnEquity": null,
+   "debtToEquity": null,
+   "profitMargins": null,
+   "operatingMargins": null,
+   "marketCap": 1040358080,
+   "heldPercentInsiders": null,
+   "sector": null,
+   "industry": null,
+   "currency": "INR"
+  },
+  "income": {
+   "2025-03-31": {
+    "Total Revenue": 1633851000.0,
+    "Net Income": 58526000.0,
+    "EBIT": 111803000.0,
+    "Operating Income": 79069000.0
+   },
+   "2024-03-31": {
+    "Total Revenue": 1949603000.0,
+    "Net Income": 107516000.0,
+    "EBIT": 169916000.0,
+    "Operating Income": 135150000.0
+   },
+   "2023-03-31": {
+    "Total Revenue": 1874521000.0,
+    "Net Income": 67831000.0,
+    "EBIT": 141100000.0,
+    "Operating Income": 114385000.0
+   },
+   "2022-03-31": {
+    "Total Revenue": 1336531000.0,
+    "Net Income": 57422000.0,
+    "EBIT": 121306000.0,
+    "Operating Income": 88404000.0
+   }
+  },
+  "balance": {
+   "2025-03-31": {
+    "Total Assets": 1678072000.0,
+    "Current Liabilities": 558940000.0,
+    "Total Debt": 345227000.0,
+    "Stockholders Equity": 1053258000.0
+   },
+   "2024-03-31": {
+    "Total Assets": 1397340000.0,
+    "Current Liabilities": 287391000.0,
+    "Total Debt": 225216000.0,
+    "Stockholders Equity": 1003849000.0
+   },
+   "2023-03-31": {
+    "Total Assets": 1384051000.0,
+    "Current Liabilities": 355070000.0,
+    "Total Debt": 279621000.0,
+    "Stockholders Equity": 896942000.0
+   },
+   "2022-03-31": {
+    "Total Assets": 1572718000.0,
+    "Current Liabilities": 637921000.0,
+    "Total Debt": 437750000.0,
+    "Stockholders Equity": 833059000.0
+   }
+  }
+ }
+}

@@ -1,0 +1,21 @@
+{
+  "request": null,
+  "response": {
+    "person": "father",
+    "unseen_count": 1,
+    "items": [
+      {
+        "id": "chg_001",
+        "person": "father",
+        "symbol": "FIXA",
+        "kind": "call_changed",
+        "old_value": "hold",
+        "new_value": "buy",
+        "reason": "Profit growth beat the usual",
+        "reason_bn": null,
+        "at": "2026-11-25T09:15:00+05:30",
+        "seen_at": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+[
+  {"symbol": "VEDL", "isin": "INE205A01025", "exDate": "30-Apr-2026", "faceVal": "1", "subject": "Demerger", "recDate": "30-Apr-2026"},
+  {"symbol": "BASML", "isin": "", "exDate": "12-Mar-2026", "faceVal": "10", "subject": "Rights 1:4 @ Premium Rs 45/-", "recDate": "12-Mar-2026"},
+  {"symbol": "ITC", "isin": "INE154A01025", "exDate": "28-Nov-2026", "faceVal": "1", "subject": "Dividend - Rs 6.50 Per Share", "recDate": "29-Nov-2026"}
+]

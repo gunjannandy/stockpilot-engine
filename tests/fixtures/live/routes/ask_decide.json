@@ -1,0 +1,9 @@
+{
+  "request": {
+    "decision": "approve"
+  },
+  "response": {
+    "id": "ask_002",
+    "status": "being_built"
+  }
+}

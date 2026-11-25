@@ -1,0 +1,1081 @@
+{
+  "version": 1,
+  "about": "The one v2 live data contract (ticket T0, issue #26). tests/live_contract checks fixtures, migration and write budget against this file. Lanes build against it and tests/fixtures/live/.",
+  "shape_language": "A shape is an object {key: type}. A key ending '?' may be left out. A list is [itemShape]. Types: str int num bool json (any), date (2026-11-25), time (2026-11-25T09:15:00+05:30, IST), enum(a|b); a trailing '?' allows null. Extra keys are errors.",
+  "times": "All times are IST ISO text with +05:30. All dates are ISO. Fractions (chance_*) are 0.62 = 62%. Money is rupees unless the name ends _cr (crore).",
+  "tables": {
+    "calls": {
+      "writer": "vm",
+      "desc": "One row per stock we hold a view on: the call, the chances, the price bands and the model's full form.",
+      "columns": {
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "call": "enum(buy|hold|sell|wait)",
+        "route": "enum(code|news)",
+        "chance_3m": "num",
+        "chance_6m": "num",
+        "confidence": "enum(low|medium|high)",
+        "low_1m": "num",
+        "likely_1m": "num",
+        "high_1m": "num",
+        "low_3m": "num",
+        "likely_3m": "num",
+        "high_3m": "num",
+        "low_6m": "num",
+        "likely_6m": "num",
+        "high_6m": "num",
+        "model": "str",
+        "form": "json",
+        "as_of": "date",
+        "written_at": "time",
+        "out_of_date": "bool",
+        "news_buy": "bool"
+      },
+      "pk": [
+        "symbol",
+        "exchange"
+      ],
+      "indexes": [
+        [
+          "written_at"
+        ]
+      ]
+    },
+    "lists": {
+      "writer": "vm",
+      "desc": "Members of Worth following, In today's news, and the owner's own lists. One row per member.",
+      "columns": {
+        "list_name": "enum(worth_following|in_the_news|holdings|watchlist)",
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "rank": "int",
+        "reason": "str",
+        "reason_bn": "str?",
+        "since": "time"
+      },
+      "pk": [
+        "list_name",
+        "symbol",
+        "exchange"
+      ],
+      "indexes": []
+    },
+    "jobs": {
+      "writer": "pages+vm",
+      "desc": "Every request and scheduled task. Replaces the KV queue.",
+      "columns": {
+        "id": "str",
+        "kind": "str",
+        "payload": "json",
+        "asked_by": "enum(owner|father|system)",
+        "status": "enum(queued|running|done|failed)",
+        "result": "str?",
+        "error": "str?",
+        "error_bn": "str?",
+        "created_at": "time",
+        "started_at": "time?",
+        "finished_at": "time?"
+      },
+      "pk": [
+        "id"
+      ],
+      "indexes": [
+        [
+          "status",
+          "created_at"
+        ]
+      ]
+    },
+    "job_lines": {
+      "writer": "vm",
+      "desc": "Progress lines of a job, numbered 1, 2, 3 with no gaps.",
+      "columns": {
+        "job_id": "str",
+        "seq": "int",
+        "at": "time",
+        "state": "enum(info|ok|fail)",
+        "text": "str",
+        "text_bn": "str?"
+      },
+      "pk": [
+        "job_id",
+        "seq"
+      ],
+      "indexes": []
+    },
+    "changes": {
+      "writer": "vm",
+      "desc": "Change feed, one row per person per change. A row with seen_at null is a yellow mark.",
+      "columns": {
+        "id": "str",
+        "person": "enum(owner|father)",
+        "symbol": "str",
+        "kind": "enum(call_changed|chance_moved|list_entered|list_left|level_crossed|forecast_ready|ask_status)",
+        "old_value": "str?",
+        "new_value": "str?",
+        "reason": "str",
+        "reason_bn": "str?",
+        "at": "time",
+        "seen_at": "time?"
+      },
+      "pk": [
+        "id"
+      ],
+      "indexes": [
+        [
+          "person",
+          "seen_at"
+        ]
+      ]
+    },
+    "feedback": {
+      "writer": "pages+vm",
+      "desc": "A message the father or owner posted, stored at once.",
+      "columns": {
+        "id": "str",
+        "person": "enum(owner|father)",
+        "text": "str",
+        "status": "enum(received|reading|understood|failed)",
+        "created_at": "time"
+      },
+      "pk": [
+        "id"
+      ],
+      "indexes": []
+    },
+    "asks": {
+      "writer": "vm",
+      "desc": "One wish read out of a feedback message.",
+      "columns": {
+        "id": "str",
+        "feedback_id": "str",
+        "original": "str",
+        "line_en": "str",
+        "line_bn": "str",
+        "tag": "enum(chart|data|news|forecast|bug|wording)",
+        "size": "enum(small|medium|large)",
+        "plan": "str",
+        "route": "enum(auto|owner_approval)",
+        "status": "enum(received|understood|waiting_for_approval|being_built|done|declined)",
+        "not_meant": "bool",
+        "issue_number": "int?",
+        "updated_at": "time"
+      },
+      "pk": [
+        "id"
+      ],
+      "indexes": []
+    },
+    "news_items": {
+      "writer": "ingest",
+      "desc": "Public news: links only. Never article text, summary or image address.",
+      "columns": {
+        "id": "str",
+        "link": "str",
+        "title": "str",
+        "source": "str",
+        "published_at": "time",
+        "group_id": "str",
+        "source_count": "int",
+        "sector": "str?",
+        "market_wide": "bool",
+        "direction": "enum(good|bad|mixed|none)",
+        "impact": "int",
+        "line_en": "str?",
+        "line_bn": "str?",
+        "tagged_at": "time?"
+      },
+      "pk": [
+        "id"
+      ],
+      "indexes": [
+        [
+          "published_at"
+        ],
+        [
+          "group_id"
+        ]
+      ]
+    },
+    "news_tags": {
+      "writer": "ingest",
+      "desc": "Which stocks a news item touches, public tickers only; holdings are never matched here.",
+      "columns": {
+        "item_id": "str",
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "relation": "enum(self|rival|supplier|customer|sector)",
+        "direction": "enum(good|bad|mixed)",
+        "size": "enum(small|medium|large)",
+        "changes_call": "bool"
+      },
+      "pk": [
+        "item_id",
+        "symbol",
+        "exchange"
+      ],
+      "indexes": [
+        [
+          "symbol"
+        ]
+      ]
+    },
+    "news_rank": {
+      "writer": "vm",
+      "desc": "Private ranking of a news item for the owners, after matching to holdings and watchlist.",
+      "columns": {
+        "item_id": "str",
+        "closeness": "enum(holding|watchlist|sector|other)",
+        "score": "num",
+        "tier": "enum(high|medium|low)",
+        "ranked_at": "time"
+      },
+      "pk": [
+        "item_id"
+      ],
+      "indexes": []
+    },
+    "quotes": {
+      "writer": "ingest",
+      "desc": "Near-live price of each stock in the news, one row per stock, overwritten each refresh.",
+      "columns": {
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "price": "num",
+        "prev_close": "num",
+        "as_of": "time",
+        "source": "enum(yahoo|nse)"
+      },
+      "pk": [
+        "symbol",
+        "exchange"
+      ],
+      "indexes": []
+    },
+    "write_budget": {
+      "writer": "ingest",
+      "desc": "Counter of rows written today, kept by the ingest Worker.",
+      "columns": {
+        "day": "date",
+        "writes": "int",
+        "warn_at": "int",
+        "stop_at": "int",
+        "updated_at": "time"
+      },
+      "pk": [
+        "day"
+      ],
+      "indexes": []
+    }
+  },
+  "routes": [
+    {
+      "id": "jobs_create",
+      "method": "POST",
+      "path": "/api/v2/jobs",
+      "auth": "person",
+      "desc": "Press a button: create a job. The page then polls jobs_get.",
+      "request": {
+        "kind": "str",
+        "payload": "json"
+      },
+      "response": {
+        "id": "str",
+        "status": "enum(queued)"
+      }
+    },
+    {
+      "id": "jobs_get",
+      "method": "GET",
+      "path": "/api/v2/jobs/:id",
+      "auth": "person",
+      "desc": "One job with its progress lines. Poll every few seconds while it runs.",
+      "request": null,
+      "response": {
+        "job": {
+          "id": "str",
+          "kind": "str",
+          "payload": "json",
+          "asked_by": "enum(owner|father|system)",
+          "status": "enum(queued|running|done|failed)",
+          "result": "str?",
+          "error": "str?",
+          "error_bn": "str?",
+          "created_at": "time",
+          "started_at": "time?",
+          "finished_at": "time?"
+        },
+        "lines": [
+          {
+            "job_id": "str",
+            "seq": "int",
+            "at": "time",
+            "state": "enum(info|ok|fail)",
+            "text": "str",
+            "text_bn": "str?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "jobs_list",
+      "method": "GET",
+      "path": "/api/v2/jobs?status=&limit=",
+      "auth": "owner",
+      "desc": "The Jobs screen: queued, running, finished and failed.",
+      "request": null,
+      "response": {
+        "jobs": [
+          {
+            "id": "str",
+            "kind": "str",
+            "payload": "json",
+            "asked_by": "enum(owner|father|system)",
+            "status": "enum(queued|running|done|failed)",
+            "result": "str?",
+            "error": "str?",
+            "error_bn": "str?",
+            "created_at": "time",
+            "started_at": "time?",
+            "finished_at": "time?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "jobs_rerun",
+      "method": "POST",
+      "path": "/api/v2/jobs/:id/rerun",
+      "auth": "owner",
+      "desc": "Rerun a failed job as a new job.",
+      "request": null,
+      "response": {
+        "id": "str",
+        "status": "enum(queued)"
+      }
+    },
+    {
+      "id": "changes_list",
+      "method": "GET",
+      "path": "/api/v2/changes?since=",
+      "auth": "person",
+      "desc": "Yellow marks for the signed-in person. Older than 7 days leave the strip.",
+      "request": null,
+      "response": {
+        "person": "enum(owner|father)",
+        "unseen_count": "int",
+        "items": [
+          {
+            "id": "str",
+            "person": "enum(owner|father)",
+            "symbol": "str",
+            "kind": "enum(call_changed|chance_moved|list_entered|list_left|level_crossed|forecast_ready|ask_status)",
+            "old_value": "str?",
+            "new_value": "str?",
+            "reason": "str",
+            "reason_bn": "str?",
+            "at": "time",
+            "seen_at": "time?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "changes_seen",
+      "method": "POST",
+      "path": "/api/v2/changes/seen",
+      "auth": "person",
+      "desc": "Clear marks: one stock, named ids, or all.",
+      "request": {
+        "symbol?": "str",
+        "ids?": [
+          "str"
+        ],
+        "all?": "bool"
+      },
+      "response": {
+        "marked": "int"
+      }
+    },
+    {
+      "id": "call_get",
+      "method": "GET",
+      "path": "/api/v2/calls/:symbol",
+      "auth": "person",
+      "desc": "A stock's call and form, with its change history.",
+      "request": null,
+      "response": {
+        "call": {
+          "symbol": "str",
+          "exchange": "enum(NSE|BSE)",
+          "call": "enum(buy|hold|sell|wait)",
+          "route": "enum(code|news)",
+          "chance_3m": "num",
+          "chance_6m": "num",
+          "confidence": "enum(low|medium|high)",
+          "low_1m": "num",
+          "likely_1m": "num",
+          "high_1m": "num",
+          "low_3m": "num",
+          "likely_3m": "num",
+          "high_3m": "num",
+          "low_6m": "num",
+          "likely_6m": "num",
+          "high_6m": "num",
+          "model": "str",
+          "form": "json",
+          "as_of": "date",
+          "written_at": "time",
+          "out_of_date": "bool",
+          "news_buy": "bool"
+        },
+        "changes": [
+          {
+            "id": "str",
+            "person": "enum(owner|father)",
+            "symbol": "str",
+            "kind": "enum(call_changed|chance_moved|list_entered|list_left|level_crossed|forecast_ready|ask_status)",
+            "old_value": "str?",
+            "new_value": "str?",
+            "reason": "str",
+            "reason_bn": "str?",
+            "at": "time",
+            "seen_at": "time?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "lists_get",
+      "method": "GET",
+      "path": "/api/v2/lists/:name",
+      "auth": "person",
+      "desc": "A list with each member's call summary; call is null for No forecast yet.",
+      "request": null,
+      "response": {
+        "list_name": "str",
+        "items": [
+          {
+            "symbol": "str",
+            "exchange": "enum(NSE|BSE)",
+            "rank": "int",
+            "reason": "str",
+            "reason_bn": "str?",
+            "since": "time",
+            "call": "enum(buy|hold|sell|wait)?",
+            "chance_3m": "num?",
+            "out_of_date": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quotes_get",
+      "method": "GET",
+      "path": "/api/v2/quotes?symbols=",
+      "auth": "person",
+      "desc": "Near-live prices with their age; the page always shows the age.",
+      "request": null,
+      "response": {
+        "quotes": [
+          {
+            "symbol": "str",
+            "exchange": "enum(NSE|BSE)",
+            "price": "num",
+            "prev_close": "num",
+            "as_of": "time",
+            "source": "enum(yahoo|nse)",
+            "age_seconds": "int"
+          }
+        ]
+      }
+    },
+    {
+      "id": "news_list",
+      "method": "GET",
+      "path": "/api/v2/news?limit=",
+      "auth": "person",
+      "desc": "Ranked news with stock chips and the sector mood strip.",
+      "request": null,
+      "response": {
+        "items": [
+          {
+            "id": "str",
+            "link": "str",
+            "title": "str",
+            "source": "str",
+            "published_at": "time",
+            "group_id": "str",
+            "source_count": "int",
+            "sector": "str?",
+            "market_wide": "bool",
+            "direction": "enum(good|bad|mixed|none)",
+            "impact": "int",
+            "line_en": "str?",
+            "line_bn": "str?",
+            "tagged_at": "time?",
+            "tags": [
+              {
+                "item_id": "str",
+                "symbol": "str",
+                "exchange": "enum(NSE|BSE)",
+                "relation": "enum(self|rival|supplier|customer|sector)",
+                "direction": "enum(good|bad|mixed)",
+                "size": "enum(small|medium|large)",
+                "changes_call": "bool"
+              }
+            ],
+            "rank": {
+              "item_id": "str",
+              "closeness": "enum(holding|watchlist|sector|other)",
+              "score": "num",
+              "tier": "enum(high|medium|low)",
+              "ranked_at": "time"
+            }
+          }
+        ],
+        "sector_mood": [
+          {
+            "sector": "str",
+            "mood": "enum(good|bad|mixed)",
+            "items": "int"
+          }
+        ]
+      }
+    },
+    {
+      "id": "og_image",
+      "method": "GET",
+      "path": "/api/v2/og?url=",
+      "auth": "person",
+      "desc": "Thumbnail for a card, read from the article page when the card is shown, edge cached 7 days. Reads at most the first 100 KB of the page (probe T2).",
+      "request": null,
+      "response": {
+        "image": "str?",
+        "logo": "str?"
+      },
+      "read_limit_bytes": 102400
+    },
+    {
+      "id": "feedback_create",
+      "method": "POST",
+      "path": "/api/v2/feedback",
+      "auth": "person",
+      "desc": "Post feedback. It shows at once as Received.",
+      "request": {
+        "text": "str"
+      },
+      "response": {
+        "id": "str",
+        "status": "enum(received)"
+      }
+    },
+    {
+      "id": "feedback_list",
+      "method": "GET",
+      "path": "/api/v2/feedback",
+      "auth": "person",
+      "desc": "Own feedback with its asks and their statuses.",
+      "request": null,
+      "response": {
+        "items": [
+          {
+            "id": "str",
+            "person": "enum(owner|father)",
+            "text": "str",
+            "status": "enum(received|reading|understood|failed)",
+            "created_at": "time",
+            "asks": [
+              {
+                "id": "str",
+                "feedback_id": "str",
+                "original": "str",
+                "line_en": "str",
+                "line_bn": "str",
+                "tag": "enum(chart|data|news|forecast|bug|wording)",
+                "size": "enum(small|medium|large)",
+                "plan": "str",
+                "route": "enum(auto|owner_approval)",
+                "status": "enum(received|understood|waiting_for_approval|being_built|done|declined)",
+                "not_meant": "bool",
+                "issue_number": "int?",
+                "updated_at": "time"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ask_not_meant",
+      "method": "POST",
+      "path": "/api/v2/asks/:id/not-meant",
+      "auth": "person",
+      "desc": "Not what I meant: flag a wrong reading.",
+      "request": null,
+      "response": {
+        "id": "str",
+        "not_meant": "bool"
+      }
+    },
+    {
+      "id": "ask_decide",
+      "method": "POST",
+      "path": "/api/v2/asks/:id/decide",
+      "auth": "owner",
+      "desc": "Only the owner approves or declines asks that change a forecast, number, rule, money or tax.",
+      "request": {
+        "decision": "enum(approve|decline)"
+      },
+      "response": {
+        "id": "str",
+        "status": "enum(being_built|declined)"
+      }
+    },
+    {
+      "id": "budget_get",
+      "method": "GET",
+      "path": "/api/v2/budget",
+      "auth": "owner",
+      "desc": "Today's write count against its warn and stop lines, for the Jobs screen.",
+      "request": null,
+      "response": {
+        "day": "date",
+        "writes": "int",
+        "warn_at": "int",
+        "stop_at": "int",
+        "status": "enum(ok|warn|stopped)"
+      }
+    },
+    {
+      "id": "ingest_write",
+      "method": "POST",
+      "path": "/api/v2/ingest",
+      "auth": "ingest",
+      "desc": "Write-only door for public jobs. Accepts public tables only, with its own key. Refuses when stopped.",
+      "request": {
+        "table": "enum(news_items|news_tags|quotes)",
+        "rows": [
+          "json"
+        ]
+      },
+      "response": {
+        "written": "int",
+        "writes_today": "int",
+        "stopped": "bool"
+      }
+    }
+  ],
+  "job_kinds": {
+    "sync": {
+      "runs_on": "vm_private",
+      "payload": [],
+      "desc": "Kite sync: login, fetch holdings, process. Created by the Kite callback."
+    },
+    "analyse": {
+      "runs_on": "vm_model",
+      "payload": [
+        "symbol",
+        "exchange"
+      ],
+      "desc": "Analyse any stock: full form."
+    },
+    "refresh_call": {
+      "runs_on": "vm_model",
+      "payload": [
+        "symbol",
+        "exchange",
+        "reason"
+      ],
+      "desc": "Update forecast, or a news refresh capped at 2 Sonnet at once and about 6 a day."
+    },
+    "feedback_read": {
+      "runs_on": "vm_model",
+      "payload": [
+        "feedback_id"
+      ],
+      "desc": "Split a message into asks."
+    },
+    "news_tag": {
+      "runs_on": "vm_model",
+      "payload": [
+        "batch"
+      ],
+      "desc": "Tag about 30 new items; Gemini, then Haiku."
+    },
+    "news_rank": {
+      "runs_on": "vm_private",
+      "payload": [],
+      "desc": "Match tags to holdings and watchlist, spread by sector, rank."
+    },
+    "load_stock": {
+      "runs_on": "github_public",
+      "payload": [
+        "symbol",
+        "exchange"
+      ],
+      "desc": "Fetch history and facts for a stock we never loaded."
+    },
+    "news_collect": {
+      "runs_on": "github_public",
+      "payload": [],
+      "desc": "Every 15 minutes; whole market only."
+    },
+    "history_backfill": {
+      "runs_on": "github_public",
+      "payload": [
+        "from",
+        "to"
+      ],
+      "desc": "All-time daily history files."
+    },
+    "nightly": {
+      "runs_on": "github_public",
+      "payload": [],
+      "desc": "Screen and mechanical forecast on every stock."
+    },
+    "weekly_review": {
+      "runs_on": "vm_model",
+      "payload": [],
+      "desc": "Separate model reviews scored calls; proposals wait for Approve."
+    },
+    "backup": {
+      "runs_on": "vm_private",
+      "payload": [],
+      "desc": "Encrypted copy of the database into the private repo."
+    }
+  },
+  "progress_line": {
+    "shape": {
+      "job_id": "str",
+      "seq": "int",
+      "at": "time",
+      "state": "enum(info|ok|fail)",
+      "text": "str",
+      "text_bn": "str?"
+    },
+    "rules": [
+      "seq starts at 1 and rises by 1 with no gaps; a writer appends and never edits a line.",
+      "text is one plain English sentence fragment such as 'Logged in' or 'Fetching holdings'; text_bn is the same in Kolkata Bengali or null.",
+      "state info = step started, ok = step finished, fail = step failed. The last line of a failed job has state fail and the job's error repeats it.",
+      "The final line of a done job has state ok and the same words as the job's result, e.g. 'Done, 3 changes'."
+    ]
+  },
+  "files": {
+    "search_index": {
+      "path": "search/index.json",
+      "published_by": "github_public",
+      "desc": "Every NSE, NSE SME, BSE and BSE SME stock, loaded once for Fuse.js.",
+      "shape": {
+        "built_at": "time",
+        "entries": [
+          {
+            "symbol": "str",
+            "exchange": "enum(NSE|BSE)",
+            "segment": "enum(NSE|NSE_SME|BSE|BSE_SME)",
+            "name": "str",
+            "isin": "str",
+            "aliases": [
+              "str"
+            ]
+          }
+        ]
+      },
+      "served_by": "pages"
+    },
+    "stock_facts": {
+      "path": "stock/{SYMBOL}.json",
+      "published_by": "github_public",
+      "desc": "Per-stock facts each screen shows; every figure has one plain sentence.",
+      "shape": {
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "name": "str",
+        "sector": "str",
+        "as_of": "date",
+        "today": {
+          "last": "num",
+          "day_change_pct": "num",
+          "high_52w": "num",
+          "low_52w": "num",
+          "volume_vs_usual": "num",
+          "delivery_pct": "num?"
+        },
+        "valuation": {
+          "pe": "num?",
+          "pe_sector": "num?",
+          "pe_own_5y_median": "num?",
+          "pb": "num?",
+          "dividend_yield_pct": "num?",
+          "market_cap_cr": "num"
+        },
+        "quality": {
+          "sales_growth_yoy_pct": "num?",
+          "profit_growth_yoy_pct": "num?",
+          "roe_pct": "num?",
+          "roce_pct": "num?",
+          "debt_to_equity": "num?",
+          "promoter_pct": "num?",
+          "pledge_pct": "num?"
+        },
+        "sentences": [
+          {
+            "key": "str",
+            "en": "str",
+            "bn": "str"
+          }
+        ],
+        "events": [
+          {
+            "date": "date",
+            "kind": "enum(results|dividend|split|bulk_deal|block_deal|asm|gsm)",
+            "text": "str",
+            "text_bn": "str?"
+          }
+        ],
+        "not_available": [
+          "str"
+        ]
+      },
+      "served_by": "pages"
+    },
+    "chart_history": {
+      "path": "chart/{SYMBOL}.json",
+      "published_by": "github_public",
+      "desc": "All-time daily candles back to listing, split-adjusted; columns share one length.",
+      "shape": {
+        "symbol": "str",
+        "exchange": "enum(NSE|BSE)",
+        "listed_on": "date",
+        "as_of": "date",
+        "adjusted": "bool",
+        "dates": [
+          "date"
+        ],
+        "open": [
+          "num"
+        ],
+        "high": [
+          "num"
+        ],
+        "low": [
+          "num"
+        ],
+        "close": [
+          "num"
+        ],
+        "volume": [
+          "int"
+        ],
+        "dma50": [
+          "num?"
+        ],
+        "dma200": [
+          "num?"
+        ]
+      },
+      "served_by": "pages"
+    },
+    "mechanical_results": {
+      "path": "mechanical/{YYYY-MM-DD}.json",
+      "published_by": "github_public",
+      "desc": "Nightly mechanical forecast for every stock, before any model call.",
+      "shape": {
+        "as_of": "date",
+        "model_version": "str",
+        "universe_count": "int",
+        "observed_coverage": "num",
+        "results": [
+          {
+            "symbol": "str",
+            "exchange": "enum(NSE|BSE)",
+            "chance_3m": "num",
+            "chance_6m": "num",
+            "low_3m": "num",
+            "likely_3m": "num",
+            "high_3m": "num",
+            "low_6m": "num",
+            "likely_6m": "num",
+            "high_6m": "num",
+            "signals": {
+              "momentum": "num?",
+              "near_52w_high": "num?",
+              "low_volatility": "num?",
+              "quality": "num?",
+              "sector_value": "num?",
+              "market_regime": "num?",
+              "size": "num?",
+              "liquidity": "num?",
+              "earnings_growth": "num?",
+              "trend": "num?",
+              "delivery_info": "num?",
+              "reversal_1m_info": "num?"
+            }
+          }
+        ]
+      },
+      "served_by": "pages"
+    },
+    "fund_index": {
+      "path": "funds/index.json",
+      "published_by": "github_public",
+      "desc": "Every mutual fund (about 1,500, grouped from about 16,500 AMFI schemes), loaded once for Fuse.js; counts report coverage.",
+      "shape": {
+        "built_at": "time",
+        "entries": [
+          {
+            "id": "str",
+            "name": "str",
+            "amc": "str?",
+            "category": "str?",
+            "group": "str?",
+            "variants": "int",
+            "primary_code": "int",
+            "isin": "str?",
+            "ter_direct": "num?",
+            "ter_regular": "num?",
+            "aum_cr": "num?",
+            "aliases": [
+              "str"
+            ]
+          }
+        ],
+        "counts": {
+          "funds": "int",
+          "schemes": "int",
+          "schemes_mapped": "int",
+          "ter_pct": "num",
+          "aum_pct": "num",
+          "nav_history": {
+            "funds_with_history": "int",
+            "pct": "num",
+            "rows": "int"
+          }
+        }
+      },
+      "served_by": "pages"
+    },
+    "fund_facts": {
+      "path": "funds/{id}.json",
+      "published_by": "github_public",
+      "desc": "One fund: its plan and option variants with latest NAV, TER, AUM and the primary scheme's NAV history since 2006; columns share one length.",
+      "shape": {
+        "id": "str",
+        "name": "str",
+        "amc": "str?",
+        "category": "str?",
+        "as_of": "date?",
+        "variants": [
+          {
+            "code": "int",
+            "isin": "str?",
+            "plan": "enum(Direct|Regular)",
+            "option": "enum(Growth|IDCW|Bonus)",
+            "label": "str",
+            "nav": "num?",
+            "nav_date": "date?"
+          }
+        ],
+        "costs": {
+          "ter_regular": "num?",
+          "ter_direct": "num?",
+          "aum_cr": "num?"
+        },
+        "nav": {
+          "code": "int",
+          "dates": [
+            "date"
+          ],
+          "nav": [
+            "num"
+          ]
+        },
+        "not_available": [
+          "str"
+        ]
+      },
+      "served_by": "pages"
+    }
+  },
+  "write_budget": {
+    "daily_limit": 100000,
+    "warn_at": 60000,
+    "stop_at": 85000,
+    "estimated_total": 17790,
+    "rarely_written": [],
+    "note": "D1 counts every index entry as a row written, so a row costs 1 + its indexes. warn_at and stop_at are the ingest Worker's lines; stop_at leaves room for the owner's own writes.",
+    "items": [
+      {
+        "table": "calls",
+        "rows": 40,
+        "basis": "30 model forecasts plus changed mechanical calls"
+      },
+      {
+        "table": "lists",
+        "rows": 300,
+        "basis": "only changed members are written"
+      },
+      {
+        "table": "jobs",
+        "rows": 750,
+        "basis": "250 jobs: one insert and two status updates each"
+      },
+      {
+        "table": "job_lines",
+        "rows": 2000,
+        "basis": "about 8 progress lines a job"
+      },
+      {
+        "table": "changes",
+        "rows": 320,
+        "basis": "about 60 changes for two people plus seen marks"
+      },
+      {
+        "table": "feedback",
+        "rows": 10,
+        "basis": "a day's feedback"
+      },
+      {
+        "table": "asks",
+        "rows": 60,
+        "basis": "30 asks and their status updates"
+      },
+      {
+        "table": "news_items",
+        "rows": 1400,
+        "basis": "700 new items, each written again when tagged"
+      },
+      {
+        "table": "news_tags",
+        "rows": 2100,
+        "basis": "about 3 stocks per item"
+      },
+      {
+        "table": "news_rank",
+        "rows": 1400,
+        "basis": "700 items, ranked and re-ranked"
+      },
+      {
+        "table": "quotes",
+        "rows": 3000,
+        "basis": "40 news stocks, every 5 minutes for 75 market-hour slots, one overwrite each"
+      },
+      {
+        "table": "write_budget",
+        "rows": 400,
+        "basis": "counter bump per ingest batch"
+      }
+    ]
+  },
+  "probes": {
+    "source": "docs/research/probes-v2.md (ticket T2)",
+    "release_assets_to_browser": "never",
+    "release_assets_note": "GitHub release assets send no Access-Control-Allow-Origin, so static files reach the browser through Pages. Releases are for DuckDB and the nightly job only.",
+    "d1_night_rows_simulated": 9540,
+    "d1_night_note": "Local D1 simulation counted indexes; keep indexes few.",
+    "quote_path": {
+      "primary": "worker_timer",
+      "fallback": "github_public_poll"
+    }
+  }
+}

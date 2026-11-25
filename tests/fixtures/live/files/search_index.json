@@ -1,0 +1,26 @@
+{
+  "built_at": "2026-11-25T09:15:00+05:30",
+  "entries": [
+    {
+      "symbol": "FIXA",
+      "exchange": "NSE",
+      "segment": "NSE",
+      "name": "Fixture Alpha Ltd",
+      "isin": "INE000FIX001",
+      "aliases": [
+        "fixture alpha"
+      ]
+    },
+    {
+      "symbol": "FIXD",
+      "exchange": "BSE",
+      "segment": "BSE_SME",
+      "name": "Fixture Delta Industries",
+      "isin": "INE000FIX004",
+      "aliases": [
+        "fixture delta",
+        "fixd"
+      ]
+    }
+  ]
+}

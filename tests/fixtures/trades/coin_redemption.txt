@@ -1,0 +1,19 @@
+ 
+<https://coin.zerodha.com> 
+Hi Investor (ZZ0000), 
+Your mutual fund redemption has been processed successfully. 
+The amount will be credited to your primary bank account as per the 
+settlement cycle of the funds. 
+The redemption details are as below: 
+Fund Settl. type* Units Nav Amount Exit Load STT 
+B'Parag Parikh Flexi Cap Fund - Direct Plan Growth' T2 1.0 88.798 Rs. 88.8 Rs. 
+Rs. 0.0 
+
+
+
+   - *T refers to the day the order was processed. For example, if the 
+   settlement cycle of a scheme is T3, and you place a redemption order on a 
+   Monday, then you will receive the credit by Thursday. 
+   - There will be no credits on Saturday and Sunday. 
+
+© Zerodha 

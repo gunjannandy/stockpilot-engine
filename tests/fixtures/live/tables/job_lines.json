@@ -1,0 +1,42 @@
+[
+  {
+    "job_id": "job_001",
+    "seq": 1,
+    "at": "2026-11-25T09:15:00+05:30",
+    "state": "info",
+    "text": "Logging in to Kite",
+    "text_bn": "Kite-এ ঢুকছি"
+  },
+  {
+    "job_id": "job_001",
+    "seq": 2,
+    "at": "2026-11-25T09:15:00+05:30",
+    "state": "ok",
+    "text": "Logged in",
+    "text_bn": null
+  },
+  {
+    "job_id": "job_001",
+    "seq": 3,
+    "at": "2026-11-25T09:16:10+05:30",
+    "state": "ok",
+    "text": "Done, 3 changes",
+    "text_bn": null
+  },
+  {
+    "job_id": "job_002",
+    "seq": 1,
+    "at": "2026-11-25T09:15:00+05:30",
+    "state": "info",
+    "text": "Reading the numbers",
+    "text_bn": null
+  },
+  {
+    "job_id": "job_003",
+    "seq": 1,
+    "at": "2026-11-25T09:15:00+05:30",
+    "state": "fail",
+    "text": "No model is available",
+    "text_bn": null
+  }
+]

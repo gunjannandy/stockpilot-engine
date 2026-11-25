@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "restatement", "category", "size", "plan"],
+        "properties": {
+          "id": {"type": "integer"},
+          "restatement": {"type": "string"},
+          "category": {"type": "string", "enum": ["data wanted", "screen change", "wording", "new feature", "bug", "rule or money change"]},
+          "size": {"type": "string", "enum": ["small", "large"]},
+          "plan": {"type": "string"},
+          "house_rule": {"type": ["string", "null"],
+                         "description": "When the feedback asks the analyst to write or judge differently (wording, what to stress, what to ignore), one short imperative sentence for the analyst's house rules; null otherwise. Never about money, thresholds, tax or orders."}
+        }
+      }
+    }
+  }
+}

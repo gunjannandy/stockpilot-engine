@@ -1,0 +1,57 @@
+{
+  "request": null,
+  "response": {
+    "items": [
+      {
+        "id": "n1",
+        "link": "https://example.invalid/news/1",
+        "title": "FIXB posts a strong quarter",
+        "source": "Example Wire",
+        "published_at": "2026-11-25T09:15:00+05:30",
+        "group_id": "g1",
+        "source_count": 3,
+        "sector": "Fixture sector",
+        "market_wide": false,
+        "direction": "good",
+        "impact": 4,
+        "line_en": "Profit rose more than expected",
+        "line_bn": null,
+        "tagged_at": "2026-11-25T09:16:10+05:30",
+        "tags": [
+          {
+            "item_id": "n1",
+            "symbol": "FIXB",
+            "exchange": "NSE",
+            "relation": "self",
+            "direction": "good",
+            "size": "medium",
+            "changes_call": true
+          },
+          {
+            "item_id": "n1",
+            "symbol": "FIXA",
+            "exchange": "NSE",
+            "relation": "rival",
+            "direction": "bad",
+            "size": "small",
+            "changes_call": false
+          }
+        ],
+        "rank": {
+          "item_id": "n1",
+          "closeness": "holding",
+          "score": 8.4,
+          "tier": "high",
+          "ranked_at": "2026-11-25T09:16:10+05:30"
+        }
+      }
+    ],
+    "sector_mood": [
+      {
+        "sector": "Fixture sector",
+        "mood": "good",
+        "items": 1
+      }
+    ]
+  }
+}

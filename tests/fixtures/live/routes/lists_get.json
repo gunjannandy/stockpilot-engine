@@ -1,0 +1,30 @@
+{
+  "request": null,
+  "response": {
+    "list_name": "worth_following",
+    "items": [
+      {
+        "symbol": "FIXA",
+        "exchange": "NSE",
+        "rank": 1,
+        "reason": "Strong growth and a fair price",
+        "reason_bn": "ভালো বৃদ্ধি, দাম ন্যায্য",
+        "since": "2026-11-25T09:15:00+05:30",
+        "call": "buy",
+        "chance_3m": 0.62,
+        "out_of_date": false
+      },
+      {
+        "symbol": "FIXD",
+        "exchange": "BSE",
+        "rank": 2,
+        "reason": "No forecast yet",
+        "reason_bn": null,
+        "since": "2026-11-25T09:15:00+05:30",
+        "call": null,
+        "chance_3m": null,
+        "out_of_date": false
+      }
+    ]
+  }
+}

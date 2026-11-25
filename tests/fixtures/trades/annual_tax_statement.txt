@@ -1,0 +1,26 @@
+Data updated till 15-Jul-2025
+
+Annual Tax Statement
+
+Permanent Account Number (PAN) BBBBB1111B Current Status of PAN Active and Operative Financial Year 2024-25 Assessment Year 2025-26
+Name of Assessee SOMEONE ELSE
+(All amount values are in INR)
+PART-I - Details of Tax Deducted at Source
+Sr. No. Name of Deductor TAN of Deductor Total Amount Paid/
+Credited
+Total Tax Deducted# Total TDS
+Deposited
+1 EXAMPLE CORP LIMITED ABCD02396C 2000.00 0.00 0.00
+Sr. No. Section1 Transaction Date Status of Booking* Date of Booking Remarks** Amount Paid /
+Credited Tax Deducted ## TDS Deposited
+1 194 25-Oct-2024 F 03-Feb-2025 - 500.00 0.00 0.00
+Sr. No. Name of Deductor TAN of Deductor Total Amount Paid/
+Credited
+Total Tax Deducted# Total TDS
+Deposited
+3 EXAMPLE BANK LIMITED EFGH15631A 90092.00 9010.20 9010.20
+Sr. No. Section1 Transaction Date Status of Booking* Date of Booking Remarks** Amount Paid /
+Credited Tax Deducted ## TDS Deposited
+1 194A 31-Mar-2025 F 05-Jun-2025 - 1031.00 103.00 103.00
+4 SAMPLE TRADERS LIMITED IJKL01639B 7000.00 700.00 700.00
+PART-II-Details of Tax Deducted at Source for 15G / 15H

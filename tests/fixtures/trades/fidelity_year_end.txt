@@ -1,0 +1,57 @@
+2025 YEAR-END INVESTMENT REPORT
+January 1, 2025 - December 31, 2025
+Envelope # XXXXXXXXXXXXX
+1 of 8
+TEST PERSON
+ Participant Number: I00000000
+OWNER NAME - STOCK PLAN ACCOUNTStock Plans
+Restricted Stock Units - NOW RESTRICTED UNIT
+Grant Transaction Details a
+Transaction
+Date Grant Date Grant ID
+Grant 4
+Type Transaction Type Quantity
+Fair Market
+Value Per Share
+Net Share
+Proceeds
+6
+02/07/2025 02/15/2024 21RUIN4.4 RSU Vesting  3.00 $800.50 0.00
+02/07/2025 02/15/2024 21RUIN4.4 RSU Distribution  3.00 800.50 3.00
+02/14/2025 03/15/2023 22RUIN13 RSU Distribution  7.00 790.25 5.00
+02/14/2025 03/15/2023 22RUIN13 RSU Vesting  7.00 790.25 0.00
+02/24/2025 02/18/2025 25RUST RSU Grant  10.00 0.00 0.00
+YR_CE _BSRXLHBBBSNXG_BBBBB 20260116
+S
+6 of 8
+2025 YEAR-END INVESTMENT REPORT
+January 1, 2025 - December 31, 2025
+Grant Transaction Details a (continued)
+Transaction
+Date Grant Date Grant ID
+Grant 4
+Type Transaction Type Quantity
+Fair Market
+Value Per Share
+Net Share
+Proceeds
+6
+05/16/2025 03/15/2023 22RUIN13 RSU Distribution  8.00 832.15 8.00
+05/16/2025 03/15/2023 22RUIN13 RSU Vesting  8.00 832.15 0.00
+11/17/2025 03/15/2023 22RUIN13 RSU Vesting  7.00 668.60 0.00
+11/17/2025 03/15/2023 22RUIN13 RSU Distribution  7.00 668.60 7.00
+12/18/2025 02/15/2024 21RUIN4.4 RSU Grant Reprice
+SERVICENOW
+5-FOR-1 S
+TOCK SPLIT 16
+0.00 0.00 0.00 16
+12/18/2025 02/15/2024 21RUIN4.4 RSU Grant
+SERVICENOW
+5-FOR-1 S
+TOCK SPLIT 16
+52.00 0.00 0.00 16
+12/18/2025 02/15/2024 21RUIN4.4 RSU Distribution
+SERVICENOW
+5-FOR-1 S
+TOCK SPLIT 16
+12.00 0.00 0.00 16

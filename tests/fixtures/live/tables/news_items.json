@@ -1,0 +1,34 @@
+[
+  {
+    "id": "n1",
+    "link": "https://example.invalid/news/1",
+    "title": "FIXB posts a strong quarter",
+    "source": "Example Wire",
+    "published_at": "2026-11-25T09:15:00+05:30",
+    "group_id": "g1",
+    "source_count": 3,
+    "sector": "Fixture sector",
+    "market_wide": false,
+    "direction": "good",
+    "impact": 4,
+    "line_en": "Profit rose more than expected",
+    "line_bn": null,
+    "tagged_at": "2026-11-25T09:16:10+05:30"
+  },
+  {
+    "id": "n2",
+    "link": "https://example.invalid/news/2",
+    "title": "Central bank holds rates",
+    "source": "Example Times",
+    "published_at": "2026-11-25T09:15:00+05:30",
+    "group_id": "g2",
+    "source_count": 1,
+    "sector": null,
+    "market_wide": true,
+    "direction": "mixed",
+    "impact": 3,
+    "line_en": null,
+    "line_bn": null,
+    "tagged_at": null
+  }
+]

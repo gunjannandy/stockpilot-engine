@@ -1,0 +1,15 @@
+ANONYMISED excerpt of a real Form 16 (employee identity removed; amounts x0.5 of the real ones). The pdf text
+comes out with Part B scrambled like this: the label of line (b), "Value of perquisites under section 17(2)", is
+printed apart from its number.
+Financial Year : 2025 - 2026
+Assessment Year : 2026 - 2027
+Certificate Number: AAAAAAA TAN of Employer: AAAA00000A PAN of Employee: AAAAA0000A Assessment Year: 2026-27
+Annexure  -  I
+Rs. Rs.1. Gross Salary
+Salary as per provisions contained in section 17(1)(a) 1450958.00
+(b) 1171347.00
+(c) Profits in lieu of salary under section 17(3) (as per Form No. 12BA, wherever applicable) 0.00
+(d) Total 2622305.00
+Details of Salary Paid and any other income and tax deducted
+Value of perquisites under section 17(2) (as per Form No. 12BA,
+wherever applicable)

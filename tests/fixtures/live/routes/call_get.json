@@ -1,0 +1,102 @@
+{
+  "request": null,
+  "response": {
+    "call": {
+      "symbol": "FIXA",
+      "exchange": "NSE",
+      "call": "buy",
+      "route": "code",
+      "chance_3m": 0.62,
+      "chance_6m": 0.66,
+      "confidence": "medium",
+      "low_1m": 98.0,
+      "likely_1m": 103.0,
+      "high_1m": 108.0,
+      "low_3m": 95.0,
+      "likely_3m": 108.0,
+      "high_3m": 121.0,
+      "low_6m": 92.0,
+      "likely_6m": 114.0,
+      "high_6m": 135.0,
+      "model": "sonnet",
+      "form": {
+        "call": {
+          "call": "buy",
+          "chance_3m": 0.62,
+          "chance_6m": 0.66,
+          "confidence": "medium"
+        },
+        "bands": {
+          "1m": [
+            98,
+            103,
+            108
+          ],
+          "3m": [
+            95,
+            108,
+            121
+          ],
+          "6m": [
+            92,
+            114,
+            135
+          ]
+        },
+        "history": "Steady grower; fell less than the market in past falls.",
+        "market_weight": "Mid-sized, held by many funds, easy to trade.",
+        "news": [
+          {
+            "item_id": "n1",
+            "effect": "helps",
+            "size": "small"
+          }
+        ],
+        "reasons_for": [
+          {
+            "text": "Profit is growing",
+            "weight": 3,
+            "evidence": "stock_facts.quality"
+          }
+        ],
+        "reasons_against": [
+          {
+            "text": "Price is above its 200-day line",
+            "weight": 1,
+            "evidence": "chart_history"
+          }
+        ],
+        "what_would_change": [
+          {
+            "level": 95,
+            "text": "A close below 95 breaks the view"
+          }
+        ],
+        "risks": [
+          "Weak monsoon"
+        ],
+        "bengali": {
+          "summary": "ভালো কোম্পানি, এখন কেনা যায়"
+        }
+      },
+      "as_of": "2026-11-24",
+      "written_at": "2026-11-25T09:15:00+05:30",
+      "out_of_date": false,
+      "news_buy": false
+    },
+    "changes": [
+      {
+        "id": "chg_001",
+        "person": "father",
+        "symbol": "FIXA",
+        "kind": "call_changed",
+        "old_value": "hold",
+        "new_value": "buy",
+        "reason": "Profit growth beat the usual",
+        "reason_bn": null,
+        "at": "2026-11-25T09:15:00+05:30",
+        "seen_at": null
+      }
+    ]
+  }
+}

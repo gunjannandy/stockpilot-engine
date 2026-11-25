@@ -1,0 +1,10 @@
+{
+  "request": null,
+  "response": {
+    "day": "2026-11-25",
+    "writes": 18000,
+    "warn_at": 60000,
+    "stop_at": 85000,
+    "status": "ok"
+  }
+}

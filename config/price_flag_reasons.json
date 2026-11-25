@@ -1,0 +1,13 @@
+{
+  "ALLCARGO:2025-11-12": "Demerger (NSE corporate-action feed, ex-date 12-Nov-2025): a business moved into a new company, so the old share price fell. Real, not a data error. No ratio in the feed, so it cannot be adjusted.",
+  "DCMSRIND:2025-12-26": "Demerger (NSE feed, ex-date 26-Dec-2025): a business moved into a new company, so the share price fell. Real, not a data error. No ratio in the feed, so it cannot be adjusted.",
+  "DHARIWAL:2026-02-27": "Rights issue 1:1 at Re 0.50 premium on a Rs 2 share (NSE SME feed, ex-date 27-Feb-2026): the price fell to about the mix of old and new shares. Real. The Feb-06 split is already adjusted.",
+  "MAHAPEXLTD:2026-03-20": "Rights issue 1:1 at no premium on a Rs 10 share (NSE feed, ex-date 20-Mar-2026): the price fell with the new shares. Real. Rights are not adjusted by the code.",
+  "VEDL:2026-04-30": "Demerger (NSE feed, ex-date 30-Apr-2026): a business moved into a new company, so the share price fell. Real. No ratio in the feed, so it cannot be adjusted.",
+  "SETCO:2026-06-02": "Interim dividend of Rs 13 on a Rs 28.6 share (NSE feed, ex-date 02-Jun-2026): the price fell by the dividend. Real, not a data error. Dividends are not adjusted.",
+  "TRIVENI:2026-07-22": "Demerger (NSE feed, ex-date 22-Jul-2026): a business moved into a new company, so the share price fell. Real. No ratio in the feed, so it cannot be adjusted.",
+  "INDIAGLYCO:2026-09-02": "Demerger (NSE feed, ex-date 02-Sep-2026): a business moved into a new company, so the share price fell. Real. No ratio in the feed, so it cannot be adjusted.",
+  "HEG:2026-09-07": "Demerger (NSE feed lists it under the new name HEGAM, same ISIN INE545A01024, ex-date 07-Sep-2026). The stock was renamed: HEG prices end 21-Sep, HEGAM starts 22-Sep, so the history is split across two symbols. Real.",
+  "VERANDA:2026-10-06": "Demerger (NSE feed, ex-date 06-Oct-2026): a business moved into a new company, so the share price fell. Real. No ratio in the feed, so it cannot be adjusted.",
+  "BHAGYANGR:2026-10-08": "Demerger (NSE feed, ex-date 08-Oct-2026): a business moved into a new company, so the share price fell. Real. No ratio in the feed, so it cannot be adjusted."
+}

@@ -1,0 +1,162 @@
+{
+ "as_on_date": "20-Nov-2026",
+ "BULK_DEALS_DATA": [
+  {
+   "buySell": "BUY",
+   "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+   "date": "20-Nov-2026",
+   "name": "BLS Polymers Limited",
+   "qty": "414422",
+   "remarks": "-",
+   "symbol": "BLSPOLY",
+   "watp": "273.3"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "QE SECURITIES LLP",
+   "date": "20-Nov-2026",
+   "name": "BLS Polymers Limited",
+   "qty": "1071662",
+   "remarks": "-",
+   "symbol": "BLSPOLY",
+   "watp": "272.55"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "JUMP TRADING FINANCIAL INDIA PRIVATE LIMITED",
+   "date": "20-Nov-2026",
+   "name": "BLS Polymers Limited",
+   "qty": "612007",
+   "remarks": "-",
+   "symbol": "BLSPOLY",
+   "watp": "272.23"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
+   "date": "20-Nov-2026",
+   "name": "BLS Polymers Limited",
+   "qty": "1053743",
+   "remarks": "-",
+   "symbol": "BLSPOLY",
+   "watp": "273.58"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "HRTI PRIVATE LIMITED",
+   "date": "20-Nov-2026",
+   "name": "BLS Polymers Limited",
+   "qty": "620351",
+   "remarks": "-",
+   "symbol": "BLSPOLY",
+   "watp": "270.82"
+  }
+ ],
+ "BULK_DEALS": "108",
+ "SHORT_DEALS": "84",
+ "BLOCK_DEALS": "5",
+ "SHORT_DEALS_DATA": [
+  {
+   "buySell": null,
+   "clientName": null,
+   "date": "19-Nov-2026",
+   "name": "360 ONE WAM LIMITED",
+   "qty": "7",
+   "remarks": null,
+   "symbol": "360ONE",
+   "watp": null
+  },
+  {
+   "buySell": null,
+   "clientName": null,
+   "date": "19-Nov-2026",
+   "name": "63 MOONS TECHNOLOGIES LTD",
+   "qty": "10",
+   "remarks": null,
+   "symbol": "63MOONS",
+   "watp": null
+  },
+  {
+   "buySell": null,
+   "clientName": null,
+   "date": "19-Nov-2026",
+   "name": "ADITYA BIRLA CAPITAL LIMITED",
+   "qty": "200",
+   "remarks": null,
+   "symbol": "ABCAPITAL",
+   "watp": null
+  },
+  {
+   "buySell": null,
+   "clientName": null,
+   "date": "19-Nov-2026",
+   "name": "ADANI ENERGY SOLUTION LTD",
+   "qty": "2",
+   "remarks": null,
+   "symbol": "ADANIENSOL",
+   "watp": null
+  },
+  {
+   "buySell": null,
+   "clientName": null,
+   "date": "19-Nov-2026",
+   "name": "ADANI GREEN ENERGY LTD",
+   "qty": "6000",
+   "remarks": null,
+   "symbol": "ADANIGREEN",
+   "watp": null
+  }
+ ],
+ "BLOCK_DEALS_DATA": [
+  {
+   "buySell": "BUY",
+   "clientName": "SHREE SURABHI FLOUR MILLS PRIVATE LIMITED",
+   "date": "20-Nov-2026",
+   "name": "Gallantt Ispat Limited",
+   "qty": "550000",
+   "remarks": null,
+   "symbol": "GALLANTT",
+   "watp": "523"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "SURYALAXMI INFRACON PRIVATE LIMITED",
+   "date": "20-Nov-2026",
+   "name": "Gallantt Ispat Limited",
+   "qty": "1060292",
+   "remarks": null,
+   "symbol": "GALLANTT",
+   "watp": "524.41"
+  },
+  {
+   "buySell": "BUY",
+   "clientName": "RAJESH BHASKARAN NAIR",
+   "date": "20-Nov-2026",
+   "name": "Indegene Limited",
+   "qty": "380750",
+   "remarks": null,
+   "symbol": "INDGN",
+   "watp": "657"
+  },
+  {
+   "buySell": "SELL",
+   "clientName": "DINESH R AGARWAL",
+   "date": "20-Nov-2026",
+   "name": "Gallantt Ispat Limited",
+   "qty": "1610292",
+   "remarks": null,
+   "symbol": "GALLANTT",
+   "watp": "523.93"
+  },
+  {
+   "buySell": "SELL",
+   "clientName": "AARABHI PARTNERS CONSULTANTS LLP",
+   "date": "20-Nov-2026",
+   "name": "Indegene Limited",
+   "qty": "380750",
+   "remarks": null,
+   "symbol": "INDGN",
+   "watp": "657"
+  }
+ ]
+}
