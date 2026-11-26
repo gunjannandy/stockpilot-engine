@@ -62,6 +62,11 @@ for (const [width, theme, height] of RUNS) {
     window.__cls = 0; window.__sh = [];
     new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__sh.push(e.value.toFixed(4) + " " + (e.sources || []).map(s => s.node && (s.node.className || s.node.nodeName)).join(",")); } }).observe({ type: "layout-shift", buffered: true });
   });
+  if (!remote) {
+    // The page asks for its fonts with display=optional: a font that is late on the first paint is dropped for that visit, and a runner's
+    // fallback font is wider, so the 1366x768 fit check flaked. Here the test waits for the real font (block) so every run measures it.
+    await ctx.route(/fonts\.googleapis\.com\/css2/, async r => { const res = await r.fetch(); await r.fulfill({ response: res, body: (await res.text()).replace(/display:\s*optional/g, "display:block") }); });
+  }
   const p = await ctx.newPage();
   p.on("pageerror", e => problems.push(`${tag} pageerror ${e.message}`));
   p.on("console", m => { if (m.type() === "error" && !/404|Failed to load resource/.test(m.text())) problems.push(`${tag} console ${m.text()}`); });

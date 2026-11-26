@@ -30,6 +30,7 @@ jobs:
           done
           ls out/history | head -50
       - name: Fit, test and write the files
+        shell: bash
         run: uv run python -m stockpilot.mechanical.run --history out/history --out out/site | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Check the run is not empty
         run: |

@@ -17,3 +17,22 @@ def _ship_does_not_run_the_real_verify(monkeypatch, request):
         return
     from stockpilot.jobs import ship
     monkeypatch.setattr(ship, "run_verify", lambda m, day, *, write=True: {"hard_failed": 0, "summary": "stubbed"})
+
+
+# Tests that read the private tree (ops/, docs/, .github/), which the public code copy does not carry (publish.py allow list).
+# In the private repo they all run; in the public copy they skip with this message instead of failing.
+_NEEDS_PRIVATE_TREE = (
+    "tests/test_ops.py", "tests/test_wrangler_path.py", "tests/test_heartbeat.py", "tests/test_publish.py::test_public_workflows_exist",
+    "tests/test_publish.py::test_keep_alive_is_scheduled", "tests/jobs/test_vmjobs.py::test_the_timer_unit_is_a_oneshot",
+    "tests/sources/test_history.py::test_public_workflows_parse", "tests/verify/test_model_checks.py::test_the_real_baseline_table",
+)
+
+
+def pytest_collection_modifyitems(config, items):
+    root = config.rootpath
+    if (root / "ops").is_dir() and (root / "docs").is_dir():
+        return
+    skip = pytest.mark.skip(reason="needs ops/ and docs/, which are not in the public code copy")
+    for item in items:
+        if item.nodeid.startswith(_NEEDS_PRIVATE_TREE):
+            item.add_marker(skip)

@@ -22,6 +22,7 @@ jobs:
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
       - run: uv sync --frozen
       - name: Read the portfolio files
+        shell: bash
         run: uv run python -m stockpilot.sources.fund_holdings out/files | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Publish to the data-latest release
         run: |

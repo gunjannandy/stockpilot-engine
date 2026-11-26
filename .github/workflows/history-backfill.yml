@@ -57,6 +57,7 @@ jobs:
       - name: Restore this year's files
         run: gh release download history-prices -D out/history -p "prices-${EXCHANGE}-${YEAR}.parquet" -p "checked-${EXCHANGE}-${YEAR}.parquet" || true
       - name: Backfill the year
+        shell: bash
         run: |
           uv run python - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
           import json, os
@@ -89,8 +90,10 @@ jobs:
         run: gh release download history-prices -D out/history -p "*.parquet" || true
       - name: Corporate actions
         if: ${{ inputs.actions == 'true' }}
+        shell: bash
         run: uv run python -m stockpilot.sources.history actions --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
       - name: ISIN map, report and row counts
+        shell: bash
         run: uv run python -m stockpilot.sources.history consolidate --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Attach to the release
         run: gh release upload history-prices out/history/*.parquet out/history/report.json --clobber

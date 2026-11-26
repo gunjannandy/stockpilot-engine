@@ -29,6 +29,7 @@ jobs:
       - name: Restore the resume state
         run: gh release download data-latest -p fund-nav-state.json.gz -D out || true
       - name: Build the fund files
+        shell: bash
         run: |
           [ -f out/fund-nav-state.json.gz ] && gunzip -f out/fund-nav-state.json.gz
           uv run python -m stockpilot.sources.fund_universe out/files out/fund-nav-state.json "${{ inputs.max_windows || 40 }}" | tee -a "$GITHUB_STEP_SUMMARY"

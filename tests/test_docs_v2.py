@@ -2,7 +2,12 @@
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
+if not (ROOT / "README.md").exists():
+    # The public code copy carries no README or docs; this guard only runs where the private docs live.
+    pytest.skip("private README.md not in this copy (public engine repo)", allow_module_level=True)
 README = (ROOT / "README.md").read_text()
 GLOSSARY = (ROOT / "GLOSSARY.md").read_text()
 

@@ -31,6 +31,7 @@ jobs:
           latest=$(gh release view mechanical-latest --json assets --jq '[.assets[].name | select(test("^20[0-9-]+\\.json$"))] | sort | last' || true)
           [ -n "$latest" ] && [ "$latest" != "null" ] && gh release download mechanical-latest -p "$latest" -O out/mechanical/latest.json --clobber || echo "no mechanical file yet: no chance column"
       - name: Build the table
+        shell: bash
         run: uv run python -m stockpilot.sources.screen_table out/search/index.json out/facts out/mechanical/latest.json out/universe.json | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Check it is not shrunk
         run: |

@@ -21,8 +21,10 @@ jobs:
       - name: Throwaway release
         run: gh release create probe-t2 probe.parquet --title probe-t2 --notes "synthetic probe data" --repo "$GITHUB_REPOSITORY"
       - name: Probe 1, DuckDB through the release redirect
+        shell: bash
         run: python probes/py/duckdb_probe.py "https://github.com/$GITHUB_REPOSITORY/releases/download/probe-t2/probe.parquet" "SELECT max(close) FROM t WHERE day BETWEEN 1900000 AND 1900010" | tee probe1.json
       - name: Probe 2, CORS on the release asset
+        shell: bash
         run: |
           set +e
           URL="https://github.com/$GITHUB_REPOSITORY/releases/download/probe-t2/probe.parquet"
@@ -30,6 +32,7 @@ jobs:
           echo "--- GET with Origin and Range"; curl -s -D - -o /dev/null -H "Origin: $ORIGIN" -H "Range: bytes=0-99" "$FINAL" | grep -i -E "^(HTTP|access-control|accept-ranges|content-range)" | tee probe2-get.txt
           echo "--- preflight"; curl -s -D - -o /dev/null -X OPTIONS -H "Origin: $ORIGIN" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: range" "$FINAL" | grep -i -E "^(HTTP|access-control)" | tee probe2-options.txt
       - name: Probe 4b, Yahoo and NSE quotes from a runner (the Worker run is a VM step)
+        shell: bash
         run: |
           set +e
           curl -s -m 20 -H "User-Agent: Mozilla/5.0" "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?range=1d&interval=1m" | head -c 600 | tee probe4-yahoo.txt; echo

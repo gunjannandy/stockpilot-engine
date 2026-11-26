@@ -34,6 +34,7 @@ jobs:
           gh release download data-latest -p 'news-20??-??.json' -D out/months || true
           for f in out/months/news-*.json; do [ -f "$f" ] && cp "$f" "out/archive/news/$(basename "$f" | sed 's/^news-//')"; done || true
       - name: Collect
+        shell: bash
         run: uv run python -m stockpilot.sources.news_collect out/search/index.json out/news-state.json out/archive | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the state and any monthly files
         run: |

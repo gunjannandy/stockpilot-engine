@@ -30,6 +30,7 @@ jobs:
           done
           gh release download history-prices -D out/history -p corporate_actions.parquet || true
       - name: Add the new day
+        shell: bash
         run: uv run python -m stockpilot.sources.history daily --actions --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Attach to the release
         run: |

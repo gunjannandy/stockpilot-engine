@@ -196,7 +196,7 @@ def _sign(key: str, ts: str, body: str) -> str:
 
 
 def http_post(url, body, headers):
-    req = urllib.request.Request(url, data=body.encode(), headers={"Content-Type": "application/json", **headers})
+    req = urllib.request.Request(url, data=body.encode(), headers={"Content-Type": "application/json", "User-Agent": "stockpilot-ingest/1.0", **headers})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
 

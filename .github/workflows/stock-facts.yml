@@ -25,9 +25,11 @@ jobs:
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
       - run: uv sync --frozen
       - name: Fetch the search index
-        run: mkdir -p out/search
+        run: |
+          mkdir -p out/search
           gh release download data-latest -p search-index.json -O out/search/index.json --clobber
       - name: Build the facts
+        shell: bash
         run: uv run python -m stockpilot.sources.facts_sources out/search/index.json out/facts ${{ inputs.limit }} | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Check coverage is not collapsed
         run: |
