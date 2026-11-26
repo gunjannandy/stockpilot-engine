@@ -1092,7 +1092,7 @@ Object.assign(W.bn, {
 });
 Object.assign(DOTS, { holdings: ["portfolio"], tax: ["portfolio"], tradrec: ["own_record"], record: ["record"] });
 NAV.length = 0;
-NAV.push(["today", "wb_sunny"], ["holdings", "account_balance_wallet"], ["follow", "star"], ["watchlist", "visibility"], ["ideas", "query_stats"], ["funds", "savings"]);
+NAV.push(["today", "wb_sunny"], ["holdings", "account_balance_wallet"], ["follow", "star"], ["universe", "table_rows"], ["watchlist", "visibility"], ["ideas", "query_stats"], ["funds", "savings"]);
 const NAVQ = [["market", "newspaper", "desk"], ["tax", "receipt_long", "desk"], ["tradrec", "history", "desk"], ["record", "fact_check", "desk"]];
 
 renderRail = function () {
@@ -1812,7 +1812,7 @@ if (window.SPJobs) {
 function boot() {
   const th = store.get("theme", null); root.dataset.theme = th || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   root.lang = S.lang === "bn" ? "bn" : "en";
-  document.body.insertAdjacentHTML("beforeend", `<div id="app"><nav id="rail" aria-label="Main"></nav><main id="main"><div class="topbar" id="bar"></div><div id="alerts"></div><div id="view"><p class="muted" style="padding:40px 4px">${w("load")}</p></div></main></div><div id="tip" role="tooltip"></div><div id="toasts" role="status" aria-live="polite" role="status" aria-live="polite"></div>`);
+  document.body.insertAdjacentHTML("beforeend", `<div id="app"><nav id="rail" aria-label="Main"></nav><main id="main"><div class="topbar" id="bar"></div><div id="alerts"></div><div id="view"><p class="muted" style="padding:40px 4px">${w("load")}</p></div></main></div><div id="tip" role="tooltip"></div><div id="toasts" role="status" aria-live="polite"></div>`);
   renderBar();
   const qp = LIVE ? fetch("/api/queue", { cache: "no-store", signal: AbortSignal.timeout(2500) }).then(r => r.ok ? r.json() : null).then(j => j?.items || null).catch(() => null) : Promise.resolve(null);
   const rc = window.SPRecords ? SPRecords.load(fetch, getJSON) : Promise.resolve(null);   // T29: portfolio, smallcase, record, own_record from /api/v2/views
