@@ -82,7 +82,7 @@ def ship_public_files(cfg, site_dir) -> None:
         return
     from stockpilot.sources import public_files
     try:
-        public_files.fetch_into(site_dir, repo)
+        public_files.fetch_into(site_dir, repo, state=Path(cfg.root) / "data" / "public-files-state.json")
     except Exception:  # noqa: BLE001  a missing night of public data must not stop the dashboard deploying
         pass
 
@@ -99,12 +99,15 @@ def run_verify(m, day: date, *, write: bool = True) -> dict:
 
 def build_verified(m, db, day: date, now=None) -> tuple[dict, dict | None]:
     """The deploy order: build the site, `sp verify` with write access (it writes the price flags the first build could not
-    hide), rebuild, `sp verify` again. Returns (the second build's meta, the second verify's result). Only the second verify
-    gates the deploy. A verify that cannot run is a problem row, not a stop: a broken checker must not freeze the dashboard.
-    Off with `verify.on_ship: false`."""
+    hide). Only when that verify changed the set of flagged symbols is the site rebuilt and verified again: otherwise the rebuild
+    would be byte-for-byte the same site, so the first verify is the one that gates. Returns (the last build's meta, the gating
+    verify's result). A hard failure of the gating verify is a hard block either way. A verify that cannot run is a problem row,
+    not a stop: a broken checker must not freeze the dashboard. Off with `verify.on_ship: false`."""
+    from stockpilot.verify import flags as verify_flags
     meta = build_site(db, m.cfg, today=day, now=now)
     if not m.cfg.get("verify.on_ship", True):
         return meta, None
+    before = verify_flags.flagged_symbols(db)
     final = None
     for step in ("first", "final"):
         _release(db)                       # verify opens the store for writing itself
@@ -114,6 +117,8 @@ def build_verified(m, db, day: date, now=None) -> tuple[dict, dict | None]:
             journal.problem(db, "ship", f"verify ({step} pass) could not run: {err!r}", "error", key=f"verify-{step}")
             return meta, None
         if step == "first":
+            if verify_flags.flagged_symbols(db) == before:
+                break                      # no flag changed: a second build would write the same site
             meta = build_site(db, m.cfg, today=day, now=now)
     return meta, final
 
@@ -162,13 +167,16 @@ def node_path() -> str:
     return found
 
 
+DEPLOY_TIMEOUT_S = 3600      # wrangler uploads ~15,000 files from a swapping 1 GB VM, then the four checks drive a headless browser
+
+
 def deploy_safe(cfg, run=subprocess.run, node: str | None = None, wrangler: str | None = None) -> str:
     """The deploy rule (orchestration-decisions section 3): `scripts/cutover/cutover.mjs deploy --target production` deploys,
     checks the four hard blocks on the new deployment and rolls production back on a failure. Raises with the reason, so the
     caller writes the problem row; the live site is then the one that was live before."""
     script = cfg.root / "scripts" / "cutover" / "cutover.mjs"
     done = run([node or node_path(), str(script), "deploy", "--target", "production"], cwd=cfg.root / "web",
-               capture_output=True, text=True, env={**os.environ, "WRANGLER": wrangler or wrangler_path()}, timeout=1200)
+               capture_output=True, text=True, env={**os.environ, "WRANGLER": wrangler or wrangler_path()}, timeout=DEPLOY_TIMEOUT_S)
     if done.returncode == 0:
         return "Dashboard deployed."
     out = (done.stdout or "") + (done.stderr or "")

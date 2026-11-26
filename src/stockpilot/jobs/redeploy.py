@@ -3,7 +3,7 @@ every 15 minutes and it exits at once unless something is due:
   daily    the two slots (07:30 and 23:30 IST) so the public files that land overnight and in the morning (search index, universe,
            fund stats, charts, mechanical results) reach Pages;
   changed  the shipped paths on `main` (web/, the site builder) differ from what was last deployed.
-It fast-forwards the checkout only (never reset, checkout, pull or rebase), builds the site, and deploys through `ship.deploy_safe`
+It fast-forwards the checkout only (never reset, checkout, pull or rebase), builds the site (once; twice only if `sp verify` changed a price flag), and deploys through `ship.deploy_safe`
 (scripts/cutover: the four hard blocks, then rollback). A failure leaves the live site as it was and is a problem row; the same
 failure is not retried for two hours."""
 import json
