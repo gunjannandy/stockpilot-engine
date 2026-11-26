@@ -15,7 +15,7 @@ export const REQUIRED = [
   { name: "GOOGLE_BRIDGE_KEY", kind: "secret", why: "key for that bridge" },
   { name: "KITE_API_KEY", kind: "secret", why: "Kite connect" },
   { name: "KITE_API_SECRET", kind: "secret", why: "Kite connect" },
-  { name: "SP_OWNER", kind: "var", optional: true, why: "which SP_PEOPLE id is the owner (default owner)" },
+  { name: "SP_OWNER", kind: "secret", optional: true, why: "which SP_PEOPLE id is the owner (default owner); private, so a Pages secret, never wrangler.toml" },
   { name: "KITE_API_BASE", kind: "var", optional: true, why: "test override only" },
   { name: "KITE_LOGIN_BASE", kind: "var", optional: true, why: "test override only" },
 ];
@@ -33,6 +33,8 @@ function shapeProblem(item, value) {
 
 export function runPreflight({ env, toml, remote, target = "production" }) {
   const problems = [];
+  // SP_PEOPLE already on the project (v1 legacy ids) and not in .env: SP_OWNER maps it to owner/father, so it must be there.
+  const legacyPeople = !env?.SP_PEOPLE;
   const cfg = remote?.[target];
   if (!cfg) problems.push({ kind: "remote_unknown", name: "(project)", note: "could not read the Pages project's bindings and secrets from Cloudflare; only this machine was checked" });
   const tomlHas = (binding, table) => new RegExp(`\\[\\[${table}\\]\\][^\\[]*binding\\s*=\\s*"${binding}"`).test(toml || "");
@@ -48,6 +50,14 @@ export function runPreflight({ env, toml, remote, target = "production" }) {
     }
     const value = env?.[item.name];
     const set = (cfg?.env_vars || []).includes(item.name);
+    if (item.name === "SP_PEOPLE" && legacyPeople && cfg && set) {
+      if (!(env?.SP_OWNER || (cfg.env_vars || []).includes("SP_OWNER"))) problems.push({ kind: "missing_local", name: "SP_OWNER", note: "SP_PEOPLE is on the project but not in .env, so SP_OWNER is needed to name the owner. Not in the VM .env or on the project." });
+      continue;
+    }
+    if (item.name === "SP_OWNER" && legacyPeople && cfg && !set) {
+      problems.push({ kind: "missing_remote", name: "SP_OWNER", note: `${item.why}. Needed because SP_PEOPLE is not in .env. Not set on the ${target} project.` });
+      continue;
+    }
     if (!item.optional) {
       if (cfg && !set) problems.push({ kind: "missing_remote", name: item.name, note: `${item.why}. Not set on the ${target} project.` });
       if (value == null || value === "") problems.push({ kind: "missing_local", name: item.name, note: `${item.why}. Not in the VM .env, so it cannot be set from there.` });
@@ -58,7 +68,7 @@ export function runPreflight({ env, toml, remote, target = "production" }) {
     }
   }
   const owner = env?.SP_OWNER;
-  if (owner) {
+  if (owner && env.SP_PEOPLE) {
     const ids = Object.keys(people({ SP_PEOPLE: env.SP_PEOPLE }));
     if (!ids.includes(owner)) problems.push({ kind: "bad_shape", name: "SP_OWNER", note: `in .env is not one of the SP_PEOPLE ids (${ids.join(", ") || "none valid"})` });
   }

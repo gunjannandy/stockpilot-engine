@@ -51,6 +51,13 @@ export function people(env) {
   for (const [id, email] of Object.entries(parsed)) {
     if (id !== "__proto__" && PERSON.test(id) && typeof email === "string" && EMAIL.test(email.trim())) out[id] = email.trim();
   }
+  // v1 stored two legacy ids; v2 expects "owner" and "father". With SP_OWNER naming one of exactly two
+  // people and no "owner" key, that person is "owner" and the other is "father".
+  const ids = Object.keys(out), legacyOwner = env?.SP_OWNER;
+  if (typeof legacyOwner === "string" && ids.length === 2 && !Object.hasOwn(out, "owner") && Object.hasOwn(out, legacyOwner)) {
+    const other = ids.find((id) => id !== legacyOwner);
+    return { owner: out[legacyOwner], father: out[other] };
+  }
   return out;
 }
 

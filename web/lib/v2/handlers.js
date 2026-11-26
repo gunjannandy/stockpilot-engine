@@ -2,7 +2,7 @@
 // functions/api/v2/ only wire them to URLs. Handlers take a Pages Functions context and return a Response.
 // Optional context.now (Date) and context.fetch exist so tests control the clock and the network.
 import { json, readJson } from "../http.js";
-import { knownPerson, ingestAllowed } from "../auth.js";
+import { knownPerson, people, ingestAllowed } from "../auth.js";
 import contract from "../../../schemas/live-contract.json";
 import { marketOpen, refreshQuotes } from "./quotes.js";
 
@@ -13,10 +13,12 @@ const nowOf = (ctx) => (ctx.now instanceof Date ? ctx.now : new Date());
 const rid = (prefix, d) => `${prefix}_${d.getTime().toString(36)}${[...crypto.getRandomValues(new Uint8Array(4))].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
 const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
 
-// Who is calling: "owner" (SP_OWNER, default owner), "father" (any other signed-in person) or null.
+// Who is calling: "owner", "father" (any other signed-in person) or null. people() already maps a legacy
+// SP_OWNER id to "owner"; SP_OWNER only decides when SP_PEOPLE has no "owner" key (and then never beats it).
 export function roleOf(env, id) {
   if (!id || !knownPerson(env, id)) return null;
-  return id === (env.SP_OWNER || "owner") ? "owner" : "father";
+  const hasOwnerKey = Object.hasOwn(people(env), "owner");
+  return id === (hasOwnerKey ? "owner" : env.SP_OWNER || "owner") ? "owner" : "father";
 }
 const needPerson = (ctx) => { const role = roleOf(ctx.env, ctx.data?.person); return role ? { role } : { fail: json({ error: "login_needed" }, 401) }; };
 const needOwner = (ctx) => {

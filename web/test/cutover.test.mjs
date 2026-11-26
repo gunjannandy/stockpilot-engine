@@ -244,3 +244,30 @@ test("the repo's own web/wrangler.toml declares the DB and SP bindings", async (
   const r = runPreflight({ env: goodEnv, toml: fs.readFileSync("wrangler.toml", "utf8"), remote: remote(Object.keys(goodEnv)), target: "production" });
   assert.deepEqual(r.problems, []);
 });
+
+const legacyEnv = (() => { const e = { ...goodEnv, SP_OWNER: "legacy_a" }; delete e.SP_PEOPLE; return e; })();
+
+test("preflight: SP_PEOPLE only on the remote project is fine when SP_OWNER is in .env and set remotely", () => {
+  const names = [...Object.keys(goodEnv), "SP_OWNER"];
+  const r = runPreflight({ env: legacyEnv, toml, remote: remote(names), target: "production" });
+  assert.equal(r.ok, true, JSON.stringify(r.problems));
+});
+
+test("preflight: SP_OWNER must reach the project as a secret when SP_PEOPLE is not in .env", () => {
+  const r = runPreflight({ env: legacyEnv, toml, remote: remote(Object.keys(goodEnv)), target: "production" });
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.some((p) => p.name === "SP_OWNER" && p.kind === "missing_remote"));
+});
+
+test("preflight: SP_OWNER set remotely only (not in .env) also passes without a local SP_PEOPLE", () => {
+  const env = { ...goodEnv }; delete env.SP_PEOPLE;
+  const r = runPreflight({ env, toml, remote: remote([...Object.keys(goodEnv), "SP_OWNER"]), target: "production" });
+  assert.equal(r.ok, true, JSON.stringify(r.problems));
+});
+
+test("preflight: no SP_PEOPLE in .env and no SP_OWNER anywhere is still a problem", () => {
+  const env = { ...goodEnv }; delete env.SP_PEOPLE;
+  const r = runPreflight({ env, toml, remote: remote(Object.keys(goodEnv)), target: "production" });
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.some((p) => p.name === "SP_OWNER"));
+});

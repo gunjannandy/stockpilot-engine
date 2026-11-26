@@ -77,3 +77,15 @@ test("safeNext keeps same-site paths and drops everything else", () => {
     assert.equal(safeNext(bad), "/", String(bad));
   }
 });
+
+test("SP_OWNER maps a legacy two-person SP_PEOPLE onto owner and father", () => {
+  const legacy = JSON.stringify({ legacy_a: "a@example.test", legacy_b: "b@example.test" });
+  const env = makeEnv({ SP_PEOPLE: legacy, SP_OWNER: "legacy_a" });
+  assert.deepEqual(people(env), { owner: "a@example.test", father: "b@example.test" });
+  assert.deepEqual(people(makeEnv({ SP_PEOPLE: legacy })), { legacy_a: "a@example.test", legacy_b: "b@example.test" }, "no SP_OWNER, no change");
+  assert.deepEqual(people(makeEnv({ SP_PEOPLE: legacy, SP_OWNER: "nobody" })), { legacy_a: "a@example.test", legacy_b: "b@example.test" });
+  const three = JSON.stringify({ legacy_a: "a@example.test", legacy_b: "b@example.test", c: "c@example.test" });
+  assert.deepEqual(Object.keys(people(makeEnv({ SP_PEOPLE: three, SP_OWNER: "legacy_a" }))), ["legacy_a", "legacy_b", "c"]);
+  const v2 = JSON.stringify({ owner: "a@example.test", father: "b@example.test" });
+  assert.deepEqual(people(makeEnv({ SP_PEOPLE: v2, SP_OWNER: "father" })), { owner: "a@example.test", father: "b@example.test" });
+});

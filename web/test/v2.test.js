@@ -394,3 +394,18 @@ describe("quotes_get refresh on open (T15)", () => {
     expect((await call(v2.quotesGet, "/api/v2/quotes?symbols=A1&refresh=1", { person: null, extra: { fetch: f } })).status).toBe(401);
   });
 });
+
+describe("roleOf with the legacy SP_OWNER mapping", () => {
+  const legacy = JSON.stringify({ legacy_a: "a@example.test", legacy_b: "b@example.test" });
+  it("maps the SP_OWNER person to owner and the other to father; the father is never owner", () => {
+    const e = { SP_PEOPLE: legacy, SP_OWNER: "legacy_a" };
+    expect(v2.roleOf(e, "owner")).toBe("owner");
+    expect(v2.roleOf(e, "father")).toBe("father");
+    expect(v2.roleOf(e, "legacy_a")).toBe(null); // old ids no longer exist
+  });
+  it("with an owner key present, only owner is owner, whatever SP_OWNER says", () => {
+    const e = { SP_PEOPLE: PEOPLE, SP_OWNER: "father" };
+    expect(v2.roleOf(e, "owner")).toBe("owner");
+    expect(v2.roleOf(e, "father")).toBe("father");
+  });
+});
