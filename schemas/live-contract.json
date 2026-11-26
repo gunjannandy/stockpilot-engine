@@ -266,6 +266,20 @@
         "day"
       ],
       "indexes": []
+    },
+    "views": {
+      "writer": "vm",
+      "desc": "The private screens' documents (Holdings and Tax, Smallcase against own trades, Our record, Trading record), one row each, rewritten whole when a sync or build changes them. Private: read only through views_get by a signed-in person; the public ingest door cannot write it.",
+      "columns": {
+        "name": "enum(portfolio|smallcase|record|own_record)",
+        "doc": "json",
+        "as_of": "date",
+        "written_at": "time"
+      },
+      "pk": [
+        "name"
+      ],
+      "indexes": []
     }
   },
   "routes": [
@@ -664,6 +678,20 @@
         "writes_today": "int",
         "stopped": "bool"
       }
+    },
+    {
+      "id": "views_get",
+      "method": "GET",
+      "path": "/api/v2/views/:name",
+      "auth": "person",
+      "desc": "One private screen document: portfolio (holdings, tax, RSUs), smallcase, record or own_record. 404 until the VM has written it; the page then falls back to the last static file.",
+      "request": null,
+      "response": {
+        "name": "enum(portfolio|smallcase|record|own_record)",
+        "as_of": "date",
+        "written_at": "time",
+        "doc": "json"
+      }
     }
   ],
   "job_kinds": {
@@ -1044,7 +1072,7 @@
     "daily_limit": 100000,
     "warn_at": 60000,
     "stop_at": 85000,
-    "estimated_total": 17790,
+    "estimated_total": 17794,
     "rarely_written": [],
     "note": "D1 counts every index entry as a row written, so a row costs 1 + its indexes. warn_at and stop_at are the ingest Worker's lines; stop_at leaves room for the owner's own writes.",
     "items": [
@@ -1107,6 +1135,11 @@
         "table": "write_budget",
         "rows": 400,
         "basis": "counter bump per ingest batch"
+      },
+      {
+        "table": "views",
+        "rows": 4,
+        "basis": "four documents, each rewritten whole after a sync or a build"
       }
     ]
   },

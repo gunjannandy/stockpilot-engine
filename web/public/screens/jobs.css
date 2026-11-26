@@ -34,3 +34,11 @@
 .pagewrap .wk{height:100%}
 .pagewrap .grid td .msg{margin-top:2px}
 @media (max-width:1100px){.pagewrap .wgrid>.s6,.pagewrap .wgrid>.s12{grid-column:1/-1}}
+
+/* V2: the Sync follow-banner shown after the Kite login */
+.sync-banner{position:sticky;top:0;z-index:20;margin:0 auto 12px;max-width:640px;padding:12px 16px;border-radius:12px;background:var(--surface,#fff);border:1px solid var(--line,#ddd);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.sync-banner ul{list-style:none;margin:8px 0;padding:0}
+.sync-banner li{padding:2px 0}
+.sync-banner li[data-state="ok"]::before{content:"✓ "}
+.sync-banner li[data-state="fail"]::before{content:"✗ "}
+.sync-banner .job-err{color:var(--bad,#b3261e)}

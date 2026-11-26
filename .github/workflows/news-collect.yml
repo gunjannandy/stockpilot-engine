@@ -1,0 +1,44 @@
+name: news-collect
+# Public job (runs in stockpilot-engine): whole-market news only, never the holdings or watchlist. Every 15 minutes it reads
+# NSE and BSE announcements, Google News (market topics and a rotating slice of the universe) and six publisher feeds,
+# groups reports of one event, and writes links-only rows through the ingest Worker. The public repo holds no deploy
+# token: only the Worker's own write key. The seen-events state and the monthly archive files live on the release `data-latest`.
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"   # off the :00/:15/:30/:45 marks the nightly jobs use
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: news-collect
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SP_INGEST_URL: ${{ secrets.SP_INGEST_URL }}
+      SP_INGEST_KEY: ${{ secrets.SP_INGEST_KEY }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Restore the universe and the seen-events state
+        run: |
+          mkdir -p out/search
+          gh release download data-latest -p search-index.json -O out/search/index.json --clobber
+          gh release download data-latest -p news-state.json.gz -D out || true
+          [ -f out/news-state.json.gz ] && gunzip -f out/news-state.json.gz || true
+          mkdir -p out/archive/news out/months
+          gh release download data-latest -p 'news-20??-??.json' -D out/months || true
+          for f in out/months/news-*.json; do [ -f "$f" ] && cp "$f" "out/archive/news/$(basename "$f" | sed 's/^news-//')"; done || true
+      - name: Collect
+        run: uv run python -m stockpilot.sources.news_collect out/search/index.json out/news-state.json out/archive | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the state and any monthly files
+        run: |
+          gzip -kf out/news-state.json
+          gh release upload data-latest out/news-state.json.gz --clobber
+          for f in out/archive/news/*.json; do
+            [ -f "$f" ] && cp "$f" "out/months/news-$(basename "$f")" && gh release upload data-latest "out/months/news-$(basename "$f")" --clobber
+          done || true

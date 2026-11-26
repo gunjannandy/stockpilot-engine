@@ -1,0 +1,96 @@
+name: history-backfill
+# Public job: exchange daily files only, nothing private. Backfills all-time daily prices, one job per exchange and year,
+# into Parquet files attached to the release `history-prices`. A rerun carries on where it stopped: files already on the
+# release are downloaded first, and a day already asked is not asked again.
+# NSE from 1994-11-03, BSE from 2006-09-01. Run it as: gh workflow run history-backfill.yml -f exchange=NSE -f from_year=1994 -f to_year=2026
+on:
+  workflow_dispatch:
+    inputs:
+      exchange:
+        description: "NSE or BSE"
+        default: "NSE"
+      from_year:
+        description: "First year"
+        default: "1994"
+      to_year:
+        description: "Last year"
+        default: "2026"
+      actions:
+        description: "Also load corporate actions from 1995 (true or false)"
+        default: "false"
+permissions:
+  contents: write
+concurrency:
+  group: history
+  cancel-in-progress: false
+jobs:
+  years:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          a, b = int("${{ inputs.from_year }}"), int("${{ inputs.to_year }}")
+          print("matrix=" + json.dumps({"year": list(range(a, b + 1))}))
+          PY
+  backfill:
+    needs: years
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.years.outputs.matrix) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXCHANGE: ${{ inputs.exchange }}
+      YEAR: ${{ matrix.year }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Make sure the release exists
+        run: gh release view history-prices >/dev/null 2>&1 || gh release create history-prices --title "Price history" --notes "All-time daily prices by exchange and year. Public market data only."
+      - name: Restore this year's files
+        run: gh release download history-prices -D out/history -p "prices-${EXCHANGE}-${YEAR}.parquet" -p "checked-${EXCHANGE}-${YEAR}.parquet" || true
+      - name: Backfill the year
+        run: |
+          uv run python - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, os
+          from datetime import date
+          from stockpilot.sources import history
+          from stockpilot.sources.http import fetch
+          ex, year = os.environ["EXCHANGE"], int(os.environ["YEAR"])
+          first = history.NSE_FIRST_DAY if ex == "NSE" else history.BSE_FIRST_DAY
+          start, end = max(date(year, 1, 1), first), min(date(year, 12, 31), date.today())
+          if start > end:
+              print(f"{ex} {year}: before the first file or in the future, nothing to do")
+          else:
+              print(f"{ex} {year}: " + json.dumps(history.backfill(history.HistoryStore("out/history"), ex, start, end, fetch, pause=0.3)))
+          PY
+      - name: Attach to the release
+        run: |
+          ls out/history/*-${EXCHANGE}-${YEAR}.parquet >/dev/null 2>&1 && gh release upload history-prices out/history/*-${EXCHANGE}-${YEAR}.parquet --clobber || echo "no files for this year"
+  consolidate:
+    needs: backfill
+    if: ${{ always() && needs.backfill.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Restore every file
+        run: gh release download history-prices -D out/history -p "*.parquet" || true
+      - name: Corporate actions
+        if: ${{ inputs.actions == 'true' }}
+        run: uv run python -m stockpilot.sources.history actions --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: ISIN map, report and row counts
+        run: uv run python -m stockpilot.sources.history consolidate --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Attach to the release
+        run: gh release upload history-prices out/history/*.parquet out/history/report.json --clobber

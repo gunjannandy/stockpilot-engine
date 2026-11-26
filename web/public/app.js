@@ -162,6 +162,8 @@ Object.assign(W.bn, {
   setData: "তথ্য", setDataP: "সব প্রতি সন্ধ্যায় নিজে হালনাগাদ হয়। কোনো সংখ্যা পুরনো লাগলে তবেই এগুলো চাপুন।", refreshDocs: "আমার document নতুন করুন", rerunNow: "আজকের analysis আবার চালান", signOut: "Sign out",
   ladder: "দাম কোথায় যেতে পারে", cWhyL: "সংক্ষেপে", snoozeShort: "30 দিন লুকান", cross: "আর দেখাবেন না",
 });
+if (window.SPStock) { Object.assign(W.en, window.SPStock.words.en); Object.assign(W.bn, window.SPStock.words.bn); }   // T22: the stock screen keeps its own words in screens/stock.js
+if (window.SPWorth) { Object.assign(W.en, window.SPWorth.WORDS.en); Object.assign(W.bn, window.SPWorth.WORDS.bn); }   // T24: Worth following words
 /* T25: Every stock (screener) words */
 Object.assign(W.en, { universe: "Every stock", universeS: "All stocks", universeP: "Every NSE, BSE and SME stock. Filter or type a name, then click a row.",
   uFilters: "Filters", uLoading: "Loading every stock...", uMissing: "The list of all stocks is not published yet. It appears after the next nightly update.", uFind: "Type a name or symbol", uAny: "Any", uOf: "of", uStocks: "stocks", uClear: "Clear filters", uMore: n => `Show ${n} more`, uNone: "No stock matches these filters. Try fewer filters.", uNoView: "No forecast yet",
@@ -739,8 +741,27 @@ function rsuBlock(r) {
    ${ex.length ? `<div class="rsu-exp"><h3>${w("rsuExp")}</h3><p class="muted">${w("rsuExpP")}</p><ul>${ex.map(e => `<li><span class="num">${mdate(e.date)}</span> · <span class="num">${n0(e.quantity)}</span> ${w("sharesW")}</li>`).join("")}</ul></div>` : ""}
    ${t ? `<div class="rsu-tax"><h3>${w("rsuTax")}</h3><p class="rsu-taxl">${esc(rsuTaxLine(r))}</p><p class="muted">${esc(r.tax_if_sold.note || "")}</p></div>` : ""}
    ${rsuCall(r)}</div></section>`; }
+/* T22: the stock screen lives in screens/stock.js; this only hands it what only app.js knows (names, holdings, trades, past calls). */
+function stockCtx(sym, pane) {
+  const it = BY.get(sym), h = HELD.get(sym), inWl = WL.has(sym);
+  const events = () => {
+    const ev = [];
+    (h?.lots || []).forEach(l => ev.push({ date: l.acquired_on, kind: "buy", qty: l.quantity }));
+    (D.trades_closed?.rows || []).filter(r => r.symbol === sym).forEach(r => ev.push({ date: r.sold_on, kind: "sell", qty: r.quantity }));
+    (D.calls_outcomes?.rows || D.record?.calls || []).filter(c => c.symbol === sym).forEach(c => ev.push({ date: c.made_on, kind: "call", call: c.action }));
+    return ev;
+  };
+  const actionsHtml = pane ? "" : `${inWl ? `<button class="btn o" data-unwatch="${esc(sym)}"><span class="ms">check</span>${w("inWl")}</button>` : `<button class="btn t" data-watch="${esc(sym)}"><span class="ms">add</span>${w("addWl")}</button>`}
+      ${h && !isFund2(sym) ? `<button class="btn ${LTM().has(sym) ? "o" : "t"}" data-ltm="${esc(sym)}" aria-pressed="${LTM().has(sym)}"><span class="ms">${LTM().has(sym) ? "check" : "bookmark"}</span>${w(LTM().has(sym) ? "ltOn" : "ltMark")}</button>` : ""}${it ? `<button class="btn x" data-snooze="${esc(sym)}"><span class="ms">schedule</span>${w("snoozeShort")}</button><button class="btn x" data-dismiss="${esc(sym)}"><span class="ms">block</span>${w("crossL")}</button>` : ""}`;
+  const rs = rsuOf(sym);
+  const after = pane ? `${rs ? rsuPane(rs) : ""}` : `<div class="sk-after">${h ? holdBlock(h) : ""}${rs ? rsuBlock(rs) : ""}${it?.news.length ? `<section class="pane" id="s-news"><div class="blk"><h3>${w("newsL")}</h3><ul>${it.news.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div></section>` : ""}</div>`;
+  return { symbol: sym, name: nameOf(sym), exchange: SMAP.get(sym)?.exchange || "NSE", lang: S.lang, pane: !!pane, events, actionsHtml, afterHtml: after,
+    price: rs?.price_usd && rs.usd_inr ? rs.price_usd * rs.usd_inr : it?.entry ?? WL.get(sym)?.close ?? h?.price,
+    tagsHtml: `${h ? `<span class="tag">${w("youHoldT")}</span>` : ""}${inWl ? `<span class="tag">${w("inWl")}</span>` : ""}`, chipHtml: it ? chip(it.v) : "" };
+}
 function pageStock() {
   const sym = S.sym; if (!sym) return pageToday();
+  if (window.SPStock) return `<a class="btn x back" href="#${esc(S.back)}" data-back><span class="ms">arrow_back</span>${w("back")}</a>${SPStock.html(stockCtx(sym, false))}`;
   const it = BY.get(sym), h = HELD.get(sym), inWl = WL.has(sym), bits = it ? whyBits(it.why) : [];
   const rs = rsuOf(sym), price = rs?.price_usd && rs.usd_inr ? rs.price_usd * rs.usd_inr : it?.entry ?? WL.get(sym)?.close;   // an RSU share is quoted in dollars; the page shows rupees
   const reasons = it ? [...new Set([...(it.reasons.length ? it.reasons : bits)])] : [];
@@ -784,6 +805,7 @@ function chartBox(box, it, h) {
 
 function fillStock() {
   const sym = S.sym; if (!sym) return; const it = BY.get(sym);
+  if (window.SPStock) { SPStock.mount($("#app"), stockCtx(sym, false)); return; }
   hist(sym).then(h => {
     const box = $(`[data-chart="${CSS.escape(sym)}"]`); if (!box || S.sym !== sym) return;
     if (!h) { box.innerHTML = `<p class="muted">${w("noHist")}</p>`; return; }
@@ -921,6 +943,7 @@ document.addEventListener("click", e => {
   if ((x = el("[data-back]"))) { e.preventDefault(); S.fromApp ? history.back() : (location.hash = S.back); return; }
   if ((x = el("[data-toggle]"))) { const k = x.dataset.toggle; S.open.has(k) ? S.open.delete(k) : S.open.add(k); render(); return; }
   if ((x = el("[data-more]"))) { const k = x.dataset.more; S.more.has(k) ? S.more.delete(k) : S.more.add(k); render(); return; }
+  if ((x = el("[data-src]"))) { S.src = x.dataset.src; render(); return; }
   if ((x = el("[data-chip]"))) { const [k, v] = x.dataset.chip.split(":"); S.chip[k] = v; render(); return; }
   if ((x = el("[data-sort]"))) { const [k, i0] = x.dataset.sort.split(":"), i = +i0, so = S.sort[k]; S.sort[k] = so?.i === i ? (so.d > 0 ? { i, d: -1 } : null) : { i, d: 1 }; render(); return; }
   if ((x = el("[data-words]"))) { openWords(); return; }
@@ -1143,6 +1166,7 @@ const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function starBtn(sym) { const on = WL.has(sym); return `<button class="icb star" data-star="${esc(sym)}" aria-pressed="${on}" data-tip="${esc(w(on ? "watchOn" : "watchStar"))}" aria-label="${esc(w("watchStar"))}"><span class="ms">star</span></button>`; }
 const rid = r => r.id ?? r.sym;
 function lrow(key, r) {
+  if (r.html) return r.html;   // T24: a screen that draws its own row
   const id = rid(r);
   return `<div class="lrow${r.nospark ? " nsp" : ""} r-${r.v || "none"}" role="option" data-sel="${key}:${esc(id)}" aria-selected="${SEL[key] === id}" tabindex="0">
   ${r.chip || (r.v ? chip(r.v) : `<span class="chip v-none">${w("none")}</span>`)}
@@ -1185,6 +1209,7 @@ function refreshList(key) {
 function paneHTML(sym) {
   const it = BY.get(sym), h = HELD.get(sym), fund = isFund2(sym), price = it?.entry ?? WL.get(sym)?.close ?? h?.price ?? LK?.[sym]?.metrics?.close;
   const holdLine = h ? `<div class="pn-hold"><span class="tag">${w("youHoldT")}</span><span class="num">${n0(Math.round(h.quantity * 1000) / 1000)}</span><span class="num">${inr(h.value)}</span>${h.gain_pct != null ? `<b class="num ${h.gain_pct >= 0 ? "up" : "dn"}">${spct(h.gain_pct)}</b>` : ""}${LTM().has(sym) ? `<span class="tag">${w("ltOn")}</span>` : ""}${h.tax_note ? `<span class="muted trunc">${esc(h.tax_note)}</span>` : ""}</div>` : "";
+  if (window.SPStock && !fund) return SPStock.html({ ...stockCtx(sym, true), afterHtml: holdLine + (rsuOf(sym) ? rsuPane(rsuOf(sym)) : "") });
   const rz = RS.get(sym), head = rz?.headline ? esc(rzSay(rz, "headline")) : "";
   const view = it ? `<div class="pn-view"><p class="bigview">${head || esc(say(it))}</p><div class="pn-ch"><div><span class="bigp num">${pct(it.p)}</span><small class="muted cap">${w("chanceCap")}</small></div><div style="flex:1;min-width:0">${bar12(it)}</div></div><p class="muted pn-key">${esc(w("similar", pct(it.br), it.n ? n0(it.n) : ""))}</p></div>`
     : fund ? `<p class="muted pn-note">${w("fundNote")}</p>` : `${head ? `<div class="pn-view"><p class="bigview">${head}</p></div>` : ""}<div class="ask pn-ask"><div><h3>${w("noView")}</h3><p>${w("noViewL")}</p></div><button class="btn f" data-ask="${esc(sym)}"><span class="ms">query_stats</span>${w("ask")}</button></div>`;
@@ -1196,6 +1221,7 @@ function paneHTML(sym) {
 }
 let LK = null; lookup().then(x => { LK = x; });
 function fillPane(sym) {
+  if (window.SPStock && sym && !isFund2(sym) && $("#lpp [data-sk-root]")) { SPStock.mount($("#lpp"), stockCtx(sym, true)); return; }
   if (!sym || isFund2(sym) || !$(`[data-pchart]`)) return; const it = BY.get(sym);
   Promise.all([hist(sym), stk(sym)]).then(([h, x]) => {
       const box = $(`[data-pchart="${CSS.escape(sym)}"]`); if (!box || $("#lpp")?.dataset.sym !== sym) return;
@@ -1260,7 +1286,7 @@ document.addEventListener("input", e => {
     box.innerHTML = r.map(s => `<li role="option" data-wladd="${esc(s)}"><span class="trunc">${esc(nameOf(s))} <span class="muted num">${esc(s)}</span></span><span class="tag"><span class="ms" style="font-size:16px">add</span>${w("wAdded")}</span></li>`).join("") || (q ? `<li class="muted">${w("noMatch")}</li>` : ""); box.hidden = !box.innerHTML; }
 }, true);
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && S.tab === "stock" && !$("#sr").hidden === false && !/INPUT/.test(document.activeElement?.tagName || "")) { history.back(); return; }
+  if (e.key === "Escape" && S.tab === "stock" && !$(".sk-chart.is-full") && !$("#sr").hidden === false && !/INPUT/.test(document.activeElement?.tagName || "")) { history.back(); return; }
   const l = $(".lp-list"); if (!l || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || "")) return;
   const dn = e.key === "j" || (e.key === "ArrowDown" && l.contains(document.activeElement)), up = e.key === "k" || (e.key === "ArrowUp" && l.contains(document.activeElement));
   if (!dn && !up) return; e.preventDefault();
@@ -1324,14 +1350,40 @@ pageToday = function () {
 
 /* ---------- Holdings (stocks, mutual funds, RSUs) ---------- */
 const isRsu = h => /RSU/.test(h.group || "");
+/* T29: Kite / Smallcase / All route filter, its totals line, and the units check (rules in screens/records.js) */
+Object.assign(W.en, {
+  srcT: "Bought through", srcAll: "All", srcKite: "Kite", srcSc: "Smallcase",
+  srcShow: (n, v, g, pc) => `Showing ${n} holding${n === 1 ? "" : "s"} worth ${v}. Together they are ${g} since you bought (${pc}).`,
+  srcUp: "up", srcDown: "down", srcViaK: q => `${q} bought on Kite`, srcViaS: q => `${q} bought through Smallcase`,
+  unitsT: "Do the share counts match?", unitsOk: n => `Yes. Our records explain every share Kite shows, for all ${n} holdings.`,
+  unitsOff: n => `For ${n} holding${n === 1 ? "" : "s"}, our records explain fewer shares than Kite shows.`,
+  unitsRow: (name, held, lots) => `${name}: Kite shows ${held}, our records explain ${lots}.`,
+});
+Object.assign(W.bn, {
+  srcT: "যে পথে কেনা", srcAll: "সব", srcKite: "Kite", srcSc: "Smallcase",
+  srcShow: (n, v, g, pc) => `${n}টা holding দেখানো হচ্ছে, মোট দাম ${v}। কেনার পর থেকে সব মিলিয়ে ${g} (${pc})।`,
+  srcUp: "লাভ", srcDown: "ক্ষতি", srcViaK: q => `${q}টা Kite-এ কেনা`, srcViaS: q => `${q}টা Smallcase দিয়ে কেনা`,
+  unitsT: "শেয়ারের সংখ্যা মিলছে?", unitsOk: n => `হ্যাঁ। Kite যত শেয়ার দেখায়, আমাদের খাতা ${n}টা holding-এই তার সবটা মেলাতে পারে।`,
+  unitsOff: n => `${n}টা holding-এ Kite-এর চেয়ে কম শেয়ার আমাদের খাতায় মিলছে।`,
+  unitsRow: (name, held, lots) => `${name}: Kite দেখায় ${held}, আমাদের খাতায় ${lots}।`,
+});
+const routeSwitch = hs => { const c = SPRecords.sourceCounts(hs), cur = S.src || "all";
+  return `<span class="srcwrap"><span class="srclbl">${esc(w("srcT"))}</span><span class="seg2 srcsw" role="group" aria-label="${esc(w("srcT"))}">${[["all", "srcAll"], ["kite", "srcKite"], ["smallcase", "srcSc"]].map(([k, l]) => `<button class="sg" data-src="${k}" aria-pressed="${cur === k}">${w(l)} <span class="num">${c[k]}</span></button>`).join("")}</span></span>`; };
+const routeLine = rows => { const s = SPRecords.summary(rows), up = s.gain >= 0;
+  return w("srcShow", s.count, inr(s.value), `${w(up ? "srcUp" : "srcDown")} ${inr(Math.abs(s.gain))}`, spct(s.gain_pct)); };
+const unitsHTML = hs => { const u = SPRecords.unitsCheck(hs); if (!u.checked && !u.noted.length) return "";
+  const offSyms = new Set(u.off.map(o => o.symbol)), ok = !u.off.length && !u.noted.length;
+  const bits = ok ? [w("unitsOk", u.checked)] : [u.off.length ? w("unitsOff", u.off.length) : "", ...u.off.map(o => w("unitsRow", clean(o.name), n0(o.held), n0(o.lots))), ...u.noted.filter(n => !offSyms.has(n.symbol)).map(n => `${clean(n.name)}: ${n.note}`)].filter(Boolean);
+  return `<p class="uchk ${ok ? "ok" : "warn"}" role="status"><span class="ms" aria-hidden="true">${ok ? "check" : "info"}</span><span><b>${esc(w("unitsT"))}</b> ${bits.map(esc).join(" ")}</span></p>`; };
 pageHoldings = function () {
   const p = D.portfolio; if (!p) return `<p class="empty">${w("noData")}</p>`;
+  const src = S.src || "all", shown = SPRecords.holdingsFor(p.holdings, src);
   const cost = p.holdings.reduce((a, h) => a + (h.avg_cost || 0) * (h.quantity || 0), 0), gain = p.total_value - cost;
-  const lead = leadH(w("holdings"), `<b class="num">${lakh(p.total_value)}</b> · <span class="num ${gain >= 0 ? "up" : "dn"}">${gain >= 0 ? "+" : "−"}${lakh(Math.abs(gain))} (${spct(gain / cost)})</span> · ${esc(p.headline || "")}`);
-  const rows = p.holdings.map(h => { const it = BY.get(h.symbol), v = it?.v || (["sell", "weak", "review", "hold", "buy", "watch"].includes(h.verdict) ? h.verdict : null);
-    return { sym: h.symbol, name: clean(h.name), it, h, v, sub: isFund2(h.symbol) ? w("fundSub") : `${n0(h.quantity)} ${w(isRsu(h) ? "rsuShares" : "sharesW")}`, subH: !isFund2(h.symbol) && !isRsu(h) ? rzLine(h.symbol, true)?.subH : undefined, value: h.value, nospark: isFund2(h.symbol), chip: isRsu(h) ? `<span class="chip v-none">RSU</span>` : isFund2(h.symbol) ? `<span class="chip v-none">${w("fundChip")}</span>` : undefined,
+  const lead = leadH(w("holdings"), `<b class="num">${lakh(p.total_value)}</b> · <span class="num ${gain >= 0 ? "up" : "dn"}">${gain >= 0 ? "+" : "−"}${lakh(Math.abs(gain))} (${spct(gain / cost)})</span> · ${esc(p.headline || "")}`) + (src !== "all" ? `<p class="uchk route" role="status">${esc(routeLine(shown))}</p>` : "") + unitsHTML(p.holdings);
+  const rows = shown.map(h => { const it = BY.get(h.symbol), v = it?.v || (["sell", "weak", "review", "hold", "buy", "watch"].includes(h.verdict) ? h.verdict : null);
+    return { sym: h.symbol, name: clean(h.name), it, h, v, sub: src !== "all" ? w(src === "kite" ? "srcViaK" : "srcViaS", n0(Math.round(h.quantity * 1000) / 1000)) : isFund2(h.symbol) ? w("fundSub") : `${n0(h.quantity)} ${w(isRsu(h) ? "rsuShares" : "sharesW")}`, subH: !isFund2(h.symbol) && !isRsu(h) ? rzLine(h.symbol, true)?.subH : undefined, value: h.value, nospark: isFund2(h.symbol), chip: isRsu(h) ? `<span class="chip v-none">RSU</span>` : isFund2(h.symbol) ? `<span class="chip v-none">${w("fundChip")}</span>` : undefined,
       right: `<b class="num">${inr(h.value)}</b>${h.gain_pct != null ? `<small class="num ${h.gain_pct >= 0 ? "up" : "dn"}">${spct(h.gain_pct)}</small>` : ""}` }; }).sort((a, b) => (a.it ? 0 : 1) - (b.it ? 0 : 1) || b.value - a.value);
-  return listPane("hold", { rows, lead, label: w("holdings"),
+  return listPane("hold", { rows, lead, label: w("holdings"), extra: routeSwitch(p.holdings),
     chips: [["all", () => true], ["fStocks", r => !isFund2(r.sym) && !isRsu(r.h)], ["fFunds", r => isFund2(r.sym)], ["fRsu", r => isRsu(r.h)], ["sell", r => r.v === "sell"], ["weak", r => r.v === "weak"], ["review", r => r.v === "review"]],
     cols: [{ l: "hHolding", v: r => r.name, h: r => `<div class="nm trunc">${esc(r.name)}</div><div class="sy num">${esc(r.sym)} · ${n0(r.h.quantity)} ${w(isRsu(r.h) ? "rsuShares" : "sharesW")}</div>` },
       { l: "cView", v: r => r.it ? VORD[r.it.v] : 9, h: r => r.v ? chip(r.v) : chip("none") },
@@ -1616,6 +1668,37 @@ function pageFunds() {
 }
 Object.assign(PAGES, { funds: pageFunds, today: pageToday, holdings: pageHoldings, follow: pageFollow, watchlist: pageWatchlist, ideas: pageIdeas, tax: pageTax, tradrec: pageTrading, record: pageRecord, market: pageMarket, portfolio: pageHoldings, stock: pageStock });
 
+/* ---------- T24: Worth following, one list (screens/worth.js) ---------- */
+if (window.SPWorth && window.SPLive) {
+  const live = window.SP_LIVE || (window.SP_LIVE = SPLive.createClient({ fetch: (u, i) => fetch(u, i), document, setTimeout: (f, m) => setTimeout(f, m), clearTimeout: t => clearTimeout(t), person: "father" }));
+  const wf = SPWorth.createController({ fetch: (u, i) => fetch(u, i), held: () => new Set(HELD.keys()), name: nameOf, lang: () => S.lang, queue, say: w, toast, watchJob: id => live.watchJob(id),
+    rerender: () => { if (S.tab === "follow" && $("#view")) render(); } });
+  live.on(e => { if (e.type === "job") wf.onJob(e); });
+  const wfRows = () => wf.rows().map(i => { const job = wf.jobOf(i.symbol);
+    return { sym: i.symbol, name: nameOf(i.symbol), has: !!i.call, v: i.call ? ({ buy: "buy", hold: "hold", sell: "sell", wait: "watch" }[i.call] || "watch") : null, p: i.chance_3m,
+      html: SPWorth.rowHtml(i, { name: nameOf, lang: S.lang, w, job, key: "follow", selected: SEL.follow, spark: s => lsp(s, 64, 24), star: starBtn, chipHtml: v => v === "none" ? `<span class="chip v-none">${esc(w("none"))}</span>` : chip(v), dot: s => live.hasDot(s) ? SPLive.rowMarks({ dot: true }) : "" }) }; });
+  pageFollow = function () {
+    const lead = leadH(w("follow"), w("wfLead"));
+    if (!wf.loaded()) { wf.load(); return `<div class="pagewrap">${lead}<p class="muted" style="padding:24px 4px">${w("wfLoading")}</p></div>`; }
+    if (wf.error() && !wf.rows().length) return `<div class="pagewrap">${lead}<p class="empty">${w("wfFailed")}</p><p><button class="btn t" data-wf-reload>${w("wfRetry")}</button></p></div>`;
+    return listPane("follow", { rowsFn: wfRows, lead, label: w("follow"), chips: [["all", () => true], ["fView", r => r.has], ["wfNoFc", r => !r.has]],
+      pane: { html: sym => { const j = wf.jobOf(sym), i = wf.itemOf(sym); if (BY.has(sym) || !i) return paneHTML(sym);
+          return SPWorth.paneHtml(i, { running: !!j && j.job.status !== "failed", name: nameOf, lang: S.lang, w, star: starBtn, chipHtml: v => v === "none" ? `<span class="chip v-none">${esc(w("none"))}</span>` : chip(v) }) + (j ? `<div class="wf-prog">${SPLive.jobProgressHtml(j, S.lang)}</div>` : ""); }, fill: sym => fillPane(sym) },
+      cols: [{ l: "cStock", v: r => r.name, h: stockCell }, { l: "cView", v: r => r.v ? VORD[r.v] : 9, h: r => r.v ? chip(r.v) : `<span class="chip v-none">${esc(w("wfNoFc"))}</span>` },
+        { l: "cChance", v: r => r.p ?? -1, h: r => r.p == null ? `<button class="btn f sm" data-analyse="${esc(r.sym)}">${esc(w("wfAnalyse"))}</button>` : `<span class="num">${pct(r.p)}</span>` }] });
+  };
+  document.addEventListener("click", e => {   // before the page's own handler: snooze and cross hide the row here
+    const el = s => e.target.closest?.(s); let x;
+    if ((x = el("[data-analyse]"))) { e.stopImmediatePropagation(); e.preventDefault(); return void wf.analyse(x.dataset.analyse); }
+    if ((x = el("[data-retry]")) && el(".wf-prog")) { e.stopImmediatePropagation(); const s = (el("[data-sym]") || el("#lpp"))?.dataset.sym; return void (s && wf.retry(s)); }
+    if ((x = el("[data-wf-reload]"))) { e.stopImmediatePropagation(); return void wf.load(); }
+    if (S.tab !== "follow") return;
+    if ((x = el("[data-snooze]"))) { e.stopImmediatePropagation(); return void wf.snooze(x.dataset.snooze); }
+    if ((x = el("[data-dismiss]"))) { e.stopImmediatePropagation(); if (!x.dataset.sure) { x.dataset.sure = 1; x.title = w("crossSure"); x.classList.add("sure"); setTimeout(() => { if (x.isConnected) { delete x.dataset.sure; x.classList.remove("sure"); } }, 5000); return; } return void wf.dismiss(x.dataset.dismiss); }
+  }, true);
+  Object.assign(PAGES, { follow: pageFollow });
+}
+
 /* ---------- boot ---------- */
 Object.assign(W.en, {
   review: "Review", wReviewT: "Review:", wReview: "You keep this one for years and its forecast has fallen. Look at it when you have time. We never say sell for one weak quarter.",
@@ -1667,10 +1750,12 @@ function boot() {
   document.body.insertAdjacentHTML("beforeend", `<div id="app"><nav id="rail" aria-label="Main"></nav><main id="main"><div class="topbar" id="bar"></div><div id="alerts"></div><div id="view"><p class="muted" style="padding:40px 4px">${w("load")}</p></div></main></div><div id="tip" role="tooltip"></div><div id="toasts" role="status" aria-live="polite" role="status" aria-live="polite"></div>`);
   renderBar();
   const qp = LIVE ? fetch("/api/queue", { cache: "no-store", signal: AbortSignal.timeout(2500) }).then(r => r.ok ? r.json() : null).then(j => j?.items || null).catch(() => null) : Promise.resolve(null);
-  const names = ["meta", "today", "calls", "market", "portfolio", "watchlist", "ideas", "search", "record", "own_record", "smallcase", "health", "feedback", "settings", "learned", "funds", "fund_research", "indices", "flows", "trades_closed", "calls_outcomes"];
+  const rc = window.SPRecords ? SPRecords.load(fetch, getJSON) : Promise.resolve(null);   // T29: portfolio, smallcase, record, own_record from /api/v2/views
+  const names = ["meta", "today", "calls", "market", "watchlist", "ideas", "search", "health", "feedback", "settings", "learned", "funds", "fund_research", "indices", "flows", "trades_closed", "calls_outcomes"];
   const ip = fetch("search/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null);
-  Promise.all([qp, ip, ...names.map(n => getJSON(n).catch(() => null))]).then(([q, idx, ...v]) => {
-    QUEUE = q; D.searchIndex = idx; names.forEach((n, i) => D[n] = v[i]); for (const k of ["today", "portfolio", "health", "record", "market", "calls", "watchlist"]) if (D[k]) D[k] = deepPlain(D[k]); settleLtm(); model(); buildEngine(); renderAlerts();
+  Promise.all([qp, ip, rc, ...names.map(n => getJSON(n).catch(() => null))]).then(([q, idx, live, ...v]) => {
+    QUEUE = q; D.searchIndex = idx; names.forEach((n, i) => D[n] = v[i]);
+    if (live) for (const n of SPRecords.VIEWS) { D[n] = live.docs[n]; if (live.live[n]) SIG[n] = fp(JSON.stringify(live.docs[n])); } for (const k of ["today", "portfolio", "health", "record", "market", "calls", "watchlist"]) if (D[k]) D[k] = deepPlain(D[k]); settleLtm(); model(); buildEngine(); renderAlerts();
     const [h, sb] = location.hash.slice(1).split("/"); S.tab = TABS.includes(h) ? h : "today"; if (S.tab === "stock" && !S.sym) S.tab = "today"; S.sub[S.tab] = sb || null;
     Object.keys(DOTS).forEach(t => { if (seen(t) == null || t === S.tab) seen(t, true); });
     renderAll();

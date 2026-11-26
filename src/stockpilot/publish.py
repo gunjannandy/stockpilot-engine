@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Folders and files that may leave. Everything else (docs, ops, config secrets, data) stays private.
-ALLOW_DIRS = ("src", "tests", "web", "schemas", "prompts", "scripts")
+ALLOW_DIRS = ("src", "tests", "web", "schemas", "prompts", "scripts", "probes")  # probes: probe-t2 runs probes/py on the public repo
 ALLOW_FILES = (
     "pyproject.toml", "uv.lock", "README.public.md", "GLOSSARY.md",
     "config/stockpilot.yaml", "config/fund_house_sources.json", "config/levels_calibration.json", "config/price_flag_reasons.json", "config/profile.example.yaml",

@@ -81,3 +81,22 @@ describe("kite flow against a fake Kite", () => {
     expect(secondsUntilSix(new Date("2026-11-23T12:30:00Z"))).toBe(12 * 3600);
   });
 });
+
+describe("V2: the callback creates a Sync job the page can follow", () => {
+  it("a completed login inserts a queued sync job in D1 and sends the browser to it", async () => {
+    const { localD1 } = await import("./d1.js");
+    const env = { ...mkEnv(), DB: localD1({ seed: false }) };
+    const r = await callback(ctx(`${O}/kite/callback?request_token=reqtok&status=success`, env));
+    const job = env.DB.db.prepare("select * from jobs where kind = 'sync'").all();
+    expect(job.length).toBe(1);
+    expect(job[0].status).toBe("queued");
+    expect(JSON.parse(job[0].payload)).toEqual({});
+    expect(r.headers.get("location")).toBe(`${O}/?synced=1&job=${job[0].id}`);
+  });
+  it("a refused login creates no job", async () => {
+    const { localD1 } = await import("./d1.js");
+    const env = { ...mkEnv(), DB: localD1({ seed: false }) };
+    await callback(ctx(`${O}/kite/callback?request_token=wrong`, env));
+    expect(env.DB.db.prepare("select count(*) as n from jobs").get().n).toBe(0);
+  });
+});

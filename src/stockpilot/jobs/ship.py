@@ -43,9 +43,24 @@ def token_list(cfg) -> list[dict]:
 def build_site(db, cfg, out: str = "site", today: date | None = None, now=None) -> dict:
     from stockpilot import site
     today = today or date.today()
-    return site.build(db, cfg.root / out, today=today, budget_inr=cfg.get("budget.monthly_default_inr", 100000),
+    meta = site.build(db, cfg.root / out, today=today, budget_inr=cfg.get("budget.monthly_default_inr", 100000),
                       liquidity_floor_cr=cfg.get("universe.liquidity_floor_cr", 1.0), pack_dir=pack_dir(cfg), now=now,
                       tokens=token_list(cfg))
+    ship_public_files(cfg, cfg.root / out)
+    return meta
+
+
+def ship_public_files(cfg, site_dir) -> None:
+    """Release assets send no CORS header, so the public data files (search index, universe table, funds, mechanical
+    results) ride along with the site. Off unless `public_data.repo` is set. A failure leaves the files already there."""
+    repo = cfg.get("public_data.repo")
+    if not repo:
+        return
+    from stockpilot.sources import public_files
+    try:
+        public_files.fetch_into(site_dir, repo)
+    except Exception:  # noqa: BLE001  a missing night of public data must not stop the dashboard deploying
+        pass
 
 
 def run_verify(m, day: date, *, write: bool = True) -> dict:

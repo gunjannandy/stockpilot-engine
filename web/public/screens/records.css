@@ -1,0 +1,12 @@
+/* T29: Holdings route filter, totals line and units check. Uses the deployed tokens only. */
+.uchk{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;padding:10px 14px;border-radius:12px;border:1px solid var(--line2);background:var(--c1);color:var(--on2);font-size:14px;line-height:1.45;max-width:88ch}
+.uchk .ms{font-size:20px;flex:none;margin-top:1px}
+.uchk b{color:var(--on);font-weight:700}
+.uchk.ok .ms{color:var(--gain)}
+.uchk.warn{border-color:color-mix(in oklab,var(--warn) 45%,var(--line2))}
+.uchk.warn .ms{color:var(--warn)}
+.uchk.route{display:block;background:var(--sel);border-color:transparent;color:var(--on)}
+.srcsw .sg{display:inline-flex;align-items:center;gap:6px}
+.srcsw .num{font-weight:600;opacity:.8}
+.srcwrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.srclbl{font-size:13px;font-weight:600;color:var(--on2)}

@@ -1,0 +1,215 @@
+[
+  {
+    "name": "portfolio",
+    "doc": {
+      "snapshot_at": "2026-11-25 18:00:00",
+      "headline": "Worth about ₹2.4 lakh.",
+      "total_value": 297000,
+      "holdings": [
+        {
+          "kind": "equity",
+          "class": "stocks",
+          "group": "stocks",
+          "symbol": "FIXA",
+          "name": "Fixture Alpha Ltd",
+          "quantity": 100,
+          "avg_cost": 1000,
+          "price": 1200,
+          "value": 120000,
+          "gain_pct": 0.2,
+          "verdict": null,
+          "lots": [
+            {
+              "acquired_on": "2024-03-04",
+              "quantity": 100,
+              "cost": 1000,
+              "days_held": 600,
+              "long_term": true,
+              "turns_long_term_on": "2025-03-05"
+            }
+          ],
+          "tax_note": "All long-term",
+          "probability": null,
+          "source": "lots",
+          "check": null,
+          "long_term": false,
+          "share": 0.404,
+          "by_source": {
+            "kite": 100,
+            "smallcase": 0
+          },
+          "lots_units": 100
+        },
+        {
+          "kind": "equity",
+          "class": "stocks",
+          "group": "stocks",
+          "symbol": "FIXB",
+          "name": "Fixture Beta Ltd",
+          "quantity": 60,
+          "avg_cost": 500,
+          "price": 450,
+          "value": 27000,
+          "gain_pct": -0.1,
+          "verdict": null,
+          "lots": [
+            {
+              "acquired_on": "2024-03-04",
+              "quantity": 60,
+              "cost": 500,
+              "days_held": 600,
+              "long_term": true,
+              "turns_long_term_on": "2025-03-05"
+            }
+          ],
+          "tax_note": "20 turn long-term on 5 Mar 2027",
+          "probability": null,
+          "source": "kite",
+          "check": "2 units are not in a lot yet; their cost is Kite's average price.",
+          "long_term": true,
+          "share": 0.0909,
+          "by_source": {
+            "kite": 20,
+            "smallcase": 40
+          },
+          "lots_units": 58
+        },
+        {
+          "kind": "equity",
+          "class": "stocks",
+          "group": "stocks",
+          "symbol": "FIXC",
+          "name": "Fixture Gamma Ltd",
+          "quantity": 50,
+          "avg_cost": 2000,
+          "price": 3000,
+          "value": 150000,
+          "gain_pct": 0.5,
+          "verdict": null,
+          "lots": [
+            {
+              "acquired_on": "2024-03-04",
+              "quantity": 50,
+              "cost": 2000,
+              "days_held": 600,
+              "long_term": true,
+              "turns_long_term_on": "2025-03-05"
+            }
+          ],
+          "tax_note": "All long-term",
+          "probability": null,
+          "source": "lots",
+          "check": null,
+          "long_term": false,
+          "share": 0.5051,
+          "by_source": {
+            "kite": 50,
+            "smallcase": 0
+          },
+          "lots_units": 50
+        }
+      ],
+      "allocation": {
+        "current": {
+          "stocks": 1.0
+        },
+        "labels": {
+          "stocks": "Indian stocks"
+        },
+        "approved": false
+      },
+      "budget": {},
+      "funds": {},
+      "opportunities": [],
+      "tax": {
+        "fy": "2026-27",
+        "realised_gain": 15000,
+        "harvest_room": 4000,
+        "notes": [
+          "Loss harvesting could save about ₹500 in tax."
+        ],
+        "schedule_fa": null,
+        "itr_pack": null
+      },
+      "rsu": null
+    },
+    "as_of": "2026-11-25",
+    "written_at": "2026-11-25T18:00:00+05:30"
+  },
+  {
+    "name": "smallcase",
+    "doc": {
+      "as_of": "2026-11-25",
+      "fees": {},
+      "months": [],
+      "lines": [
+        "Smallcase baskets made ₹1,000 more than the same buys on Kite."
+      ],
+      "notes": [
+        "Fees counted at the published rates."
+      ]
+    },
+    "as_of": "2026-11-25",
+    "written_at": "2026-11-25T18:00:00+05:30"
+  },
+  {
+    "name": "record",
+    "doc": {
+      "headline": "Our calls so far: 6 of 10 came true.",
+      "learning_lines": [
+        "Strong calls did better than fair ones."
+      ],
+      "calls": [
+        {
+          "symbol": "FIXA",
+          "action": "buy"
+        },
+        {
+          "symbol": "FIXB",
+          "action": "sell"
+        }
+      ]
+    },
+    "as_of": "2026-11-25",
+    "written_at": "2026-11-25T18:00:00+05:30"
+  },
+  {
+    "name": "own_record",
+    "doc": {
+      "as_of": "2026-11-25",
+      "closed": 10,
+      "winners": 6,
+      "losers": 4,
+      "win_rate": 60,
+      "avg_days_winners": 40,
+      "avg_days_losers": 70,
+      "sold_early": {
+        "share": 30
+      },
+      "vs_nifty": {
+        "share": 50,
+        "beat": 5,
+        "checked": 10
+      },
+      "by_month": [
+        {
+          "month": "2026-10",
+          "closed": 4,
+          "winners": 3,
+          "gain": 5000
+        },
+        {
+          "month": "2026-11",
+          "closed": 6,
+          "winners": 3,
+          "gain": -1000
+        }
+      ],
+      "lines": [
+        "You hold losers longer than winners."
+      ]
+    },
+    "as_of": "2026-11-25",
+    "written_at": "2026-11-25T18:00:00+05:30"
+  }
+]

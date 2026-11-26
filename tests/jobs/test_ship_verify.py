@@ -95,3 +95,28 @@ def test_run_verify_calls_sp_verify_with_write_access_and_returns_the_hard_failu
     got = ship.run_verify(m, NOW.date())
     assert seen["read_only"] is False and seen["db_path"] == m.db_path and seen["site"] == m.root / "site"
     assert got["hard_failed"] == 0 and "verify" in got["summary"]
+
+
+def test_build_site_ships_the_public_data_files_when_configured(tmp_path, monkeypatch):
+    """The browser cannot read release assets, so the deploy carries the public files (docs/contract/live-data-v2.md)."""
+    from datetime import date
+    from stockpilot import config
+    from stockpilot.sources import public_files
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "stockpilot.yaml").write_text("worker:\n  url: https://x.pages.dev\npublic_data:\n  repo: o/r\n")
+    seen = []
+    monkeypatch.setattr(public_files, "fetch_into", lambda site, repo, **k: seen.append((str(site), repo)) or [])
+    ship.build_site(seed_site(tmp_path / "sp.duckdb"), config.load(tmp_path), today=date(2026, 11, 22))
+    assert seen == [(str(tmp_path / "site"), "o/r")]
+
+
+def test_a_broken_public_fetch_does_not_stop_the_build(tmp_path, monkeypatch):
+    from datetime import date
+    from stockpilot import config
+    from stockpilot.sources import public_files
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "stockpilot.yaml").write_text("worker:\n  url: https://x.pages.dev\npublic_data:\n  repo: o/r\n")
+    def boom(*a, **k): raise RuntimeError("down")
+    monkeypatch.setattr(public_files, "fetch_into", boom)
+    meta = ship.build_site(seed_site(tmp_path / "sp.duckdb"), config.load(tmp_path), today=date(2026, 11, 22))
+    assert meta is not None

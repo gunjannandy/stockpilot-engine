@@ -132,11 +132,24 @@ def test_blocked_publish_pushes_nothing(tmp_path):
 import re
 from pathlib import Path
 
+# v2 data jobs: they run on the public repo, so they live here and not in .github/workflows/.
+DATA_JOBS = {f"{n}.yml" for n in (
+    "search-index", "stock-facts", "fund-universe", "fund-holdings", "news-collect",
+    "history-backfill", "history-daily", "mechanical-forecast", "screen-universe", "probe-t2")}
+# The only workflows that upload to a release (they need contents: write).
+RELEASE_PUBLISHERS = set(DATA_JOBS)
+ALLOWED_SECRETS = {"SP_INGEST_URL", "SP_INGEST_KEY"}
+
 WORKFLOWS = sorted((Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS).glob("*.yml"))
 
 
 def test_public_workflows_exist():
-    assert {w.name for w in WORKFLOWS} == {"ci.yml", "keep-alive.yml"}
+    assert {w.name for w in WORKFLOWS} == {"ci.yml", "keep-alive.yml", *DATA_JOBS}
+
+
+def test_data_jobs_no_longer_live_in_the_private_workflows_folder():
+    private = Path(__file__).parent.parent / ".github" / "workflows"
+    assert not [n for n in DATA_JOBS if (private / n).exists()]
 
 
 @pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda w: w.name)
@@ -152,14 +165,43 @@ def test_permissions_are_declared_and_minimal(wf):
     text = wf.read_text()
     top = text.split("\njobs:")[0]
     assert re.search(r"^permissions:", top, re.M), "top-level permissions missing"
-    assert "write-all" not in text and "contents: write" not in text
+    assert "write-all" not in text
+    if wf.name in RELEASE_PUBLISHERS:
+        assert re.search(r"^permissions:\n  contents: write\b[^\n]*(\n|$)", top, re.M), "release publisher must ask for contents: write only"
+    else:
+        assert "contents: write" not in text
 
 
 @pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda w: w.name)
 def test_public_repo_holds_no_cloudflare_token_and_does_not_deploy(wf):
     text = wf.read_text().lower()
-    for word in ("cloudflare", "wrangler", "secrets.", "pages deploy", "pull_request_target"):
+    for word in ("cloudflare", "wrangler", "pages deploy", "pull_request_target"):
         assert word not in text, word
+    assert set(re.findall(r"secrets\.(\w+)", wf.read_text())) <= ALLOWED_SECRETS
+
+
+def test_only_the_news_job_gets_the_ingest_secrets():
+    for wf in WORKFLOWS:
+        used = set(re.findall(r"secrets\.(\w+)", wf.read_text()))
+        assert used == (ALLOWED_SECRETS if wf.name == "news-collect.yml" else set()), wf.name
+
+
+def test_schedules_do_not_collide():
+    seen = {}
+    for wf in WORKFLOWS:
+        for cron in re.findall(r'^\s*- cron:\s*"([^"]+)"', wf.read_text(), re.M):
+            seen.setdefault(cron, []).append(wf.name)
+    assert all(len(v) == 1 for v in seen.values()), seen
+    # news every 15 minutes must not sit on the quarter hours the nightly jobs use
+    news = (Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS / "news-collect.yml").read_text()
+    minutes = re.search(r'cron:\s*"([^ ]+) ', news).group(1).split(",")
+    assert len(minutes) == 4 and not {"0", "15", "30", "45"} & set(minutes)
+
+
+def test_screen_universe_builds_and_publishes_the_table():
+    text = (Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS / "screen-universe.yml").read_text()
+    assert "stockpilot.sources.screen_table" in text and "data-latest" in text
+    assert "mechanical-latest" in text      # the chance column comes from the nightly mechanical file
 
 
 def test_keep_alive_is_scheduled():

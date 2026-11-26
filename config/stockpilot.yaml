@@ -11,6 +11,10 @@ worker:
   url: https://stockpilotgn.pages.dev
   project: stockpilotgn
 
+# Public market data built nightly on the public engine repo's Actions; the deploy copies it into the site (Pages serves it).
+public_data:
+  repo: gunjannandy/stockpilot-engine
+
 vault:
   remote: origin
   paths: [private, .env]   # not the DB: rebuilt from public data, and too big to gzip in RAM

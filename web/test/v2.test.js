@@ -341,8 +341,27 @@ describe("middleware", () => {
   });
 });
 
+describe("views_get (T29): the private screens' documents", () => {
+  it("returns the stored document for a known view, to either person", async () => {
+    for (const person of ["owner", "father"]) {
+      const r = await call(v2.viewsGet, "/api/v2/views/portfolio", { person, params: { name: "portfolio" } });
+      expect(r.status).toBe(200); ok("views_get", r.body);
+      expect(r.body.name).toBe("portfolio");
+      expect(r.body.doc.holdings.length).toBeGreaterThan(1);
+    }
+  });
+  it("serves all four views, 404 for an unknown or unwritten name, 401 for strangers", async () => {
+    for (const name of ["portfolio", "smallcase", "record", "own_record"]) expect((await call(v2.viewsGet, "", { params: { name } })).status, name).toBe(200);
+    expect((await call(v2.viewsGet, "", { params: { name: "secrets" } })).status).toBe(404);
+    env.DB.db.prepare("delete from views where name = 'record'").run();
+    expect((await call(v2.viewsGet, "", { params: { name: "record" } })).status).toBe(404);
+    expect((await call(v2.viewsGet, "", { person: null, params: { name: "portfolio" } })).status).toBe(401);
+    expect((await call(v2.viewsGet, "", { person: "stranger", params: { name: "portfolio" } })).status).toBe(401);
+  });
+});
+
 it("every route in the contract has a handler and a test above", () => {
-  const names = { jobs_create: "jobsCreate", jobs_get: "jobsGet", jobs_list: "jobsList", jobs_rerun: "jobsRerun", changes_list: "changesList", changes_seen: "changesSeen", call_get: "callGet", lists_get: "listsGet", quotes_get: "quotesGet", news_list: "newsList", og_image: "ogImage", feedback_create: "feedbackCreate", feedback_list: "feedbackList", ask_not_meant: "askNotMeant", ask_decide: "askDecide", budget_get: "budgetGet", ingest_write: "ingestWrite" };
+  const names = { jobs_create: "jobsCreate", jobs_get: "jobsGet", jobs_list: "jobsList", jobs_rerun: "jobsRerun", changes_list: "changesList", changes_seen: "changesSeen", call_get: "callGet", lists_get: "listsGet", quotes_get: "quotesGet", news_list: "newsList", og_image: "ogImage", feedback_create: "feedbackCreate", feedback_list: "feedbackList", ask_not_meant: "askNotMeant", ask_decide: "askDecide", budget_get: "budgetGet", ingest_write: "ingestWrite", views_get: "viewsGet" };
   expect(CONTRACT.routes.map((r) => r.id).sort()).toEqual(Object.keys(names).sort());
   for (const fn of Object.values(names)) expect(typeof v2[fn]).toBe("function");
 });

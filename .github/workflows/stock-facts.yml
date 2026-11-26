@@ -1,0 +1,42 @@
+name: stock-facts
+# Public job (runs in stockpilot-engine): NSE filings and yfinance only, nothing private. Weekly: results and
+# shareholding change slowly. Needs search/index.json from the search-index job (release data-latest).
+on:
+  schedule:
+    - cron: "30 20 * * 6"    # Sunday 02:00 IST
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Only the first N stocks (a trial run)"
+        required: false
+permissions:
+  contents: write
+concurrency:
+  group: stock-facts
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Fetch the search index
+        run: mkdir -p out/search
+          gh release download data-latest -p search-index.json -O out/search/index.json --clobber
+      - name: Build the facts
+        run: uv run python -m stockpilot.sources.facts_sources out/search/index.json out/facts ${{ inputs.limit }} | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Check coverage is not collapsed
+        run: |
+          python3 - <<'PY'
+          import json
+          c = json.load(open("out/facts/facts-coverage.json"))
+          assert c["with_facts"] > 0.5 * c["universe"], c
+          PY
+      - name: Publish to the data-latest release
+        run: |
+          tar -czf out/stock-facts.tar.gz -C out/facts .
+          gh release upload data-latest out/stock-facts.tar.gz out/facts/facts-coverage.json --clobber

@@ -1,0 +1,43 @@
+name: screen-universe
+# Public job (runs in stockpilot-engine): market data only, nothing private. Builds the universe table the "Every stock"
+# screen loads (screen/universe.json, PR #93): the search index, the weekly stock facts and the latest nightly mechanical
+# result, joined into one columns file, attached to the rolling release `data-latest`. Runs after mechanical-forecast
+# (22:00 IST); the deploy-time fetch (src/stockpilot/sources/public_files.py) ships it to Pages.
+on:
+  schedule:
+    - cron: "40 17 * * *"    # 23:10 IST, after mechanical-forecast on weekdays; weekends pick up the new weekly facts
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: screen-universe
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Restore the search index, the stock facts and the newest mechanical file
+        run: |
+          mkdir -p out/search out/facts out/mechanical
+          gh release download data-latest -p search-index.json -O out/search/index.json --clobber
+          gh release download data-latest -p stock-facts.tar.gz -D out || true
+          [ -f out/stock-facts.tar.gz ] && tar -xzf out/stock-facts.tar.gz -C out/facts || echo "no stock facts yet: the table will have empty P/E and size columns"
+          latest=$(gh release view mechanical-latest --json assets --jq '[.assets[].name | select(test("^20[0-9-]+\\.json$"))] | sort | last' || true)
+          [ -n "$latest" ] && [ "$latest" != "null" ] && gh release download mechanical-latest -p "$latest" -O out/mechanical/latest.json --clobber || echo "no mechanical file yet: no chance column"
+      - name: Build the table
+        run: uv run python -m stockpilot.sources.screen_table out/search/index.json out/facts out/mechanical/latest.json out/universe.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Check it is not shrunk
+        run: |
+          python3 - <<'PY'
+          import json
+          t = json.load(open("out/universe.json"))
+          assert t["n"] > 5000 and len(t["symbol"]) == t["n"], t["n"]
+          PY
+      - name: Publish to the data-latest release
+        run: gh release upload data-latest out/universe.json --clobber

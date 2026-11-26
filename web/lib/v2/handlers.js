@@ -41,6 +41,9 @@ async function insertJob(db, kind, payload, askedBy, now) {
   return id;
 }
 
+// The Kite callback's job: the owner just logged in, so the VM reads holdings and the page follows the lines.
+export const addSyncJob = (db, now = new Date()) => insertJob(db, "sync", {}, "owner", now);
+
 export async function jobsCreate(ctx) {
   const { role, fail } = needPerson(ctx); if (fail) return fail;
   const body = await readJson(ctx.request);
@@ -127,6 +130,16 @@ export async function listsGet(ctx) {
      where l.list_name = ? order by l.rank, l.symbol`).bind(param(ctx, "name")).all();
   const items = results.map(({ out_of_date, call, chance_3m, ...r }) => ({ ...r, call: call ?? null, chance_3m: chance_3m ?? null, out_of_date: bool(out_of_date) }));
   return json({ list_name: param(ctx, "name"), items });
+}
+
+// T29: the private screens (Holdings, Tax, records) read one stored document each. Names are fixed by the contract.
+export async function viewsGet(ctx) {
+  const { fail } = needPerson(ctx); if (fail) return fail;
+  const name = param(ctx, "name");
+  if (!contract.tables.views.columns.name.slice(5, -1).split("|").includes(name)) return json({ error: "not_found" }, 404);
+  const row = await ctx.env.DB.prepare("select name, doc, as_of, written_at from views where name = ?").bind(name).first();
+  if (!row) return json({ error: "not_found" }, 404);
+  return json({ ...row, doc: parse(row.doc) ?? {} });
 }
 
 export async function quotesGet(ctx) {

@@ -1,0 +1,46 @@
+name: mechanical-forecast
+# Public job (runs in stockpilot-engine): exchange price files only, nothing private. Reads the all-time history from the
+# release `history-prices`, fits the number-only forecast, tests it walk-forward, and attaches the nightly results file and
+# the report to the rolling release `mechanical-latest`. Runs after history-daily (21:00 IST); the 22:00 IST start sits
+# inside the forecast window the build lanes keep clear of.
+on:
+  schedule:
+    - cron: "30 16 * * 1-5"    # 22:00 IST on weekdays
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: mechanical-forecast
+  cancel-in-progress: false
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Restore the last nine years of prices
+        run: |
+          year=$(date -u +%Y)
+          for y in $(seq $((year - 9)) $year); do
+            gh release download history-prices -D out/history -p "prices-*-$y.parquet" || true
+          done
+          ls out/history | head -50
+      - name: Fit, test and write the files
+        run: uv run python -m stockpilot.mechanical.run --history out/history --out out/site | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Check the run is not empty
+        run: |
+          python3 - <<'PY'
+          import glob, json
+          f = sorted(f for f in glob.glob("out/site/mechanical/20*.json") if "report" not in f)[-1]
+          d = json.load(open(f))
+          assert d["universe_count"] > 1500, d["universe_count"]
+          assert 0.6 < d["observed_coverage"] < 0.95, d["observed_coverage"]
+          PY
+      - name: Publish to the mechanical-latest release
+        run: |
+          gh release view mechanical-latest >/dev/null 2>&1 || gh release create mechanical-latest --title "Latest mechanical forecast" --notes "Rolling public forecast files. Nothing private."
+          gh release upload mechanical-latest out/site/mechanical/* --clobber

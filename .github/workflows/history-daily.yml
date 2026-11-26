@@ -1,0 +1,38 @@
+name: history-daily
+# Public job: exchange daily files only, nothing private. Adds the newest trading day to the history files on the release
+# `history-prices`. It also re-asks the last five days that had no data yet (NSE publishes UDiFF after about 19:00 IST,
+# BSE can lag), so a late file is picked up the next evening. Running it twice changes nothing. The upload counts as
+# activity, which keeps GitHub from switching scheduled runs off.
+on:
+  schedule:
+    - cron: "30 15 * * 1-5"    # 21:00 IST on weekdays, after the exchanges publish
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: history
+  cancel-in-progress: false
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Restore this and last year's files
+        run: |
+          year=$(date -u +%Y)
+          for y in $year $((year - 1)); do
+            gh release download history-prices -D out/history -p "prices-*-$y.parquet" -p "checked-*-$y.parquet" || true
+          done
+          gh release download history-prices -D out/history -p corporate_actions.parquet || true
+      - name: Add the new day
+        run: uv run python -m stockpilot.sources.history daily --actions --dir out/history | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Attach to the release
+        run: |
+          year=$(date -u +%Y)
+          gh release upload history-prices out/history/*-$year.parquet out/history/corporate_actions.parquet --clobber
+          ls out/history/*-$((year - 1)).parquet >/dev/null 2>&1 && gh release upload history-prices out/history/*-$((year - 1)).parquet --clobber || true

@@ -109,9 +109,9 @@ def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, no
         runs_on = CONTRACT["job_kinds"].get(row["kind"], {}).get("runs_on")
         if runs_on == "github_public":
             began += _start_github(sink, row, start_github, now)
-        elif runs_on == "vm_model" and row["kind"] in handlers and now() - started < timedelta(seconds=budget_s):
+        elif runs_on in ("vm_model", "vm_private") and row["kind"] in handlers and now() - started < timedelta(seconds=budget_s):
             _adopt(sink, row)
-            runner = JobRunner(sink, model=chain_for(row["kind"], make_backend), clock=now)
+            runner = JobRunner(sink, model=chain_for(row["kind"], make_backend) if row["kind"] in CHAINS else None, clock=now)
             runner.register(row["kind"], handlers[row["kind"]])
             runner.run(row["id"])
             ran += 1
@@ -216,6 +216,20 @@ def gh_starter(workflows: dict, run=subprocess.run, repo="gunjannandy/stockpilot
     return start
 
 
+def _handlers(cfg) -> dict:
+    """Kinds the VM runs itself: `analyse` through the model chain, `sync` through the Worker's Kite read."""
+    from stockpilot import store
+    from stockpilot.jobs import sync
+    from stockpilot.sources import kite
+    handlers = {"analyse": ask_handler(ANALYSE_PROMPT)}
+    key, url = cfg.secret("SP_VM_KEY"), cfg.get("worker.url")
+    if key and url:
+        path = cfg.root / cfg.get("store.path", "data/stockpilot.duckdb")
+        handlers["sync"] = sync.handler(lambda: store.open(path, job="sync", wait_s=120), kite.Worker(url, key),
+                                        close=lambda db: db.close())
+    return handlers
+
+
 def run(cfg) -> int:
     """One firing wired for production. Imports stay inside so an unconfigured or idle firing is as small as it can be."""
     import json
@@ -247,7 +261,7 @@ def run(cfg) -> int:
     query = cloudflare_query(account, database, token)
     out = tick(D1Source(query), SqliteSink(D1Db(query)),
                make_backend=lambda name: CliBackend(name, env={**env, **(cfg.get(f"minute.env.{name}", {}) or {})}),
-               handlers={"analyse": ask_handler(ANALYSE_PROMPT)},
+               handlers=_handlers(cfg),
                start_github=gh_starter(cfg.get("minute.workflows", {}) or {}), alarm=alarm, state=state,
                now=lambda: datetime.now(IST))
     if out["alarm"]:

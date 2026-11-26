@@ -11,7 +11,12 @@ function loadWords() {
   const win = { SP_WORDS: null };
   const ctx = { window: win, document: doc, localStorage: { getItem: () => null, setItem: noop }, matchMedia: () => ({ matches: false }), location: { hash: "" }, console, addEventListener: noop, removeEventListener: noop, setTimeout: noop, requestAnimationFrame: noop, innerWidth: 1280, navigator: {}, fetch: () => new Promise(noop) };
   win.window = win;
+  // T22: the stock screen's own words live in screens/stock.js; app.js merges them, so the gate loads that file first.
+  vm.runInNewContext(readFileSync(new URL("../public/screens/stock.js", import.meta.url), "utf8"), ctx);
   vm.runInNewContext(src, ctx);
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync(new URL("../public/screens/worth.js", import.meta.url), "utf8"), ctx);   // screens add their words first
+  vm.runInContext(src, ctx);
   return win.SP_WORDS;
 }
 

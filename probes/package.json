@@ -1,0 +1,7 @@
+{
+  "name": "stockpilot-probes",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "^3.2.0", "miniflare": "^3.20250408.0" }
+}
