@@ -1096,7 +1096,7 @@ Object.assign(W.bn, {
 });
 Object.assign(DOTS, { holdings: ["portfolio"], tax: ["portfolio"], tradrec: ["own_record"], record: ["record"] });
 NAV.length = 0;
-NAV.push(["today", "wb_sunny"], ["holdings", "account_balance_wallet"], ["follow", "star"], ["universe", "table_rows"], ["watchlist", "visibility"], ["ideas", "query_stats"], ["funds", "savings"]);
+NAV.push(["today", "wb_sunny"], ["holdings", "account_balance_wallet"], ["follow", "star"], ["universe", "table_rows"], ["watchlist", "visibility"], ["ideas", "query_stats", "desk"], ["funds", "savings", "desk"]);
 const NAVQ = [["market", "newspaper", "desk"], ["tax", "receipt_long", "desk"], ["tradrec", "history", "desk"], ["record", "fact_check", "desk"]];
 
 renderRail = function () {
@@ -1111,7 +1111,7 @@ renderRail = function () {
    <div class="rail-foot">${w("upd")} ${esc((m.built_at || "").slice(11, 16))}${m.holdings?.days_old != null ? `<br>${w("synced")} ${w("ago", m.holdings.days_old)}` : ""}</div>`;
 };
 openMore = function () {
-  document.body.insertAdjacentHTML("beforeend", `<div id="scrim"></div><nav id="more" aria-label="${esc(w("moreNav"))}"><div class="grab"></div>${[["market", "newspaper"], ["tax", "receipt_long"], ["tradrec", "history"], ["record", "fact_check"], ...(window.SPJobs ? [["jobs", "schedule"]] : []), ["settings", "settings"], ["feedback", "rate_review"], ["health", "monitor_heart"]].map(([k, ic]) => `<a class="nav" href="#${k}"><span class="ms">${ic}</span><span>${w(k)}</span></a>`).join("")}</nav>`);
+  document.body.insertAdjacentHTML("beforeend", `<div id="scrim"></div><nav id="more" aria-label="${esc(w("moreNav"))}"><div class="grab"></div>${[["ideas", "query_stats"], ["funds", "savings"], ["market", "newspaper"], ["tax", "receipt_long"], ["tradrec", "history"], ["record", "fact_check"], ...(window.SPJobs ? [["jobs", "schedule"]] : []), ["settings", "settings"], ["feedback", "rate_review"], ["health", "monitor_heart"]].map(([k, ic]) => `<a class="nav" href="#${k}"><span class="ms">${ic}</span><span>${w(k)}</span></a>`).join("")}</nav>`);
 };
 
 Object.assign(W.en, {
