@@ -36,12 +36,12 @@ class TagModel:
 
 
 # --- tagging --------------------------------------------------------------------------------------------
-def test_tags_in_batches_of_about_30():
+def test_tags_in_batches_of_about_10():
     raw = [{"id": f"n{i}", "title": f"T{i}", "source": "ET"} for i in range(65)]
     model = TagModel()
     tags = news_tag.tag_all(raw, model)
-    assert [len(b) for b in news_tag.batches(raw)] == [30, 30, 5]
-    assert len(model.prompts) == 3 and len(tags) == 65
+    assert [len(b) for b in news_tag.batches(raw)] == [10] * 6 + [5]
+    assert len(model.prompts) == 7 and len(tags) == 65
 
 
 def test_second_model_takes_over_when_the_first_fails():

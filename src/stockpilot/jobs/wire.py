@@ -18,13 +18,14 @@ from pathlib import Path
 from typing import Callable
 
 from stockpilot.jobrun import CONTRACT, IST, JobFailed
+from stockpilot.modeljson import json_in
 
 ROOT = Path(__file__).resolve().parents[3]
 PROMPTS = ROOT / "prompts"
 PEOPLE = ("owner", "father")
 MOVE_POINTS = 0.05                  # a chance that moves this far (5 points) is a change both people should see
 NEWS_DAYS = 14                      # news older than this stays out of a forecast brief
-TAG_BATCH = 30
+TAG_BATCH = 10                      # same as news_tag.BATCH (a test holds them equal); not imported, the idle path stays small
 
 # ---- GitHub kinds: the workflow file each one starts, and how its payload becomes workflow inputs ---------------------
 WORKFLOWS = {
@@ -82,21 +83,7 @@ def _prompt(name: str) -> str:
     return (PROMPTS / f"{name}.md").read_text()
 
 
-def _json_in(text: str):
-    """The first JSON value in a model's answer (it may wrap it in a code fence or a sentence)."""
-    text = (text or "").strip()
-    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
-    if fence:
-        text = fence.group(1).strip()
-    try:
-        return json.loads(text)
-    except ValueError:
-        pass
-    start = min((i for i in (text.find("{"), text.find("[")) if i >= 0), default=-1)
-    if start < 0:
-        raise ValueError("no JSON in the answer")
-    value, _ = json.JSONDecoder().raw_decode(text[start:])
-    return value
+_json_in = json_in
 
 
 # ---- analyse and refresh_call ---------------------------------------------------------------------------------------
@@ -445,19 +432,19 @@ def handlers(deps: Deps) -> dict:
 
 
 # ---- what the one-minute check enqueues on its own -----------------------------------------------------------------
-def schedule(seen: dict, source, enqueue, now: datetime, ran_tag: bool = False) -> list[str]:
+def schedule(seen: dict, source, enqueue, now: datetime, ran_tag: bool = False, skip=()) -> list[str]:
     """Jobs nobody presses a button for. Returns the kinds enqueued.
       weekly_review  on Saturdays (IST) from 07:00, once a week;
-      news_tag       when untagged news waits and no tag job is open (one batch of 30 a firing);
+      news_tag       when untagged news waits and no tag job is open (one batch of 10 a firing; not while its kind is backing off after failures);
       news_rank      after a tag job finished this firing."""
     made = []
     local = now.astimezone(IST)
     last = seen.get("last_weekly")
-    if local.weekday() == 5 and local.hour >= 7 and not (last and datetime.fromisoformat(last).astimezone(IST).date() == local.date()):
+    if "weekly_review" not in skip and local.weekday() == 5 and local.hour >= 7 and not (last and datetime.fromisoformat(last).astimezone(IST).date() == local.date()):
         enqueue("weekly_review", {}, "system")
         made.append("weekly_review")
     open_kinds = set(seen.get("open_kinds") or ())
-    if seen.get("untagged") and "news_tag" not in open_kinds:
+    if seen.get("untagged") and "news_tag" not in open_kinds and "news_tag" not in skip:
         batch = source.untagged()
         if batch:
             enqueue("news_tag", {"batch": batch}, "system")

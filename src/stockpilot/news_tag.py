@@ -1,10 +1,11 @@
-"""Tag new public news in batches of about 30 (ticket T18). Public side: it sees headlines only, never an owner's list.
+"""Tag new public news in batches of about 10 (ticket T18). Public side: it sees headlines only, never an owner's list.
 
 The first model tags; if it fails or answers badly the fallback gets the same batch. Each tag has the sector, direction,
 impact 1 to 5, one plain line in English and Bengali, and the stocks touched (rivals and suppliers too)."""
-import json
+from stockpilot.jobrun import JobFailed
+from stockpilot.modeljson import json_in
 
-BATCH = 30
+BATCH = 10                      # a haiku call on 2 headlines took 52 s on the VM; 10 fits the unit's time
 RELATIONS = ("self", "rival", "supplier", "customer", "sector")
 DIRECTIONS = ("good", "bad", "mixed")
 SIZES = ("small", "medium", "large")
@@ -32,7 +33,7 @@ def _clean(tag: dict) -> dict:
 
 def _ask(model, batch: list) -> list[dict]:
     lines = "\n".join(f"id:{it['id']}|{it['title']}|{it['source']}" for it in batch)
-    got = json.loads(model.ask(PROMPT + lines))
+    got = json_in(model.ask(PROMPT + lines))
     wanted = {it["id"] for it in batch}
     tags = [_clean(t) for t in got if isinstance(t, dict) and t.get("id") in wanted]
     if {t["id"] for t in tags} != wanted:
@@ -45,7 +46,9 @@ def tag_all(items: list, model, fallback=None) -> list[dict]:
     for batch in batches(items):
         try:
             out += _ask(model, batch)
-        except Exception:  # noqa: BLE001 - any failure hands the batch to the next model
+        except JobFailed:                      # the whole chain was tried (Haiku last): asking Haiku again only burns quota
+            raise
+        except Exception:  # noqa: BLE001 - a bad answer hands the batch to the next model
             if fallback is None:
                 raise
             out += _ask(fallback, batch)

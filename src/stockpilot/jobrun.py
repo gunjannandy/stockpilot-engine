@@ -7,6 +7,7 @@ not IST, an unknown state, a job that goes backwards. Secrets are scrubbed from 
 caller passes; tests pass a fake, and a job that needs one with none given fails in plain words and spends nothing."""
 import json
 import re
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,6 +24,9 @@ TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+05:30$")
 GENERIC = "Something went wrong and the owner has been told. Try again later."
 GENERIC_BN = "কিছু একটা গোলমাল হয়েছে। পরে আবার চেষ্টা করুন।"
 NO_MODEL = "No model is available for this job. Try again later."
+
+
+_URL = re.compile(r"https?://\S+")
 
 
 class BadJob(ValueError):
@@ -226,6 +230,7 @@ class JobRunner:
             self.sink.update_job(job_id, status="done", result=result, finished_at=self._now())
         except Exception as err:  # noqa: BLE001 - every failure becomes plain words on the job
             text, text_bn = (err.text, err.text_bn) if isinstance(err, JobFailed) else (GENERIC, GENERIC_BN)
+            print(f"job {job_id} ({job['kind']}) failed: " + _URL.sub("[url]", scrub(f"{type(err).__name__}: {err}"))[:500], file=sys.stderr)
             text, text_bn = scrub(text), scrub(text_bn) if text_bn else None
             self.line(job_id, "fail", text, text_bn)
             self.sink.update_job(job_id, status="failed", error=text, error_bn=text_bn, finished_at=self._now())

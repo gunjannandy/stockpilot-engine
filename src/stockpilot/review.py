@@ -12,6 +12,7 @@ from pathlib import Path
 from stockpilot import house_rules, trackrecord
 from stockpilot.forecast_form import ADJUST_AREAS, ITEM_CAP
 from stockpilot.jobrun import JobFailed
+from stockpilot.modeljson import json_in
 
 PROMPT = Path(__file__).resolve().parents[2] / "prompts" / "weekly_review.md"
 MAX_PROPOSALS = 3
@@ -57,9 +58,7 @@ def prompt(d: dict) -> str:
 
 
 def _parse(answer) -> list[dict]:
-    text = str(answer or "").strip()
-    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
-    got = json.loads(text)
+    got = json_in(answer)
     if not isinstance(got, dict) or not isinstance(got.get("proposals"), list):
         raise ValueError("no proposals list")
     return got["proposals"]

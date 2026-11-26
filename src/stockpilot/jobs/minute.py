@@ -4,12 +4,15 @@ One firing: ask the job source for queued work (one cheap read; nothing queued m
 `JobRunner` with a fallback `Chain`, start GitHub jobs through the injected `start_github`, and raise the stale-pipeline
 alarm through the injected `alarm`. Model order: forecasts Sonnet then Gemini, then a plain "usage is used up" message;
 tagging and reading feedback Gemini account A, then B, then Haiku. All I/O is injected, so tests use fakes and spend nothing."""
+import re
 import subprocess
+import sys
 import tempfile
 from datetime import datetime, timedelta
 
 from stockpilot.jobrun import CONTRACT, IST, JobFailed, JobRunner
 from stockpilot.jobs import wire
+from stockpilot.jobs.vmjobs import scrub
 
 QUOTA = "Usage is used up. Try again in about an hour."
 QUOTA_BN = "ব্যবহারের সীমা শেষ। প্রায় এক ঘণ্টা পরে আবার চেষ্টা করুন।"
@@ -29,21 +32,45 @@ class Refused(Exception):
     """A model said no for quota or load reasons; the chain moves on."""
 
 
+class Unavailable(Exception):
+    """A backend cannot answer now for a reason of its own (not logged in, no binary, bad exit); the chain moves on."""
+
+
+NOT_ANSWERED = "The models could not answer just now. The owner has been told."
+NOT_ANSWERED_BN = "মডেল এখন উত্তর দিতে পারেনি। মালিককে জানানো হয়েছে।"
+
+
+URL = re.compile(r"https?://\S+")
+
+
+def log_error(where: str, err: BaseException) -> None:
+    """The real reason, for journalctl: type and message, secrets and every URL hidden. Never reaches a job line."""
+    text = URL.sub("[url]", scrub(f"{type(err).__name__}: {err}"))
+    print(f"{where}: {text[:500]}", file=sys.stderr)
+
+
 class Chain:
-    """Ask each backend in order; the first answer wins. A refusal moves on; when all refuse the job fails in plain words."""
+    """Ask each backend in order; the first answer wins. Any failure of one backend (quota, not logged in, bad exit, no binary)
+    moves on. When all fail the job fails in plain words: the usage message if every one refused, else a plain "could not answer"."""
 
     def __init__(self, backends):
         self.backends, self.used = backends, None
 
     def ask(self, prompt):
+        refused_only = True
         for backend in self.backends:
             try:
                 answer = backend.ask(prompt)
-            except Refused:
+            except Refused as err:
+                log_error(f"backend {getattr(backend, 'name', '?')}", err)
+                continue
+            except Exception as err:  # noqa: BLE001 - one backend failing must never fail the job while another is left
+                refused_only = False
+                log_error(f"backend {getattr(backend, 'name', '?')}", err)
                 continue
             self.used = backend.name
             return answer
-        raise JobFailed(QUOTA, QUOTA_BN)
+        raise JobFailed(QUOTA, QUOTA_BN) if refused_only else JobFailed(NOT_ANSWERED, NOT_ANSWERED_BN)
 
 
 def chain_for(kind: str, make, payload: dict | None = None) -> Chain:
@@ -53,35 +80,82 @@ def chain_for(kind: str, make, payload: dict | None = None) -> Chain:
     return Chain([make(name) for name in names])
 
 
-class CliBackend:
-    """One model through its command line, in an empty folder, prompt on stdin. A quota or load message is a `Refused`."""
-    MODELS = {"sonnet": ["claude", "-p", "--model", "sonnet"], "haiku": ["claude", "-p", "--model", "haiku"],
-              "gemini-a": ["agy", "-p"], "gemini-b": ["agy", "-p"]}
+TIMEOUTS = {"sonnet": 170, "haiku": 170, "gemini-a": 75, "gemini-b": 75}   # seconds; agy waits 60 s for a login before it gives up
+START_BUDGET_S = 150                  # no new model job starts after this many seconds of one firing
+LEAN_CLAUDE = ["--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
+               "--setting-sources", "project"]          # no tools, no MCP, no user settings: a cheaper start; auth stays the setup token
+AUTH_WORDS = ("authentication required", "authentication failed", "not logged in", "please log in", "login required")
+DOWN_FOR = timedelta(minutes=30)
+BACKOFF_STEP, BACKOFF_MAX = timedelta(minutes=5), timedelta(hours=6)
 
-    def __init__(self, name, env=None, run=subprocess.run, timeout=290):
-        self.name, self.env, self.run, self.timeout = name, env or {}, run, timeout
+
+def _binary(name: str) -> str:
+    return "agy" if name.startswith("gemini") else "claude"
+
+
+class CliBackend:
+    """One model through its command line, in an empty folder. `claude` reads the prompt on stdin; `agy` takes it as the value
+    of -p. A quota or load message is a `Refused`; a login prompt or missing binary marks that binary down for 30 minutes in
+    `state` so the next backend and the next firing do not wait on it again."""
+
+    def __init__(self, name, env=None, run=subprocess.run, timeout=None, state=None, now=None):
+        self.name, self.env, self.run, self.timeout = name, env or {}, run, timeout or TIMEOUTS[name]
+        self.state = state if state is not None else {}
+        self.now = now or (lambda: datetime.now(IST))
+
+    def command(self, prompt):
+        if self.name in ("sonnet", "haiku"):
+            return ["claude", "-p", "--model", self.name, *LEAN_CLAUDE], prompt
+        return ["agy", "-p", prompt], None
+
+    def _mark_down(self):
+        self.state.setdefault("backend_down", {})[_binary(self.name)] = (self.now() + DOWN_FOR).isoformat()
 
     def ask(self, prompt):
+        until = self.state.get("backend_down", {}).get(_binary(self.name))
+        if until and self.now() < datetime.fromisoformat(until):
+            raise Refused(f"{self.name}: {_binary(self.name)} is marked down until {until}")
+        argv, stdin = self.command(prompt)
         with tempfile.TemporaryDirectory(prefix="sp-min-") as empty:
             try:
-                done = self.run(self.MODELS[self.name], cwd=empty, env=self.env, input=prompt, capture_output=True, text=True,
-                                timeout=self.timeout)
+                done = self.run(argv, cwd=empty, env=self.env, input=stdin, capture_output=True, text=True, timeout=self.timeout)
             except subprocess.TimeoutExpired as err:
                 raise Refused(self.name) from err
             except OSError as err:
-                raise Refused(self.name) from err
+                self._mark_down()
+                raise Unavailable(f"{self.name}: {err}") from err
         text = (done.stdout or "") + (done.stderr or "")
         if done.returncode != 0:
-            if any(w in text.lower() for w in REFUSAL_WORDS):
+            low = text.lower()
+            if any(w in low for w in AUTH_WORDS):
+                self._mark_down()
+                raise Unavailable(f"{self.name} is not logged in")
+            if any(w in low for w in REFUSAL_WORDS):
                 raise Refused(self.name)
-            raise RuntimeError(f"{self.name} exited {done.returncode}")
-        return done.stdout.strip()
+            raise Unavailable(f"{self.name} exited {done.returncode}: {(done.stderr or '').strip()[:200]}")
+        return (done.stdout or "").strip()
 
 
 GITHUB_FAIL = "Could not start this on GitHub. The owner has been told."
 STALE_AFTER = timedelta(hours=26)
 ALARM_EVERY = timedelta(hours=6)
 STALE_TEXT = "The nightly market job has not finished in over a day. Numbers on the site may be old."
+
+
+def backed_off(state, kind, now) -> bool:
+    until = state.get("backoff", {}).get(kind, {}).get("until")
+    return bool(until) and now < datetime.fromisoformat(until)
+
+
+def note_failure(state, kind, now):
+    """A model job of this kind failed: wait 5 min, then 10, 20 ... up to 6 hours, before the next try."""
+    fails = state.setdefault("backoff", {}).get(kind, {}).get("fails", 0) + 1
+    wait = min(BACKOFF_STEP * 2 ** (fails - 1), BACKOFF_MAX)
+    state["backoff"][kind] = {"fails": fails, "until": (now + wait).isoformat()}
+
+
+def note_success(state, kind):
+    state.get("backoff", {}).pop(kind, None)
 
 
 def ask_handler(template: str):
@@ -99,7 +173,7 @@ def _stale(last_nightly, now, state) -> bool:
     return not last or now - datetime.fromisoformat(last) >= ALARM_EVERY
 
 
-def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, now, budget_s=240, enqueue=None,
+def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, now, budget_s=START_BUDGET_S, enqueue=None,
          check_github=None) -> dict:
     """One firing. `source.pending()` is the only read when nothing is happening:
     `{"queued": [rows], "last_nightly": time or None}` plus, when the source has them, `running_github` (started GitHub jobs to
@@ -116,15 +190,22 @@ def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, no
         if runs_on == "github_public":
             began += _start_github(sink, row, start_github, now)
         elif runs_on in ("vm_model", "vm_private") and row["kind"] in handlers and now() - started < timedelta(seconds=budget_s):
+            if row["kind"] in CHAINS and backed_off(state, row["kind"], started):
+                continue                                          # failed lately: stays queued, no quota spent until the wait is over
             _adopt(sink, row)
             runner = JobRunner(sink, model=chain_for(row["kind"], make_backend, row["payload"]) if row["kind"] in CHAINS else None, clock=now)
             runner.register(row["kind"], handlers[row["kind"]])
             runner.run(row["id"])
             ran += 1
+            if row["kind"] in CHAINS:
+                if sink.jobs[row["id"]]["status"] == "done":
+                    note_success(state, row["kind"])
+                else:
+                    note_failure(state, row["kind"], now())
             tagged = tagged or (row["kind"] == "news_tag" and sink.jobs[row["id"]]["status"] == "done")
     made = []
     if enqueue is not None:
-        made = wire.schedule(seen, source, enqueue, started, ran_tag=tagged)
+        made = wire.schedule(seen, source, enqueue, started, ran_tag=tagged, skip=tuple(k for k in CHAINS if backed_off(state, k, started)))
     raised = _stale(seen.get("last_nightly"), started, state)
     if raised:
         alarm(STALE_TEXT)
@@ -338,7 +419,7 @@ def run(cfg) -> int:
 
     query = cloudflare_query(account, database, token)
     sink, now = SqliteSink(D1Db(query)), (lambda: datetime.now(IST))
-    make = lambda name: CliBackend(name, env={**env, **(cfg.get(f"minute.env.{name}", {}) or {})})  # noqa: E731
+    make = lambda name: CliBackend(name, env={**env, **(cfg.get(f"minute.env.{name}", {}) or {})}, state=state)  # noqa: E731
     enqueue = lambda kind, payload, by: JobRunner(sink, clock=now).enqueue(kind, payload, by)  # noqa: E731
     deps = wire.production_deps(cfg, query, now, state, enqueue, make)
     workflows = {**wire.WORKFLOWS, **(cfg.get("minute.workflows", {}) or {})}
