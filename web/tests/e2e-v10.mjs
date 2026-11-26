@@ -31,6 +31,9 @@ if (!remote) {
     const sk = /^\/stock\/([^/]+)\.json$/.exec(url.pathname); if (sk) url.pathname = "/data/stock/" + sk[1] + ".json";   // T22: the stock page reads /stock/<symbol>.json
     if (url.pathname === "/api/queue" && req.method === "GET") { res.setHeader("content-type", "application/json"); return res.end('{"items":[]}'); }
     if (url.pathname === "/api/queue" && req.method === "POST") { let b = ""; req.on("data", d => b += d); return req.on("end", () => { const j = JSON.parse(b); posted.push(j); res.setHeader("content-type", "application/json"); if (capAsk && j.kind === "ask_analyst") { res.statusCode = 429; return res.end('{"error":"cap"}'); } res.end('{"id":1}'); }); }
+    // BROWSERFIX: the page's buttons post D1 jobs (/api/v2/jobs) and feedback (/api/v2/feedback); record them as { kind, payload }
+    if ((url.pathname === "/api/v2/jobs" || url.pathname === "/api/v2/feedback") && req.method === "POST") { let b = ""; req.on("data", d => b += d); return req.on("end", () => { const j = JSON.parse(b); const q = url.pathname === "/api/v2/feedback" ? { kind: "feedback", payload: j } : j; posted.push(q); res.setHeader("content-type", "application/json"); if (capAsk && q.kind === "analyse") { res.statusCode = 429; return res.end('{"error":"cap"}'); } res.end('{"id":"job_1"}'); }); }
+    if (url.pathname === "/api/v2/jobs") { res.setHeader("content-type", "application/json"); return res.end('{"jobs":[]}'); }
     if (url.pathname.startsWith("/api/queue/")) return res.end("{}");
     const file = path.join(target, url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname));
     if (!file.startsWith(path.resolve(target)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end("no"); }

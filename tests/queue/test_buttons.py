@@ -114,3 +114,21 @@ def test_the_kv_queue_is_ready_to_retire_only_after_a_quiet_week_with_nothing_wa
     assert not vmqueue.retire_ready(StatusWorker(200, {"last_call_at": "2026-12-05T09:00:00.000Z", "pending": 0}), now)[0]
     assert not vmqueue.retire_ready(StatusWorker(200, {"last_call_at": None, "pending": 2}), now)[0]
     assert not vmqueue.retire_ready(StatusWorker(500, {}), now)[0]
+
+
+def test_every_button_the_page_posts_is_accepted_with_the_payload_the_page_sends(tmp_path):
+    """BROWSERFIX: the payloads are copied from web/public/app.js and screens/worth.js. The clock and cross buttons send
+    scope "stock" (the page has no buy or sell side), and a funds star sends exchange AMFI."""
+    db = store.open(tmp_path / "sp.duckdb")
+    page = [("watchlist_add", {"symbol": "SBIN", "exchange": "NSE"}), ("watchlist_add", {"symbol": "INF846K01DP8", "exchange": "AMFI"}),
+            ("watchlist_remove", {"symbol": "SBIN", "exchange": "NSE"}), ("snooze", {"symbol": "TCS", "scope": "stock"}),
+            ("dismiss", {"symbol": "INFY", "scope": "stock"}), ("long_term_mark", {"symbol": "ITC", "on": True}),
+            ("long_term_mark", {"symbol": "ITC", "on": False}), ("budget_set", {"month": "2026-12", "amount": 40000}),
+            ("allocation_approve", {"target": {"equity": 0.7}})]
+    for kind, payload in page:
+        done, _ = fire(db, kind, payload)
+        assert done["status"] == "done", (kind, payload, done["error"])
+    row = db.execute("select id, scope from not_now where symbol = 'TCS' and undone_at is null").fetchone()
+    assert row, "the snooze was not stored"
+    done, _ = fire(db, "not_now_undo", {"id": str(row[0])})              # the page sends the id from a data- attribute: a string
+    assert done["status"] == "done", done["error"]

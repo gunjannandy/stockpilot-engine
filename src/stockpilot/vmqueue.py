@@ -109,16 +109,24 @@ def _allocation_approve(db, payload, by):
 @handler("not_now")
 def _not_now(db, payload, by):
     symbol = str(payload.get("symbol", "")).strip().upper()
-    not_now.set(db, symbol, payload.get("scope"), payload.get("for"), by, date.today())
-    scope = {"buy": "buy calls", "sell": "sell calls", "any": "calls"}.get(payload.get("scope"), "calls")
+    scope = _scope(payload)
+    not_now.set(db, symbol, scope, payload.get("for"), by, date.today())
+    scope = {"buy": "buy calls", "sell": "sell calls", "any": "calls"}.get(scope, "calls")
     when = {"week": "for a week", "month": "for a month", "good": "for good"}[payload["for"]]
     return f"{symbol} is out of {scope} {when}."
 
 
+def _scope(payload):
+    """The page's clock and cross buttons say "stock": it has no buy or sell side, so the stock goes out of every call."""
+    scope = payload.get("scope")
+    return "any" if scope == "stock" else scope
+
+
 def _set_aside(db, payload, by, how):
     symbol = str(payload.get("symbol", "")).strip().upper()
-    not_now.set(db, symbol, payload.get("scope"), how, by, date.today())
-    scope = {"buy": "buy calls", "sell": "sell calls", "any": "calls"}[payload["scope"]]
+    scope = _scope(payload)
+    not_now.set(db, symbol, scope, how, by, date.today())
+    scope = {"buy": "buy calls", "sell": "sell calls", "any": "calls"}[scope]
     return f"{symbol} is hidden from {scope} for 30 days." if how == "snooze" else f"{symbol} is dismissed from {scope} until you undo it."
 
 
@@ -134,7 +142,10 @@ def _dismiss(db, payload, by):
 
 @handler("not_now_undo")
 def _not_now_undo(db, payload, by):
-    not_now.undo(db, payload.get("id"))
+    ident = payload.get("id")
+    if isinstance(ident, str) and ident.strip().isdigit():     # the page reads the id from a data- attribute, so it arrives as text
+        ident = int(ident)
+    not_now.undo(db, ident)
     return "Not now undone."
 
 

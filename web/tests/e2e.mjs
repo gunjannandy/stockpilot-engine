@@ -121,7 +121,7 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
     { const n = queued.length + 1; await page.locator("[data-taxpack]").click(); await posted(page, n); }
     check(queued.at(-1).kind === "build_tax_pack", "tax pack posts build_tax_pack");
     await page.goto(base + "/#feedback"); await page.waitForSelector("#fbt"); await page.fill("#fbt", "Please show fewer small stocks.");
-    { const n = queued.length + 1; await page.locator("[data-fbsend]").click(); await posted(page, n); }
+    { const n = queued.length + 1; await page.locator("[data-fb-act=send]").click(); await posted(page, n); }
     check(queued.at(-1).kind === "feedback" && queued.at(-1).payload.text.startsWith("Please show"), "feedback posts feedback");
 
     // the VM finishes the removal: Health lists the Worker's requests with the VM's notes
