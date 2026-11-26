@@ -8,6 +8,7 @@ from datetime import date, timedelta
 SCOPES = ("buy", "sell", "any")
 DURATIONS = {"snooze": 30, "dismiss": None, "week": 7, "month": 30, "good": None}
 SNOOZE_DAYS = 30
+BACK_DAYS = 7    # a stock shows "back from snooze" for a week after its snooze ends
 
 
 def set(db, symbol: str, scope: str, for_: str, by: str, day: date) -> int:
@@ -56,6 +57,15 @@ def active(db, day: date) -> "builtins.set[tuple[str, str]]":
                           [day]).fetchall())
 
 
+def back_from_snooze(db, day: date) -> list[str]:
+    """Symbols whose snooze ended within the last BACK_DAYS days and that are not hidden again. Sorted."""
+    rows = db.execute("select distinct symbol from not_now where how = 'snooze' and undone_at is null "
+                      "and until < ? and until >= ? "
+                      "and symbol not in (select symbol from not_now where undone_at is null and (until is null or until >= ?)) "
+                      "order by symbol", [day, day - timedelta(days=BACK_DAYS), day]).fetchall()
+    return [r[0] for r in rows]
+
+
 def settings_payload(db, day: date, default_budget: float) -> dict:
     """site/settings.json: what the owners have set, for the pages to show and undo. No page reads it yet."""
     from stockpilot import forecast, watchlist   # forecast imports the book package, so import it late
@@ -66,6 +76,7 @@ def settings_payload(db, day: date, default_budget: float) -> dict:
     return {"as_of": str(day),
             "not_now": [{"id": i, "symbol": s, "scope": sc, "until": str(u) if u else None, "set_by": by,
                          "how": how, "industry": ind} for i, s, sc, u, by, how, ind in rows],
+            "back_from_snooze": back_from_snooze(db, day),
             "budget": {"month": day.strftime("%Y-%m"), "total": budget.for_month(db, day, default_budget),
                        "left": forecast.budget_left(db, day, default_budget)},
             "watchlist_count": len(watchlist.active(db))}

@@ -139,3 +139,16 @@ def test_files_of_symbols_that_are_no_longer_exported_are_removed(tmp_path):
     site.build(db, out, today=AS_OF, budget_inr=100000, now=NOW, tokens=TOKENS)
     assert not (out / "data" / "history" / "GONE.json").exists() and not (out / "data" / "stock" / "GONE.json").exists()
     assert (out / "data" / "history" / "TCS.json").exists()
+
+
+def test_a_short_history_file_still_carries_every_contract_field(tmp_path):
+    """Issue #15: history/<SYM>.json for a stock with a few days of prices (a new listing) has symbol, as_of, volume and older too."""
+    import datetime as dt
+    from stockpilot.site_export import series
+    for n in (0, 1, 5, 60):
+        rows = [(dt.date(2026, 11, 1) + dt.timedelta(days=i), 100.0 + i, None if i % 2 else 1000) for i in range(n)]
+        f = series.history_file("NEWCO", rows, dt.date(2026, 11, 20))
+        assert set(f) == {"symbol", "as_of", "dates", "close", "volume", "dma50", "dma200", "older"}, n
+        assert f["symbol"] == "NEWCO" and f["as_of"] == "2026-11-20"
+        assert len(f["dates"]) == len(f["close"]) == len(f["volume"]) == len(f["dma50"]) == len(f["dma200"]) == n
+        assert set(f["older"]) == {"dates", "close"}

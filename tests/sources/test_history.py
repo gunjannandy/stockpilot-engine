@@ -318,7 +318,10 @@ def test_report_json_round_trips(tmp_path):
 @pytest.mark.parametrize("name", ["history-backfill", "history-daily"])
 def test_public_workflows_parse_use_no_secrets_and_never_touch_private_data(name):
     import yaml
-    path = Path(__file__).parents[2] / ".github" / "workflows" / f"{name}.yml"
+    root = Path(__file__).parents[2]
+    path = root / "ops" / "public" / "workflows" / f"{name}.yml"   # the private repo keeps the public copies here
+    if not path.exists():
+        path = root / ".github" / "workflows" / f"{name}.yml"   # in the public engine they are the live workflows
     text = path.read_text()
     assert yaml.safe_load(text)["jobs"]
     assert "secrets." not in text and "cloudflare" not in text.lower()   # no Cloudflare or any other token in the public repo

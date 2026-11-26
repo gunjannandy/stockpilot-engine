@@ -509,6 +509,8 @@ def build(db: duckdb.DuckDBPyConnection, out: Path | str, today: date | None = N
     for f in WEB.iterdir():
         if f.is_file():
             shutil.copy(f, out / f.name)
+        elif f.is_dir():        # screens/ and vendor/: index.html loads them, so a site without them has no Holdings, Stock or Funds
+            shutil.copytree(f, out / f.name, dirs_exist_ok=True)
     as_of = db.execute("select max(date) from prices where date <= ?", [today]).fetchone()[0] or today
     result = screen.run(db, as_of, liquidity_floor_cr)
     names = dict(db.execute("select symbol, name from stocks").fetchall())

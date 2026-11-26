@@ -41,7 +41,7 @@ class Rules:
     setaside_limit: int = 3          # set-asides in a sector, within setaside_days, that cap it at one buy a week
     setaside_days: int = 30
     sector_week_days: int = 7
-    sector_warn_at: float = 0.20     # a buy that takes a sector to this share of the portfolio gets a warning line
+    sector_warn_at: float = 0.25     # a buy that takes a sector to this share of the portfolio gets a warning line
     tax_wait_days: int = 30          # suggest waiting when a lot turns long-term this soon
     min_sale_inr: float = 5000.0     # a holding worth less than this never gets a sell: the fees outweigh the call
     stops_from: date = date(2026, 11, 24)    # code stops apply to positions opened from a call on or after this day

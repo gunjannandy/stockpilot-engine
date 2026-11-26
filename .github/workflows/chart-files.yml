@@ -1,0 +1,40 @@
+name: chart-files
+# Public job (runs in stockpilot-engine): price history only, nothing private. Each weekday evening, after history-daily has added the day,
+# it makes the all-time chart file of every stock in the search index (NSE, NSE SME, BSE, BSE SME), split-adjusted, and attaches one
+# tar.gz to the rolling release `data-latest`. The deploy-time fetch ships the files to the site as chart/<SYMBOL>.json, which is
+# what the stock page reads. Without this job every stock page says it has no price history.
+on:
+  schedule:
+    - cron: "50 16 * * 1-5"    # 22:20 IST on weekdays, after history-daily (21:00)
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: chart-files
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - run: uv sync --frozen
+      - name: Fetch the search index and every price file
+        run: |
+          gh release download data-latest -p search-index.json -O out/search-index.json --clobber
+          gh release download history-prices -D out/history -p "prices-*.parquet"
+      - name: Build the chart files
+        shell: bash
+        run: uv run python -m stockpilot.sources.chart_files out/history out/search-index.json out/charts | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Check coverage is not collapsed
+        run: |
+          python3 - <<'PY'
+          import json
+          r = json.load(open("out/charts/chart-report.json"))
+          assert r["written"] > 1500, r["written"]
+          PY
+      - name: Publish to the data-latest release
+        run: gh release upload data-latest out/charts/chart.tar.gz --clobber

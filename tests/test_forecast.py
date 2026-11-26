@@ -516,3 +516,26 @@ def test_a_new_listing_held_says_limited_evidence(db):
     got = rows(db)[sym]
     assert got["base_rate_n"] == 0
     assert "limited evidence" in json.loads(got["reasons"])["summary"].lower()
+
+
+def test_a_chance_moved_from_the_base_rate_with_no_evidence_is_set_back_to_the_base_rate(db):
+    """Issue #17: the code-only call stands when the model moves a chance 3 points or more and cites neither a reason nor news."""
+    go(db, fake_analyse())
+    base = rows(db)["WIPRO"]["base_rate"]
+    db.execute("delete from calls where made_on = ?", [AS_OF])
+    out = go(db, fake_analyse({"analyst": {"WIPRO": base + 0.20, "ICICIBANK": 0.50}},
+                              WIPRO={"moved_by": [], "news_used": []}, ICICIBANK={"moved_by": [], "news_used": []}))
+    got = rows(db)
+    assert got["WIPRO"]["probability"] == pytest.approx(base) and got["WIPRO"]["raw_probability"] == pytest.approx(base)
+    assert "WIPRO" in out["unevidenced_reset"]
+    near = got["ICICIBANK"]["base_rate"]
+    assert abs(0.50 - near) < 0.03 or "ICICIBANK" in out["unevidenced_reset"]
+
+
+def test_a_chance_moved_with_a_cited_reason_is_kept(db):
+    go(db, fake_analyse())
+    base = rows(db)["WIPRO"]["base_rate"]
+    db.execute("delete from calls where made_on = ?", [AS_OF])
+    out = go(db, fake_analyse({"analyst": {"WIPRO": base + 0.20}}))      # the default answer cites "trend"
+    assert rows(db)["WIPRO"]["probability"] == pytest.approx(base + 0.20)
+    assert "WIPRO" not in out["unevidenced_reset"]

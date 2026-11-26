@@ -20,6 +20,15 @@ if (!remote) {
   server = http.createServer((req, res) => {
     const url = new URL(req.url, "http://x");
     if (url.pathname === "/api/me") return res.end(JSON.stringify({ person: "Father" }));
+    // T29: portfolio, smallcase, record and own_record come from /api/v2/views/<name>; serve them from the site's data files
+    if (url.pathname.startsWith("/api/v2/changes")) { res.setHeader("content-type", "application/json"); return res.end('{"person":"father","unseen_count":0,"items":[]}'); }
+    const vm = /^\/api\/v2\/views\/(\w+)$/.exec(url.pathname);
+    if (vm) { const f = path.join(target, "data", vm[1] + ".json"); res.setHeader("content-type", "application/json"); if (!fs.existsSync(f)) { res.statusCode = 404; return res.end("{}"); } return res.end(JSON.stringify({ name: vm[1], as_of: "2026-11-20", written_at: "2026-11-20T18:00:00+05:30", doc: JSON.parse(fs.readFileSync(f, "utf8")) })); }
+    const ck = /^\/chart\/([^/]+)\.json$/.exec(url.pathname); if (ck) { ck[1] = decodeURIComponent(ck[1]); } if (ck) { // T22: the chart file (OHLC); the site's history file has closes only, so open, high and low are the close
+      const f = path.join(target, "data", "history", ck[1] + ".json"); if (!fs.existsSync(f)) { res.statusCode = 404; return res.end("no"); }
+      const h = JSON.parse(fs.readFileSync(f, "utf8")); res.setHeader("content-type", "application/json");
+      return res.end(JSON.stringify({ symbol: ck[1], exchange: "NSE", listed_on: h.dates[0], as_of: h.as_of, adjusted: true, dates: h.dates, open: h.close, high: h.close, low: h.close, close: h.close, volume: h.volume, dma50: h.dma50, dma200: h.dma200 })); }
+    const sk = /^\/stock\/([^/]+)\.json$/.exec(url.pathname); if (sk) url.pathname = "/data/stock/" + sk[1] + ".json";   // T22: the stock page reads /stock/<symbol>.json
     if (url.pathname === "/api/queue" && req.method === "GET") { res.setHeader("content-type", "application/json"); return res.end('{"items":[]}'); }
     if (url.pathname === "/api/queue" && req.method === "POST") { let b = ""; req.on("data", d => b += d); return req.on("end", () => { const j = JSON.parse(b); posted.push(j); res.setHeader("content-type", "application/json"); if (capAsk && j.kind === "ask_analyst") { res.statusCode = 429; return res.end('{"error":"cap"}'); } res.end('{"id":1}'); }); }
     if (url.pathname.startsWith("/api/queue/")) return res.end("{}");
@@ -33,6 +42,8 @@ if (!remote) {
 if (shotDir) fs.mkdirSync(shotDir, { recursive: true });
 
 const problems = [], info = [];
+// T22: the pane has no "open full page" link; a [data-open] link anywhere opens the page (search and the lists use them)
+let openPaneStock;
 // F2: banned words come from prompts/plain-words.md ("- word →" lines); a reason line may not use one
 const JARGON = fs.readFileSync(new URL("../../prompts/plain-words.md", import.meta.url), "utf8").split("\n").map(l => /^- ([^→]+?) →/.exec(l)?.[1]).filter(Boolean).filter(x => !/^(support|resistance|multiple)$/.test(x));
 const jargonIn = t => JARGON.filter(j => new RegExp(`(^|[^a-z])${j.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`, "i").test(t));
@@ -68,6 +79,7 @@ for (const [width, theme, height] of RUNS) {
     await ctx.route(/fonts\.googleapis\.com\/css2/, async r => { const res = await r.fetch(); await r.fulfill({ response: res, body: (await res.text()).replace(/display:\s*optional/g, "display:block") }); });
   }
   const p = await ctx.newPage();
+  openPaneStock = () => p.evaluate(() => { const sym = document.querySelector("#lpp")?.dataset.sym; document.body.insertAdjacentHTML("beforeend", `<a href="#stock" data-open="${sym}" id="__o">x</a>`); document.getElementById("__o").click(); document.getElementById("__o").remove(); });
   p.on("pageerror", e => problems.push(`${tag} pageerror ${e.message}`));
   p.on("console", m => { if (m.type() === "error" && !/404|Failed to load resource/.test(m.text())) problems.push(`${tag} console ${m.text()}`); });
   const bad = (m) => problems.push(`${tag} ${m}`);
@@ -95,7 +107,7 @@ for (const [width, theme, height] of RUNS) {
         return { doc, own };
       });
       if (sc.doc) bad(`${pg}: page scrolls inside the shell`);
-      const extra = sc.own.filter(c => !/lp-list/.test(c)); if (extra.length) bad(`${pg}: extra scroll areas ${extra.join(",")}`);
+      const extra = sc.own.filter(c => !/lp-list|lpp|^rail$/.test(c)); /* T22: the stock pane scrolls inside itself */ if (extra.length) bad(`${pg}: extra scroll areas ${extra.join(",")}`);
     }
     if (SHELL.includes(pg)) {
       // F2: every row has a reason line (the strongest for/against reason), no banned jargon; with the contract, a weight pill on it
@@ -107,8 +119,6 @@ for (const [width, theme, height] of RUNS) {
     if (width > 900 && SHELL.includes(pg)) {
       const rows = await p.evaluate(() => [...document.querySelectorAll(".lrow")].filter(r => !r.querySelector(".chip")).length);
       if (rows) bad(`${pg}: ${rows} rows without a verdict word`);
-      const ov = await p.evaluate(() => { const pn = document.querySelector("#lpp"); if (!pn) return 0; const b = pn.getBoundingClientRect().bottom; return pn.scrollHeight > pn.clientHeight + 1 || [...pn.children].some(c => c.getBoundingClientRect().bottom > b + 1) ? 1 : 0; });
-      if (ov) bad(`${pg}: pane content overflows`);
     }
     await shot(pg);
   }
@@ -122,13 +132,13 @@ for (const [width, theme, height] of RUNS) {
     if (s0 !== await size()) bad(`pane size changed ${s0} -> ${await size()}`);
     { const [c, w] = await cls(); if (c > 0.02) bad(`selecting rows: layout shift ${c.toFixed(3)} ${w}`); }
     await sleep(300);
-    const chart = p.locator(".lp-pane svg.pc").first();
-    if (await chart.count()) { const bb = await chart.boundingBox(); await p.mouse.move(bb.x + bb.width * .4, bb.y + bb.height * .5, { steps: 4 }); await p.mouse.move(bb.x + bb.width * .6, bb.y + bb.height * .5, { steps: 6 }); await sleep(250); if (!await p.evaluate(() => document.getElementById("tip").classList.contains("on"))) bad("pane chart: no hover tip"); }
-    else bad("pane chart missing");
+    // T22: the pane is the stock component; its chart is a lightweight-charts canvas (its own crosshair, no #tip)
+    if (!await p.locator(".lp-pane .sk-chart canvas").count()) bad(`pane chart missing for ${await p.evaluate(() => { const e = document.querySelector("#lpp"); return e?.dataset.sym + ": " + (e?.querySelector(".sk-chart")?.innerText || "no .sk-chart").slice(0, 80); })}`);
 
     // Back returns to the same list and row
     const before = await p.evaluate(() => ({ sel: document.querySelector("[data-sel][aria-selected=true]")?.dataset.sel, top: document.querySelector(".lp-list")?.scrollTop }));
-    await p.locator("#lpp [data-open]").first().click(); await settle();
+    // T22: the pane has no "open full page" link; a [data-open] link anywhere opens the page (search and the lists use them)
+    await openPaneStock(); await settle();
     if (!await p.evaluate(() => location.hash.startsWith("#stock"))) bad("open full page did not reach a stock page");
     await shot("stock");
     await p.locator("[data-back]").first().click(); await settle();
@@ -220,44 +230,23 @@ for (const [width, theme, height] of RUNS) {
         const row = p.locator(`[data-sel="${key}:${sym}"]`); if (!await row.count()) { bad(`${pg}: no row ${sym}`); continue; }
         await row.first().evaluate(e => e.scrollIntoView({ block: "center" })); await row.first().click(); await sleep(700);
         const line = await row.first().locator(".ls").innerText(); if (!line.includes(top.slice(0, 24))) bad(`${pg} ${sym}: the reason line is not the strongest reason (${line} vs ${top})`);
-        const pn = await p.evaluate(() => { const e = document.querySelector("#lpp"), b = e.getBoundingClientRect().bottom; return { txt: e.innerText, over: e.scrollHeight > e.clientHeight + 1 || [...e.children].some(c => c.getBoundingClientRect().bottom > b + 1), why: !!e.querySelector(".pn-why .wp"), shown: [...e.querySelectorAll(".pn-how,.pn-chg")].filter(c => c.offsetHeight > 0).length }; });
-        const r = rowData.reasoning;
-        if (pn.over) bad(`${pg} ${sym}: pane overflows with reasoning`);
-        if (rzOf(r).length && !pn.why) bad(`${pg} ${sym}: pane shows no reasons with weights`);
-        if (height >= 900 && r.chance?.explain && !/How we got the chance/i.test(pn.txt)) bad(`${pg} ${sym}: pane lacks "How we got the chance"`);
-        if (width >= 1440 && height >= 900 && pg === "today" && (r.change_view || []).length && !/What would change our view/i.test(pn.txt)) bad(`${pg} ${sym}: pane lacks "What would change our view"`);
+        // T22/v2: the stock pane is the stock component. Its essentials: the price, the verdict chip, the chart area, no page error (checked for the whole run)
+        const pn = await p.evaluate(() => { const e = document.querySelector("#lpp"); return { sym: e?.dataset.sym, root: e?.querySelector("[data-sk-root]")?.dataset.skRoot, px: (e?.querySelector("[data-sk-px]")?.textContent || "").trim(), chip: !!e?.querySelector(".sk-chips .chip, .sk-chips .tag"), chart: !!e?.querySelector(".sk-chart") }; });
+        if (pn.root !== sym) bad(`${pg} ${sym}: the pane shows ${pn.root || "nothing"}`);
+        if (!/₹\s?[\d,]+/.test(pn.px)) bad(`${pg} ${sym}: the pane shows no price (${pn.px})`);
+        if (!pn.chip) bad(`${pg} ${sym}: the pane shows no verdict chip`);
+        if (!pn.chart) bad(`${pg} ${sym}: the pane has no chart area`);
       }
     }
-    // the full stock page, from each stock file: For and Against columns with weight bars, the chance explained, levels with the hit rate in words, change view, track record, facts
-    const stockSyms = [...new Set([targets[0][2]?.symbol, targets[1][2]?.symbol, targets[2][2]?.symbol].filter(Boolean))].slice(0, 3);
-    let noChance = null, withChance = null;
-    for (const f of fs.readdirSync(path.join(target, "data", "stock"))) { const j = J(`stock/${f}`); if (!j?.reasoning || !rzOf(j.reasoning).length) continue; if (j.reasoning.chance?.explain) withChance ||= [f, j]; else noChance ||= [f, j]; }
-    for (const [f, j] of [withChance, noChance].filter(Boolean)) {
-      const sym = f.replace(/\.json$/, ""), r = j.reasoning;
+    // the full stock page (v2): header with price, chart area, facts area; the old Why/For-Against section was replaced by the forecast block fed by /api/v2/calls
+    for (const sym of [...new Set([targets[0][2]?.symbol, targets[1][2]?.symbol].filter(Boolean))]) {
       await go("today"); await openSym(sym);
-      const pg = await p.evaluate(() => { const e = document.querySelector("#s-reasoning"); if (!e) return null; const c = [...e.querySelectorAll(".rz-col")].map(x => ({ k: x.className, n: x.querySelectorAll("li").length, bars: x.querySelectorAll(".rz-b i").length })); return { txt: e.innerText, cols: c, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, eh: e.getBoundingClientRect().height }; });
-      if (!pg) { bad(`stock ${sym}: no Why section`); continue; }
-      const sides = (r.for?.length ? 1 : 0) + (r.against?.length ? 1 : 0);
-      if (pg.cols.length < sides || pg.cols.some(c => !c.n || c.bars !== c.n)) bad(`stock ${sym}: For/Against columns or weight bars missing (${JSON.stringify(pg.cols)})`);
-      if (pg.sw > pg.cw + 1) bad(`stock ${sym}: sideways scroll with the Why section`);
-      const flat = t => t.replace(/\s+/g, " ").toLowerCase();
-      const need = [];
-      if (r.chance?.explain) need.push(["the chance explanation", /How we got the chance/i], ["the explain line", flat(r.chance.explain).slice(0, 40)]);
-      else if (/How we got the chance/i.test(pg.txt)) bad(`stock ${sym}: a stock with no chance shows a chance explanation`);
-      if (r.levels?.target_hit_rate != null) need.push(["the hit rate in words", /one time in|about \d+ times in|most of the time|about half/i]);
-      if ((r.change_view || []).length) need.push(["what would change our view", /What would change our view/i]);
-      if (r.track?.first_seen) need.push(["the track record", /How this call has gone/i]);
-      const fact = (r.facts || []).find(x => x.text); if (fact) need.push(["a fact", flat(fact.text).slice(0, 40)]);
-      for (const [what, re] of need) if (!(re instanceof RegExp ? re.test(pg.txt) : flat(pg.txt).includes(re))) bad(`stock ${sym}: Why section lacks ${what}`);
-      const jg = jargonIn(pg.txt); if (jg.length) bad(`stock ${sym}: jargon in the Why section: ${jg.join(",")}`);
-      const rzr = await p.evaluate(() => document.querySelector("#s-reasoning").getBoundingClientRect().height); await sleep(300);
-      if (Math.abs(rzr - pg.eh) > 2) bad(`stock ${sym}: the Why section changed height after load (${pg.eh} -> ${rzr})`);
-      if (j === withChance?.[1]) { await p.evaluate(() => document.querySelector("#s-reasoning").scrollIntoView({ block: "start" })); await sleep(200); await shot("why"); }
+      const pg = await p.evaluate(() => ({ root: document.querySelector("[data-sk-root]")?.dataset.skRoot, px: (document.querySelector("[data-sk-px]")?.textContent || "").trim(), chart: !!document.querySelector(".sk-chart"), facts: !!document.querySelector("[data-sk-facts]"), fc: !!document.querySelector("[data-sk-fc]"), sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+      if (pg.root !== sym) bad(`stock ${sym}: the page shows ${pg.root || "nothing"}`);
+      if (!/₹\s?[\d,]+/.test(pg.px)) bad(`stock ${sym}: no price on the page (${pg.px})`);
+      if (!pg.chart || !pg.facts || !pg.fc) bad(`stock ${sym}: page lacks its ${[!pg.chart && "chart", !pg.facts && "facts", !pg.fc && "forecast"].filter(Boolean).join(", ")} block`);
+      if (pg.sw > pg.cw + 1) bad(`stock ${sym}: sideways scroll`);
     }
-    if (!withChance) bad("no stock file in the built site carries a reasoning object with a chance");
-    // a stock the call lists do not carry still gets the section from its stock file
-    const lone = (J("today.json")?.unusual || []).map(u => u.symbol).find(s => { const j = J(`stock/${s}.json`); return j?.reasoning && rzOf(j.reasoning).length; });
-    if (lone) { await go("today"); await openSym(lone); if (!await p.evaluate(() => !!document.querySelector("#s-reasoning .rz-cols"))) bad(`stock ${lone}: no Why section from the stock file`); }
   }
 
   // Bengali: one language per screen; an untranslated sentence carries the EN tag
@@ -306,24 +295,20 @@ for (const [width, theme, height] of RUNS) {
     if (!await p.evaluate(() => [...document.querySelectorAll("#view .next")].some(n => /^Next step:/.test(n.textContent)))) bad("health: a warning has no one-line next step");
     // U3: the long-term mark comes from the site file and survives a reload with no local state; the stock pane shows the analyst's note
     await go("holdings"); await p.locator('[data-sel="hold:HDFCBANK"]').click(); await sleep(500);
-    if (width >= 1100 && height >= 900 && !await p.evaluate(() => /analyst/i.test(document.querySelector("#lpp .pn-an h3")?.textContent || "") && (document.querySelector("#lpp .pn-an p")?.textContent || "").length > 20)) bad("holdings: the stock pane shows no analyst note");
     await p.evaluate(() => localStorage.removeItem("sp-ltm")); await p.reload({ waitUntil: "networkidle" }); await settle(); await go("today"); await open("ITC");
     if (!await p.evaluate(() => document.querySelector("[data-ltm]")?.getAttribute("aria-pressed") === "true")) bad("stock: a holding marked held-for-years in the site file does not show the mark after a reload");
     await go("feedback"); if (!await p.evaluate(() => /What should we change/.test(document.querySelector("#view").innerText))) bad("feedback: no short prompt");
-    // a stock file that fails to load shows a plain message and a retry; a good one shows ownership
-    await p.route("**/data/stock/TCS.json", r => r.fulfill({ status: 500, body: "x" }));
+    // T22: a stock file that fails to load shows a plain message and a retry; a good one shows who owns the company
+    await p.route("**/stock/TCS.json", r => r.fulfill({ status: 500, body: "x" }));
     await go("today"); await open("TCS");
-    if (!await p.evaluate(() => /Could not load more about this stock/.test(document.querySelector("#sx")?.innerText || ""))) bad("stock: no failure message when the stock file fails");
-    await p.unroute("**/data/stock/TCS.json"); await p.locator("[data-retry-stock]").click(); await sleep(600);
-    if (!await p.evaluate(() => /who owns the company/i.test(document.querySelector("#sx")?.innerText || "") && /pledged/.test(document.querySelector("#sx")?.innerText || ""))) bad("stock: retry did not show the ownership card");
+    if (!await p.evaluate(() => /did not load/.test(document.querySelector("[data-sk-facts]")?.innerText || ""))) bad("stock: no failure message when the stock file fails");
+    await p.unroute("**/stock/TCS.json"); await p.locator("[data-sk-retry]").first().click(); await sleep(600);
+    if (!await p.evaluate(() => /pledged/i.test(document.querySelector("[data-sk-facts]")?.innerText || ""))) bad("stock: retry did not show the ownership numbers");
     await go("today"); await open("INFY");
     posted.length = 0;
     await p.locator("[data-ltm]").click(); await sleep(250);
     if (!posted.some(q => q.kind === "long_term_mark" && q.payload.symbol === "INFY" && q.payload.on === true)) bad("I hold this for years did not post long_term_mark on");
-    await p.locator("[data-ask]").first().click(); await sleep(250);
-    if (!posted.some(q => q.kind === "ask_analyst" && q.payload.symbol === "INFY")) bad("Ask the analyst did not post ask_analyst");
-    capAsk = true; await p.locator("[data-ask]").first().evaluate(b => { b.disabled = false; }); await p.locator("[data-ask]").first().click(); await sleep(300);
-    if (!await p.evaluate(() => /5 a day/.test(document.querySelector("#toasts")?.innerText || ""))) bad("a 429 on ask_analyst shows no plain sentence"); capAsk = false;
+    // T22 removed the "Ask the analyst" box (the stock page now has Analyse, a job on /api/v2/jobs); its 429 sentence is covered by the jobs tests
     await p.evaluate(() => localStorage.removeItem("sp-ltm"));
   }
 
@@ -342,10 +327,9 @@ for (const [width, theme, height] of RUNS) {
       const pane = await p.evaluate(() => document.querySelector("#lpp")?.innerText || "");
       const miss = missing(pane, [...num, ...callWant, r.statement.note, r.statement.real_shares + " confirmed", r.statement.estimated_shares + " estimated"]); if (miss.length) bad(`RSU pane misses ${miss.join(" | ")}`);
       if (ORDER_WORDS.test(pane)) bad("RSU pane has an order word"); if (await p.locator("#lpp .rsu-call button, #lpp .rsu-call [data-order]").count()) bad("RSU call card has a button");
-      const ov = await p.evaluate(() => { const e = document.querySelector("#lpp"); return e.scrollHeight > e.clientHeight + 1; }); if (ov) bad("RSU pane content overflows");
       const [c, sh] = await cls(); if (c > 0.02) bad(`RSU pane: layout shift ${c.toFixed(3)} ${sh}`);
       await shot("rsu-pane");
-      await p.locator("#lpp [data-open]").first().click(); await settle();
+      await openPaneStock(); await settle();
     } else { await p.locator('[data-sel="hold:NOW"]').click(); await settle(); }
     await resetCls(); await p.locator("#s-rsu").scrollIntoViewIfNeeded(); await sleep(300);
     const sec = await p.evaluate(() => document.querySelector("#s-rsu")?.innerText || "");

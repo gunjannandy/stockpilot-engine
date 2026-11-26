@@ -66,7 +66,7 @@ rules:
   watch_cap: 8              # triggered watchlist stocks analysed in one evening (the best by trigger, then screen score)
   setaside_limit: 3         # set-asides in one sector within 30 days that cap it at one buy a week
   setaside_days: 30
-  sector_warn_at: 0.20      # a buy that takes a sector to this share of the portfolio gets a warning line
+  sector_warn_at: 0.25      # a buy that takes a sector to this share of the portfolio gets a warning line
   stops_from: "2026-11-24"  # code stops apply only to positions opened from a call on or after this day
   nifty_3m: 0.03            # the Nifty's assumed three-month return, for the hurdle
   behind_sector: 0.20       # thesis break: this far behind its sector index over 3 months

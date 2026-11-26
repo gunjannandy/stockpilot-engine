@@ -213,3 +213,35 @@ def test_a_rerun_pressed_on_the_dashboard_runs_in_the_same_tick(tmp_path):
         w.close()
     assert list(report) == ["queue", "nav"] and report["queue"] == {"done": 1, "failed": 0}
     assert due.pending_reruns(tmp_path) == frozenset()
+
+
+def test_a_failing_kite_read_is_tried_at_most_three_times_an_evening_then_reported(tmp_path, monkeypatch):
+    """Issue #5: not every ten minutes until 23:00. After the third failure the owners are told, in plain words."""
+    def broken(worker):
+        raise RuntimeError("Worker /api/vm/kite answered 502")
+    monkeypatch.setattr(kite, "fetch", broken)
+    m = evening(tmp_path, worker=object())
+    for minute in range(3, 60, 10):                      # six ticks of the 19:00 hour
+        m.clock.now = at(FRIDAY, 19, minute)
+        daily.gather(m, m.clock.now)
+        settle(m)
+    assert [s for _, s in runs(m, "kite")] == ["failed"] * due.KITE_MAX
+    with m.db("t") as db:
+        notes = [r[0] for r in db.execute("select message from problems where message like '%Kite%'").fetchall()]
+    assert any("3 tries" in n and "Sync now" in n for n in notes)
+    m.clock.now = at(FRIDAY, 21, 3)
+    daily.gather(m, m.clock.now)
+    assert len(runs(m, "kite")) == due.KITE_MAX          # later evening ticks do not try again
+
+
+def test_a_login_needed_kite_read_is_one_try_and_not_a_failure(tmp_path, monkeypatch):
+    w = FakeWorker(kite=None)
+    try:
+        m = evening(tmp_path, worker=kite.Worker(w.url, KEY))
+        for minute in (3, 13, 23):
+            m.clock.now = at(FRIDAY, 19, minute)
+            daily.gather(m, m.clock.now)
+            settle(m)
+    finally:
+        w.close()
+    assert [s for _, s in runs(m, "kite")] == ["ok"]

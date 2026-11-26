@@ -33,3 +33,14 @@ describe("merged shell", () => {
     expect(app).not.toMatch(/role="status" aria-live="polite" role="status"/);
   });
 });
+
+describe("owner feedback #3 and #4", () => {
+  it("Today draws the calls-date note as its own banner above the headline", () => {
+    expect(app).toContain("SPRecords.callsBanner(D.today, S.lang)");
+    expect(app.indexOf("${banner}<header class=\"lead\">")).toBeGreaterThan(0);
+  });
+  it("a stock back from snooze shows a label in both languages", () => {
+    expect(app.match(/backSnooze: "/g).length).toBe(2);
+    expect(app).toContain("D.settings?.back_from_snooze");
+  });
+});

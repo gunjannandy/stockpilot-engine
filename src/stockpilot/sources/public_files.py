@@ -13,8 +13,9 @@ BASE = "https://github.com/{repo}/releases/download/"
 
 # release asset -> path in the site
 SINGLE = (("data-latest/search-index.json", "search/index.json"), ("data-latest/universe.json", "screen/universe.json"))
-# release asset -> folder in the site (a tar.gz holding that folder)
-TARS = (("data-latest/funds.tar.gz", "funds"),)
+# release asset -> folder in the site. `nested` False: the tar.gz already holds that folder (funds/..., chart/...);
+# True: the tar.gz holds files at its root (the weekly facts pack `./SYMBOL.json`), which belong inside the folder.
+TARS = (("data-latest/funds.tar.gz", "funds", False), ("data-latest/chart.tar.gz", "chart", False), ("data-latest/stock-facts.tar.gz", "stock", True))
 
 
 def _write(path: Path, data: bytes):
@@ -51,13 +52,13 @@ def fetch_into(site, repo=ENGINE_REPO, fetch=None, mechanical_days=None) -> list
         if blob:
             _write(site / rel, blob)
             done.append(rel)
-    for asset, folder in TARS:
+    for asset, folder, nested in TARS:
         try:
             blob = fetch(base + asset)
         except Exception:  # noqa: BLE001
             continue
         if blob:
-            _unpack(blob, site)
+            _unpack(blob, site / folder if nested else site)
             done.append(f"{folder}/index.json")
     return done
 

@@ -66,5 +66,5 @@ def rows(feedback_id: str, asks: list[dict], now: str) -> list[dict]:
     """The `asks` table rows of the live contract, ids feedback_id_a1, _a2 and so on. `touches_money_or_rules` is not stored."""
     return [{"id": f"{feedback_id}_a{i}", "feedback_id": feedback_id, "original": a["original"], "line_en": a["line_en"],
              "line_bn": a["line_bn"], "tag": a["tag"], "size": a["size"], "plan": a["plan"], "route": a["route"],
-             "status": a["status"], "not_meant": False, "issue_number": None, "updated_at": now}
+             "status": "waiting_for_approval" if a["route"] == "owner_approval" else a["status"], "not_meant": False, "issue_number": None, "updated_at": now}
             for i, a in enumerate(asks, 1)]

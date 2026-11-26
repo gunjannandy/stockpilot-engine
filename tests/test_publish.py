@@ -135,7 +135,7 @@ from pathlib import Path
 # v2 data jobs: they run on the public repo, so they live here and not in .github/workflows/.
 DATA_JOBS = {f"{n}.yml" for n in (
     "search-index", "stock-facts", "fund-universe", "fund-holdings", "news-collect",
-    "history-backfill", "history-daily", "mechanical-forecast", "screen-universe", "probe-t2")}
+    "history-backfill", "history-daily", "mechanical-forecast", "screen-universe", "probe-t2", "chart-files")}
 # The only workflows that upload to a release (they need contents: write).
 RELEASE_PUBLISHERS = set(DATA_JOBS)
 ALLOWED_SECRETS = {"SP_INGEST_URL", "SP_INGEST_KEY"}

@@ -1,7 +1,8 @@
 name: fund-holdings
 # Public job (runs in stockpilot-engine): the ten biggest fund houses' monthly portfolio files, read into dated ISIN rows
 # per fund. Public data only; which stocks the owners hold is matched privately. File addresses come from
-# config/fund_house_sources.json (empty until found); with none configured the job publishes nothing and passes.
+# config/fund_house_sources.json: each house has the page that lists its monthly sheets (read every run, latest month taken) or
+# fixed file addresses; a house marked unfound is skipped. With none configured the job publishes nothing and passes.
 on:
   schedule:
     - cron: "0 3 12 * *"    # the 12th, 08:30 IST: houses publish by the 10th

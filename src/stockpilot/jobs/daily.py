@@ -160,6 +160,10 @@ def _mark(db, day: date, name: str) -> None:
     db.execute("insert or replace into fetch_log values ('gathered', ?)", [f"{day}:{name}"])
 
 
+def _kite_tries(db, day: date) -> int:
+    return db.execute("select count(*) from runs where job = 'kite' and cast(started_at as date) = ?", [day]).fetchone()[0]
+
+
 def gather(m, now: datetime, force: bool = False) -> dict:
     """One tick of gathering: run only the sources not yet in for today, each on its own (a failing one is a problem row
     and never blocks another), and mark each that arrived. NSE's bhavcopy not being out is 'not done', not a failure.
@@ -185,6 +189,10 @@ def gather(m, now: datetime, force: bool = False) -> dict:
         if "kite" in pending:
             if not m.worker:
                 _mark(db, day, "kite")                      # nothing to read: not a gap
+            elif not force and _kite_tries(db, day) >= due.KITE_MAX:
+                _mark(db, day, "kite")                      # three failed tries tonight: stop, and say so
+                journal.problem(db, "kite", f"Kite could not be read after {due.KITE_MAX} tries tonight. "
+                                            "Your holdings are as of the last good read. Press Sync now to try again.", key="kite:gave-up")
             else:
                 report["kite"] = run_kite(db, m.worker)
                 if report["kite"]["status"] in ("ok", "login_needed"):

@@ -1,6 +1,6 @@
 """R5: Not now (set, undo, expiry), acted-on detection, budget left, settings.json, and the kinds file."""
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -254,3 +254,24 @@ def test_a_sync_marks_acted_calls_and_says_so(db):
     trade(db, "SBIN", "buy", date(2026, 11, 3))
     assert pipeline.mark_acted(db) == " 1 call marked acted on."
     assert pipeline.mark_acted(db) == ""
+
+
+# ---- back from snooze (issue #4) -----------------------------------------------------------------------
+
+def test_a_stock_is_back_from_snooze_for_a_week_after_its_snooze_ends(db):
+    not_now.set(db, "TCS", "any", "snooze", "father", DAY)               # 30 days: held through 2026-12-02
+    until = DAY + timedelta(days=30)
+    assert not_now.settings_payload(db, until, 1000)["back_from_snooze"] == []                 # still hidden on the last day
+    assert not_now.settings_payload(db, until + timedelta(days=1), 1000)["back_from_snooze"] == ["TCS"]
+    assert not_now.settings_payload(db, until + timedelta(days=7), 1000)["back_from_snooze"] == ["TCS"]
+    assert not_now.settings_payload(db, until + timedelta(days=8), 1000)["back_from_snooze"] == []
+
+
+def test_back_from_snooze_skips_dismissed_undone_and_still_hidden_stocks(db):
+    later = DAY + timedelta(days=31)
+    not_now.set(db, "INFY", "any", "snooze", "father", DAY)
+    not_now.undo(db, db.execute("select id from not_now where symbol = 'INFY'").fetchone()[0])   # undone: nothing to come back from
+    not_now.set(db, "SBIN", "any", "dismiss", "father", DAY)                                       # a cross is not a snooze
+    not_now.set(db, "WIPRO", "any", "snooze", "father", DAY)
+    not_now.set(db, "WIPRO", "buy", "snooze", "father", later)                                     # snoozed again for another call kind
+    assert not_now.settings_payload(db, later, 1000)["back_from_snooze"] == []

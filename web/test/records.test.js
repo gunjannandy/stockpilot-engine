@@ -89,3 +89,18 @@ describe("units check", () => {
     expect(R.unitsCheck(h).checked).toBe(2);
   });
 });
+
+describe("callsBanner: the date of the calls as its own banner on Today (issue #3)", () => {
+  it("is null when the calls are current or the note is missing", () => {
+    expect(R.callsBanner({ calls_note: null }, "en")).toBeNull();
+    expect(R.callsBanner({}, "en")).toBeNull();
+    expect(R.callsBanner(undefined, "en")).toBeNull();
+  });
+  it("returns the server sentence in English", () => {
+    expect(R.callsBanner({ calls_note: "Calls are from Mon 23 Nov; today's prices were not out." }, "en")).toBe("Calls are from Mon 23 Nov; today's prices were not out.");
+  });
+  it("writes Bengali for both known sentences and keeps the date", () => {
+    expect(R.callsBanner({ calls_note: "Calls are from Mon 23 Nov; today's prices were not out." }, "bn")).toContain("Mon 23 Nov");
+    expect(R.callsBanner({ calls_note: "Calls are from Mon 23 Nov; the newer calls have not been made yet." }, "bn")).toContain("নতুন call");
+  });
+});

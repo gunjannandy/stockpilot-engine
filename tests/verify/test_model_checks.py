@@ -279,3 +279,11 @@ def test_check11_soft_fails_when_over_40_percent_of_sells_flip(db):
 def test_check11_ignores_a_stock_that_was_not_called_the_day_before(db):
     _two_days(db, {f"S{i}": "sell" for i in range(5)}, {**{f"S{i}": "sell" for i in range(5)}, "NEW1": "sell", "NEW2": "sell"})
     assert model.check_regression(ctx_for(db)).status == "pass"
+
+
+def test_check10_judges_the_models_own_chance_not_the_calibrated_one(db, tmp_path):
+    """Calibration may move the stored chance away from the base rate; only the model's move needs cited evidence."""
+    call(db, "AAA", "buy", p=0.62, base=0.5, summary="Looks good.", moved=[], news=[])
+    db.execute("update calls set raw_probability = 0.5 where symbol = 'AAA'")
+    r = model.check_analyst_numbers(ctx_for(db, briefs=_brief(tmp_path, [ENTRY])))
+    assert "no evidence cited" not in " ".join(r.problems)

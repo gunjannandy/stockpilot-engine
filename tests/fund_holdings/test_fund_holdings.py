@@ -140,3 +140,76 @@ def test_publish_writes_dated_per_fund_files_and_a_house_report(tmp_path):
 
 def test_ten_houses_are_listed_with_their_amfi_names():
     assert len(fh.HOUSES) == 10 and len(set(fh.HOUSES)) == 10 and all(h.endswith("Mutual Fund") for h in fh.HOUSES)
+
+
+# ---- finding the files: houses change the address every month, so the job reads each house's disclosure page ----------
+
+PAGE = """<html><body>
+<a href="/docs/Monthly-Portfolio-September-2026.xlsx">Monthly Portfolio September 2026</a>
+<a href="/docs/Monthly-Portfolio-October-2026.xlsx">Monthly Portfolio - October 2026</a>
+<a href='https://cdn.example.com/files/all_schemes_portfolio_31102026.zip'>All schemes 31 Oct 2026</a>
+<a href="/docs/factsheet-october-2026.pdf">Factsheet October 2026</a>
+<a href="/docs/Debt-Portfolio-15-Oct-2026.xls">Debt portfolio 15 October 2026</a>
+<a href="/about">About us</a><a>no address</a>
+</body></html>"""
+
+
+def test_links_on_a_page_are_made_absolute_and_keep_their_words():
+    links = fh.find_links(PAGE, "https://amc.example.com/disclosures/portfolio")
+    assert ("https://amc.example.com/docs/Monthly-Portfolio-October-2026.xlsx", "Monthly Portfolio - October 2026") in links
+    assert any(u == "https://cdn.example.com/files/all_schemes_portfolio_31102026.zip" for u, _ in links)
+    assert all(u.startswith("https://") for u, _ in links)
+
+
+def test_only_the_latest_months_portfolio_files_are_chosen_and_pdfs_are_left_out():
+    links = fh.find_links(PAGE, "https://amc.example.com/p")
+    chosen = fh.latest_files(links)
+    assert chosen == ["https://amc.example.com/docs/Monthly-Portfolio-October-2026.xlsx",
+                      "https://cdn.example.com/files/all_schemes_portfolio_31102026.zip",
+                      "https://amc.example.com/docs/Debt-Portfolio-15-Oct-2026.xls"]
+
+
+def test_undated_links_are_kept_up_to_a_few_and_a_page_with_no_portfolio_file_gives_none():
+    undated = [(f"https://a.example/portfolio{i}.xlsx", "Portfolio") for i in range(9)]
+    assert fh.latest_files(undated) == [u for u, _ in undated[:5]]
+    assert fh.latest_files(fh.find_links("<a href='/x.pdf'>Portfolio</a>", "https://a.example")) == []
+
+
+def test_a_zip_of_monthly_sheets_is_read_file_by_file():
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("Alpha Flexi Cap.xlsx", xlsx({"S": ALPHA}))
+        z.writestr("beta.csv", "Beta Mutual Fund\nBeta Large Cap Fund\nAs on 31-Oct-2026\nName,ISIN,% to NAV\nAaa Bank Ltd,INE000A01011,8\n")
+        z.writestr("readme.txt", "ignore me")
+    ps = fh.parse_workbook(buf.getvalue(), "all.zip")
+    assert sorted(p["title"] for p in ps) == ["Alpha Flexi Cap Fund", "Beta Large Cap Fund"]
+
+
+def test_an_xlsx_is_still_read_as_a_workbook_not_a_bundle():
+    assert len(fh.parse_workbook(xlsx({"A": ALPHA}), "x.zip")) == 1
+
+
+def test_sources_entry_accepts_the_old_list_and_the_new_shape():
+    assert fh.house_sources(["u1"]) == ([], ["u1"])
+    assert fh.house_sources({"pages": ["p"], "files": ["f"], "status": "found"}) == (["p"], ["f"])
+    assert fh.house_sources({"pages": [], "files": [], "status": "unfound"}) == ([], [])
+    assert fh.house_sources(None) == ([], [])
+
+
+def test_resolve_urls_reads_the_page_then_adds_its_latest_files():
+    pages = {"https://amc.example.com/p": PAGE.encode()}
+    urls, notes = fh.resolve_urls(lambda u: pages.get(u), {"pages": ["https://amc.example.com/p", "https://down.example.com/p"],
+                                                         "files": ["https://fixed.example.com/a.xlsx"]})
+    assert urls[0] == "https://fixed.example.com/a.xlsx" and len(urls) == 4
+    assert any("down.example.com" in n for n in notes)       # a page that did not answer is reported, not hidden
+
+
+def test_the_shipped_config_names_every_house_and_never_holds_a_made_up_address():
+    cfg = json.loads(open("config/fund_house_sources.json").read())
+    assert set(cfg) == set(fh.HOUSES)
+    for house, entry in cfg.items():
+        pages, files = fh.house_sources(entry)
+        assert entry["status"] in ("page-found", "file-found", "unfound"), house
+        assert (entry["status"] == "unfound") == (not pages and not files), house
+        assert entry["note"], house
+        assert all(u.startswith("https://") for u in pages + files)

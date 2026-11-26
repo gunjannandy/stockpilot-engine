@@ -341,11 +341,12 @@ def check_analyst_numbers(ctx) -> Result:
     for c in rows:
         if c["symbol"] not in entries or c.get("probability") is None or c.get("base_rate") is None:
             continue
-        moved = abs(c["probability"] - c["base_rate"]) >= 0.03
+        said = c["raw_probability"] if c.get("raw_probability") is not None else c["probability"]   # the model's own chance: calibration is code's
+        moved = abs(said - c["base_rate"]) >= forecast.UNEVIDENCED_MOVE
         cited = bool(c["reasons"].get("moved_by")) or bool(c.get("news"))
         if moved and not cited:
             unevidenced.append(c["symbol"])
-            r.fail(f"{c['symbol']}: its chance sits {100 * (c['probability'] - c['base_rate']):+.0f} points from the base rate with no evidence cited; the code-only call should stand")
+            r.fail(f"{c['symbol']}: its chance sits {100 * (said - c['base_rate']):+.0f} points from the base rate with no evidence cited; the code-only call should stand")
     r.numbers = {"calls_on": str(made), "numbers_found": len(pool), "spot_checked": len(checked), "not_in_brief": len(wrong),
                  "without_evidence": len(unevidenced)}
     r.summary = f"{len(checked)} of {len(pool)} cited numbers spot-checked against the brief: {len(wrong)} not found; {len(unevidenced)} moved calls cite no evidence."

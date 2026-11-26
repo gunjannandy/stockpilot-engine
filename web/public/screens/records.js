@@ -64,5 +64,16 @@
     };
   }
 
-  root.SPRecords = { VIEWS, load, split, sourceCounts, holdingsFor, summary, unitsCheck };
+  // LEFTOVER #3: the "Calls are from <date>" note shown as its own banner on Today. Null when the calls are current.
+  // The server writes the English sentence (site.py); Bengali is made here from its two known shapes.
+  function callsBanner(today, lang) {
+    const note = today && typeof today.calls_note === "string" ? today.calls_note.trim() : "";
+    if (!note) return null;
+    if (lang !== "bn") return note;
+    const m = note.match(/^Calls are from (.+?); (?:(.+?) prices were not out|the newer calls have not been made yet)\.$/);
+    if (!m) return note;
+    return m[2] ? `Call-গুলো ${m[1]} তারিখের; ${m[2] === "today's" ? "আজকের" : m[2].replace(/'s$/, "")} দাম এখনও আসেনি।` : `Call-গুলো ${m[1]} তারিখের; নতুন call এখনও তৈরি হয়নি।`;
+  }
+
+  root.SPRecords = { VIEWS, load, split, sourceCounts, holdingsFor, summary, unitsCheck, callsBanner };
 })(typeof window !== "undefined" ? window : globalThis);

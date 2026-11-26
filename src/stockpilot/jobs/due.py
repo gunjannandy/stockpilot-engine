@@ -14,6 +14,7 @@ BASE_RATES_FROM_HOUR = 3
 CRUNCH_MAX = 3                # decide twice, plus one stale-day crunch
 DECIDE_MAX = 2                # the runner step at most twice an evening: one try and one retry
 NAV_MAX = 2
+KITE_MAX = 3                  # a failing Kite read is tried at most three times an evening (owners' word, issue #5)
 WEEKLY_MAX = 2
 RERUN_DIR = Path("data") / "rerun"
 # The sources gather fetches, in order. The first twelve are daily_ingest's steps; kite and docs follow.

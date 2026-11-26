@@ -1,12 +1,12 @@
 {
-  "SBI Mutual Fund": [],
-  "ICICI Prudential Mutual Fund": [],
-  "HDFC Mutual Fund": [],
-  "Nippon India Mutual Fund": [],
-  "Kotak Mahindra Mutual Fund": [],
-  "Aditya Birla Sun Life Mutual Fund": [],
-  "UTI Mutual Fund": [],
-  "Axis Mutual Fund": [],
-  "Mirae Asset Mutual Fund": [],
-  "DSP Mutual Fund": []
+  "SBI Mutual Fund": {"status": "unfound", "pages": [], "files": [], "note": "No official portfolio-disclosure page address was confirmed. Search found only scheme documents on sbimf.com. Not guessed."},
+  "ICICI Prudential Mutual Fund": {"status": "unfound", "pages": [], "files": [], "note": "No official portfolio-disclosure page address was confirmed. Search found only filings on BSE and factsheets on icicipruamc.com. Not guessed."},
+  "HDFC Mutual Fund": {"status": "page-found", "pages": ["https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio"], "files": [], "note": "Official Monthly Portfolio page on hdfcfund.com, named in search results. Its file links were not read from this session; the first VM run shows whether the page lists sheets."},
+  "Nippon India Mutual Fund": {"status": "page-found", "pages": ["https://mf.nipponindiaim.com/investor-service/downloads/factsheet-portfolio-and-other-disclosures"], "files": [], "note": "Official Factsheet, Portfolio and Other Disclosures page on mf.nipponindiaim.com, named in search results. File links not read from this session."},
+  "Kotak Mahindra Mutual Fund": {"status": "page-found", "pages": ["https://www.kotakmf.com/Information/forms-and-downloads"], "files": [], "note": "Official Forms and Downloads page on kotakmf.com, named in search results. Which section holds the monthly portfolio sheets is unconfirmed."},
+  "Aditya Birla Sun Life Mutual Fund": {"status": "page-found", "pages": ["https://mutualfund.adityabirlacapital.com/resources/monthly-portfolio"], "files": [], "note": "Official Monthly Portfolio page on mutualfund.adityabirlacapital.com, named in search results. The page may build its list with JavaScript."},
+  "UTI Mutual Fund": {"status": "unfound", "pages": [], "files": [], "note": "No official portfolio-disclosure page address was confirmed. Search found only scheme documents. Not guessed."},
+  "Axis Mutual Fund": {"status": "page-found", "pages": ["https://www.axismf.com/statutory-disclosures"], "files": [], "note": "Official Statutory Disclosures page on axismf.com with a Portfolios entry, named in search results. The Portfolios sub-page address was not confirmed."},
+  "Mirae Asset Mutual Fund": {"status": "unfound", "pages": [], "files": [], "note": "No official portfolio-disclosure page on miraeassetmf.co.in was confirmed. Monthly PDFs were seen on NSE's archive, but PDFs cannot be read by this reader. Not guessed."},
+  "DSP Mutual Fund": {"status": "unfound", "pages": [], "files": [], "note": "No official portfolio-disclosure page address was confirmed. Search found only factsheets and scheme documents on dspim.com. Not guessed."}
 }

@@ -37,7 +37,7 @@ en: {
   second: p => `A second check, done separately, says ${p}.`, sellBelow: "Sell below 40%", even: "Even", buyAbove: "Buy above 57%",
   callSell: (q, v) => `Our call: sell ${q} shares, about ${v}.`, callHold: "Our call: keep it.", callWatch: "Not a buy yet.",
   taxL: "Tax", wouldBuy: "We would buy if", fallTo: "Sell at once if it falls to", riseTo: "It could rise to", newsL: "In the news",
-  youHold: (q, v, g) => `You hold ${q} shares, worth ${v} (${g}).`, youHoldT: "You hold it", inWl: "In watchlist", addWl: "Add to watchlist", remWl: "Remove from watchlist", snooze: "Hide for 30 days", dismiss: "Never show again",
+  youHold: (q, v, g) => `You hold ${q} shares, worth ${v} (${g}).`, youHoldT: "You hold it", inWl: "In watchlist", addWl: "Add to watchlist", remWl: "Remove from watchlist", snooze: "Hide for 30 days", backSnooze: "Back from snooze", dismiss: "Never show again",
   noView: "No forecast yet", noViewL: "Our analyst has not looked at this stock. Ask, and a forecast appears here in about 15 minutes. Up to 5 a day.", ask: "Ask the analyst",
   ourView: "Our view", whySell: "Why sell", price6: "Price, last 6 months", price1y: "Nifty, last 1 year (through the Nifty BeES fund)", price: "Price", a50: "2-month average", a200: "10-month average", target: "Could rise to", stop: "Sell if it falls to", now: "Now",
   facts: "The numbers, in plain words", compare: "Against its sector", back: "Back",
@@ -87,7 +87,7 @@ bn: {
   second: p => `আলাদা করে দ্বিতীয়বার যাচাই: ${p}।`, sellBelow: "40%-এর নিচে Sell", even: "সমান", buyAbove: "57%-এর উপরে Buy",
   callSell: (q, v) => `আমাদের মত: ${q}টা share sell করুন, মোটামুটি ${v}।`, callHold: "আমাদের মত: রেখে দিন।", callWatch: "এখনও কেনার মতো নয়।",
   taxL: "Tax", wouldBuy: "কিনব যদি", fallTo: "এর নিচে নামলে সঙ্গে সঙ্গে sell", riseTo: "উঠতে পারে", newsL: "খবরে",
-  youHold: (q, v, g) => `আপনার ${q}টা share আছে, দাম ${v} (${g})।`, youHoldT: "আপনার আছে", inWl: "Watchlist-এ আছে", addWl: "Watchlist-এ যোগ করুন", remWl: "Watchlist থেকে সরান", snooze: "30 দিন লুকান", dismiss: "আর দেখাবেন না",
+  youHold: (q, v, g) => `আপনার ${q}টা share আছে, দাম ${v} (${g})।`, youHoldT: "আপনার আছে", inWl: "Watchlist-এ আছে", addWl: "Watchlist-এ যোগ করুন", remWl: "Watchlist থেকে সরান", snooze: "30 দিন লুকান", backSnooze: "Snooze শেষ, ফিরে এসেছে", dismiss: "আর দেখাবেন না",
   noView: "এখনও forecast নেই", noViewL: "Analyst এই stock এখনও দেখেনি। জিজ্ঞেস করলে মোটামুটি 15 মিনিটে forecast এখানে আসবে। দিনে 5টা পর্যন্ত।", ask: "Analyst-কে জিজ্ঞেস করুন",
   ourView: "আমাদের মত", whySell: "কেন sell", price6: "দাম, গত 6 মাস", price1y: "Nifty, গত 1 বছর (Nifty BeES fund দিয়ে)", price: "দাম", a50: "2 মাসের গড়", a200: "10 মাসের গড়", target: "উঠতে পারে", stop: "এর নিচে নামলে sell", now: "এখন",
   facts: "সংখ্যাগুলো সহজ কথায়", compare: "নিজের sector-এর তুলনায়", back: "ফিরে যান",
@@ -176,6 +176,8 @@ Object.assign(W.bn, { universe: "সব স্টক", universeS: "সব স্
   uPeLt15: "১৫-র নিচে", uPeMid: "১৫ থেকে ৩০", uPeGt30: "৩০-এর বেশি", uPeNone: "P/E নেই", uGrUp: "১৫%-এর বেশি", uGrSlow: "০ থেকে ১৫%", uGrDown: "কমছে",
   uChP60: "৬০% বা বেশি", uChP50: "৫০ থেকে ৬০%", uChLow: "৫০%-এর কম", uChNone: "পূর্বাভাস নেই", uSzLarge: "বড়", uSzMid: "মাঝারি", uSzSmall: "ছোট", uSzTiny: "খুব ছোট", uNSE: "NSE", uBSE: "BSE", uSME: "SME" });
 if (window.SPFeedback) for (const l of ["en", "bn"]) for (const k in SPFeedback.words[l]) if (!(k in W[l])) W[l][k] = SPFeedback.words[l][k];   // T27: the Feedback screen's words
+if (window.SPNewsLive) for (const l of ["en", "bn"]) for (const k in window.SPNewsLive.words[l]) if (!(k in W[l])) W[l][k] = window.SPNewsLive.words[l][k];   // AUDIT #23
+if (window.SPChanges) for (const l of ["en", "bn"]) for (const k in window.SPChanges.words[l]) if (!(k in W[l])) W[l][k] = window.SPChanges.words[l][k];   // AUDIT #19: the yellow "What changed" words
 window.SP_WORDS = W;   // read by the tests: every English word needs a Bengali one
 const w = (k, ...a) => { const v = (W[S.lang] && W[S.lang][k]) ?? W.en[k]; return typeof v === "function" ? v(...a) : (v ?? k); };
 
@@ -481,7 +483,8 @@ function table(key, rows, chips, cols, opts = {}) {
    ${rows.length ? `<table class="grid rise"><thead><tr>${cols.map((c, i) => `<th class="${c.c || ""} ${c.r ? "r" : ""}" ${so?.i === i ? `aria-sort="${so.d > 0 ? "ascending" : "descending"}"` : ""}>${c.v ? `<button data-sort="${key}:${i}">${c.l ? w(c.l) : ""}${c.t ? info(c.t) : ""}<span class="ms">${so?.i === i && so.d < 0 ? "arrow_downward" : "arrow_upward"}</span></button>` : `<button tabindex="-1" style="cursor:default">${c.l ? w(c.l) : ""}</button>`}</th>`).join("")}</tr></thead>
     <tbody>${rows.map(r => `<tr class="r" ${opts.rowAttr ? opts.rowAttr(r) : `data-open="${esc(r.sym)}"`} tabindex="0">${cols.map(c => `<td class="${c.c || ""} ${c.r ? "r" : ""}">${c.h(r)}</td>`).join("")}</tr>${opts.after ? opts.after(r) : ""}`).join("")}</tbody></table>` : `<p class="empty">${w("noMatch")}</p>`}`;
 }
-const stockCell = r => `<div class="nm trunc">${esc(r.name)}</div><div class="sy num trunc">${esc(r.sym)}${r.sector ? " · " + esc(r.sector) : ""}</div>`;
+const backFromSnooze = sym => (D.settings?.back_from_snooze || []).includes(sym);   // issue #4: its 30 days ended in the last week
+const stockCell = r => `<div class="nm trunc">${esc(r.name)}${backFromSnooze(r.sym) ? ` <span class="tag back-snooze">${w("backSnooze")}</span>` : ""}</div><div class="sy num trunc">${esc(r.sym)}${r.sector ? " · " + esc(r.sector) : ""}</div>`;
 const viewCell = r => r.it ? chip(r.it.v) : chip("none");
 function pageWatchlist() {
   const rows = [...WL.values()].map(r => ({ sym: r.symbol, name: clean(r.name), it: BY.get(r.symbol), held: HELD.has(r.symbol), w: r, fund: isFund2(r.symbol) ? fundById(r.symbol) : null }));
@@ -912,6 +915,7 @@ function render() {
   $("#view").innerHTML = (PAGES[S.tab] || pageToday)();
   hydrate(); hydrateSince(); renderRail();
   if (S.tab === "feedback" && LIVE && window.SPFeedback) SPFeedback.mount({ t: w, lang: () => S.lang, toast });
+  if (S.tab === "market" && LIVE && window.SPNewsLive) SPNewsLive.mount({ t: w, lang: () => S.lang, name: nameOf, held: s => HELD.has(s) });   // AUDIT #23: live news above the nightly numbers
   if (S.tab === "stock") fillStock();
   if (S.tab === "universe" && window.SPUniverseScreen) SPUniverseScreen.mount($("#uni"), { w, esc, px });
   $$("[data-chart='NIFTYBEES'][data-days]").forEach(box => hist("NIFTYBEES").then(h => { if (!h) return; const draw = () => { box.dataset.w = box.clientWidth - 40; box.innerHTML = priceChart(null, h, box.clientWidth - 40, 250); }; draw(); watchSize(box, draw); }));
@@ -1345,7 +1349,9 @@ pageToday = function () {
   const ah = actionHead(rows), bn = S.lang === "bn", top = rows.find(i => ["sell", "weak", "review", "buy"].includes(i.v));
   const h1 = bn ? (top ? w("firstA", top.v, top.name, ah.count > 1) : w("nothingToday")) : ah.first;
   const then = bn ? (ah.count > 1 ? w("thenN", ah.count - 1) : "") : (ah.rest ? `${w("then")} ${ah.rest}` : "");
-  const lead = `<header class="lead"><div class="lead-t"><div class="eyebrow">${esc(dayLine())}</div><h1>${esc(h1)}</h1>${then ? `<p class="then">${esc(then)}</p>` : ""}
+  const cb = window.SPRecords && SPRecords.callsBanner(D.today, S.lang);
+  const banner = cb ? `<div class="flag calls-banner" role="status"><span class="ms" style="color:var(--warn)" aria-hidden="true">info</span><span>${esc(cb)}</span></div>` : "";
+  const lead = `${banner}<header class="lead"><div class="lead-t"><div class="eyebrow">${esc(dayLine())}</div><h1>${esc(h1)}</h1>${then ? `<p class="then">${esc(then)}</p>` : ""}
      <p class="clamp"${D.today?.since?.sentence && !bn ? ` data-tip="${esc(D.today.since.sentence)}"` : ""}>${esc(bn && D.calls?.market_view_bn ? D.calls.market_view_bn : (D.today?.market_mood || ""))}</p>${glance()}</div></header>`;
   return listPane("today", { rows: rows.map(callRow), lead, label: w("today"),
     chips: [["all", () => true], ["sell", r => r.v === "sell"], ["weak", r => r.v === "weak"], ["review", r => r.v === "review"], ["buy", r => r.v === "buy"], ["hold", r => r.v === "hold"], ["watch", r => r.v === "watch"]],
@@ -1600,6 +1606,7 @@ pageMarket = function () {
     return `<div class="idx"><div class="idx-h"><b>${nm}</b><span class="muted">${sub}</span></div><div class="idx-v num">${Math.round(c[c.length - 1]).toLocaleString("en-IN")} <span class="${up ? "up" : "dn"}">${spct(chg)}</span></div><div class="chbox" data-draw="${id}" style="height:64px"></div></div>`; }).join("") : "";
   const f = F && F.length ? (() => { const day = F[F.length - 1].date, r = F.filter(x => x.date === day), mx = Math.max(...r.map(x => Math.abs(x.net)), 1); return `<div class="flows">${r.map(x => `<div class="fl"><span>${x.category === "FII" ? "Foreign funds" : "Indian funds"}</span><span class="flt"><i class="${x.net >= 0 ? "w" : "l"}" style="width:${Math.abs(x.net) / mx * 100}%" data-tip="${x.category}: bought ${inr(x.buy)} crore, sold ${inr(x.sell)} crore"></i></span><b class="num ${x.net >= 0 ? "up" : "dn"}">${x.net >= 0 ? "+" : "−"}${inr(Math.abs(x.net))} cr</b></div>`).join("")}<p class="muted">${mdate(day)}. ${r.map(x => `${x.category === "FII" ? "Foreign" : "Indian"} funds ${x.net >= 0 ? "bought" : "sold"} ₹${Math.round(Math.abs(x.net)).toLocaleString("en-IN")} crore ${x.net >= 0 ? "more than they sold" : "more than they bought"}`).join("; ")}. A longer history builds up each day.</p></div>`; })() : "";
   return `<div class="pagewrap">${leadH(w("market"), esc(plainWords(m.headline)))}
+   ${LIVE && window.SPNewsLive ? '<div id="newslive"></div>' : ""}
    <div class="wgrid">
    ${wcard(12, "The market, by group", "Each line is one index: a basket of companies. Green means the group rose over the period.", `<div class="rngbar"><span class="seg2">${Object.keys(RNG).map(k => `<button class="sg" data-rng="${k}" aria-pressed="${rng === k}">${k}</button>`).join("")}</span></div><div class="idxs">${idx || '<p class="muted">Loading...</p>'}</div>`)}
    ${wcard(6, "Who is buying", "Foreign funds and Indian funds, net of what they sold, for the latest day.", f || "")}
@@ -1833,6 +1840,7 @@ function boot() {
     const [h, sb] = location.hash.slice(1).split("/"); S.tab = TABS.includes(h) ? h : "today"; if (S.tab === "stock" && !S.sym) S.tab = "today"; S.sub[S.tab] = sb || null;
     Object.keys(DOTS).forEach(t => { if (seen(t) == null || t === S.tab) seen(t, true); });
     renderAll();
+    if (LIVE && window.SPChanges && window.SPLive) SPChanges.mount({ t: w, lang: () => S.lang, name: nameOf });   // AUDIT #19: starts the changes feed, paints the yellow dots
   });
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", boot) : boot();

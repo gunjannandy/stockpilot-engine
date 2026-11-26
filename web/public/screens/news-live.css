@@ -1,0 +1,22 @@
+/* AUDIT #23: the live news block at the top of Market & news. */
+.nl{background:var(--surf,transparent);border:1px solid var(--line,#8884);border-radius:16px;padding:14px 18px;margin:0 0 18px}
+.nl-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.nl-head h2{margin:0;font-size:1.1rem}
+.nl-head .btn{margin-left:auto}
+.nl-sub{margin:4px 0 10px}
+.nl-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:20px}
+@media (max-width:800px){.nl-grid{grid-template-columns:1fr}}
+.nl-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.nl-item{padding-bottom:10px;border-bottom:1px solid var(--line,#8883)}
+.nl-item:last-child{border-bottom:0}
+.nl-top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.nl-title{font-weight:600;color:inherit;text-decoration:none}
+.nl-title:hover{text-decoration:underline}
+.nl-dir{font-size:.75rem;font-weight:700;border-radius:999px;padding:1px 8px;border:1px solid currentColor}
+.nl-good{color:var(--gain)}.nl-bad{color:var(--loss)}.nl-mixed{color:var(--on2,inherit)}
+.nl-line{margin:3px 0}
+.nl-meta{display:flex;gap:6px;flex-wrap:wrap;font-size:.85rem}
+.nl-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.nl-chip{border:1px solid var(--line,#8886);border-radius:999px;padding:1px 10px;font-size:.85rem;text-decoration:none;color:inherit}
+.nl-stocks h3{margin:0 0 6px;font-size:1rem}
+.nl-stocks ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}

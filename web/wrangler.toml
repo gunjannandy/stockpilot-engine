@@ -6,3 +6,11 @@ compatibility_date = "2026-11-01"
 [[kv_namespaces]]
 binding = "SP"
 id = "d5ce7ac77b0b41dfb3f83d7422d96a73"
+
+# v2 (ticket V4): the live data. Same database the ingest Worker writes (web/ingest/wrangler.toml).
+# `wrangler d1 migrations apply stockpilot --remote` (run from web/) applies web/migrations/.
+[[d1_databases]]
+binding = "DB"
+database_name = "stockpilot"
+database_id = "1c803236-8efc-4ead-b183-76be75dca970"
+migrations_dir = "migrations"

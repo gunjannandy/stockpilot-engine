@@ -12,7 +12,9 @@ import json
 import re
 import zipfile
 from datetime import date, datetime
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urljoin
 
 from stockpilot.sources import fund_universe as fu
 from stockpilot.trades.xlsx import Workbook
@@ -90,8 +92,24 @@ def parse_sheet(rows: list[dict[str, str]]) -> dict | None:
     return {"title": title, "amc": amc, "as_of": as_of, "rows": out}
 
 
+def _is_bundle(blob: bytes) -> bool:
+    """A zip of sheets, as opposed to an .xlsx (itself a zip) that happens to be named .zip."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(blob)) as z:
+            return "xl/workbook.xml" not in z.namelist()
+    except zipfile.BadZipFile:
+        return False
+
+
 def parse_workbook(blob: bytes, filename: str = "") -> list[dict]:
     """Every portfolio in a file: one per sheet that has an ISIN column. An unreadable file (an old .xls, a web page) gives []."""
+    if filename.lower().endswith(".zip") and _is_bundle(blob):
+        out = []
+        with zipfile.ZipFile(io.BytesIO(blob)) as z:
+            for info in z.infolist():
+                if info.filename.lower().endswith((".xlsx", ".csv")) and info.file_size < 60_000_000:
+                    out += parse_workbook(z.read(info), info.filename)
+        return out
     if filename.lower().endswith(".csv"):
         sheets = [[{_col(i): v for i, v in enumerate(row) if v.strip()} for row in csv.reader(io.StringIO(blob.decode("utf-8-sig", errors="replace")))]]
     else:
@@ -101,6 +119,91 @@ def parse_workbook(blob: bytes, filename: str = "") -> list[dict]:
         except (zipfile.BadZipFile, KeyError):
             return []
     return [p for p in map(parse_sheet, sheets) if p]
+
+
+# ---- finding the files -------------------------------------------------------------------------------------------
+# Houses change the file address every month, so a house is configured by the page that lists its files and the job reads
+# that page each run: the links to sheets about portfolios, from the latest month on it.
+
+SHEET_EXT = (".xlsx", ".xls", ".xlsb", ".zip", ".csv")
+UNDATED_KEEP = 5
+_COMPACT_DATE = re.compile(r"(?<!\d)(\d{2})(\d{2})(20\d{2})(?!\d)")
+_MONTH_YEAR = re.compile(r"([A-Za-z]{3,9})[\s\-_/.,]+(?:\d{1,2}[\s\-_/.,]+)?(20\d{2})")
+_DAY_MONTH_YEAR = re.compile(r"(\d{1,2})(?:st|nd|rd|th)?[\s\-_/.]+([A-Za-z]{3,9})[\s\-_/.,]+(20\d{2})")
+
+
+class _Links(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links, self._href, self._text = [], None, []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self._href, self._text = dict(attrs).get("href"), []
+
+    def handle_data(self, data):
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self._href is not None:
+            self.links.append((self._href, " ".join("".join(self._text).split())))
+            self._href = None
+
+
+def find_links(html: str, base: str) -> list[tuple[str, str]]:
+    """(absolute address, link words) for every link on a page that has an address."""
+    p = _Links()
+    p.feed(html)
+    return [(urljoin(base, h.strip()), t) for h, t in p.links if h and h.strip() and not h.strip().startswith(("#", "javascript:", "mailto:"))]
+
+
+def _month_of(text: str) -> tuple[int, int] | None:
+    """(year, month) named in a link's words or address, or None."""
+    for rx in (_DAY_MONTH_YEAR, _MONTH_YEAR):
+        for m in rx.finditer(text):
+            name, year = (m[2], m[3]) if rx is _DAY_MONTH_YEAR else (m[1], m[2])
+            if name[:3].lower() in _MONTHS:
+                return int(year), _MONTHS[name[:3].lower()]
+    m = _COMPACT_DATE.search(text)
+    if m and 1 <= int(m[2]) <= 12:
+        return int(m[3]), int(m[2])
+    return None
+
+
+def latest_files(links: list[tuple[str, str]]) -> list[str]:
+    """Addresses of sheet files about portfolios from the newest month named on the page. Files that name no month: the first
+    few. Web pages, PDFs and anything not about a portfolio are left out."""
+    sheets = [(u, t) for u, t in links if u.lower().split("?")[0].endswith(SHEET_EXT) and "portfolio" in f"{u} {t}".lower()]
+    dated = [(_month_of(f"{t} {u.rsplit('/', 1)[-1]}"), u) for u, t in sheets]
+    months = [m for m, _ in dated if m]
+    if months:
+        return [u for m, u in dated if m == max(months)]
+    return [u for _, u in dated[:UNDATED_KEEP]]
+
+
+def house_sources(entry) -> tuple[list[str], list[str]]:
+    """(pages that list the files, fixed file addresses) from a config entry: a bare list is fixed file addresses."""
+    if isinstance(entry, list):
+        return [], list(entry)
+    entry = entry or {}
+    return list(entry.get("pages") or []), list(entry.get("files") or [])
+
+
+def resolve_urls(fetch, entry) -> tuple[list[str], list[str]]:
+    """The file addresses to read for a house, and plain notes about pages that gave nothing."""
+    pages, files = house_sources(entry)
+    urls, notes = list(files), []
+    for page in pages:
+        blob = fetch(page)
+        if not blob:
+            notes.append(f"{page}: no answer")
+            continue
+        found = latest_files(find_links(blob.decode("utf-8", errors="replace"), page))
+        if not found:
+            notes.append(f"{page}: no portfolio sheet links on the page (it may build its list with JavaScript)")
+        urls += [u for u in found if u not in urls]
+    return urls, notes
 
 
 # ---- matching to funds -------------------------------------------------------------------------------------------
@@ -200,14 +303,21 @@ def main(argv=None):
     args = argv or sys.argv[1:]
     out = Path(args[0])
     sources = json.loads(Path(args[1] if len(args) > 1 else "config/fund_house_sources.json").read_text())
-    if not any(sources.get(h) for h in HOUSES):
+    if not any(any(house_sources(sources.get(h))) for h in HOUSES):
         print("No fund house file addresses are configured yet: nothing published.")
         return
     blob = fetch(fu.NAVALL_URL)
     if not blob:
         raise SystemExit("AMFI NAVAll did not answer: nothing published")
     funds = fu.group_funds(fu.parse_navall(blob))
-    houses = {h: load_house(lambda u: fetch(u, attempts=3, timeout=120), sources.get(h) or [], funds) for h in HOUSES}
+    get = lambda u: fetch(u, attempts=3, timeout=120)       # noqa: E731
+    houses = {}
+    for h in HOUSES:
+        urls, notes = resolve_urls(get, sources.get(h))
+        houses[h] = load_house(get, urls, funds)
+        houses[h]["failed"] += notes
+        for n in notes:
+            print(f"{h}: {n}")
     from datetime import timedelta, timezone
     counts = publish(houses, out, datetime.now(timezone(timedelta(hours=5, minutes=30))).isoformat(timespec="seconds"))
     print(f"fund holdings: {counts['funds']} funds from {counts['houses_loaded']} of {counts['houses_total']} houses; "

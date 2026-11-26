@@ -340,8 +340,39 @@ def rank_handler(deps: Deps):
                 started += 1
             st.update(day=gov.day.isoformat(), used=gov.used_today, done=sorted(gov._done), running=sorted(gov.running))
         ctx.progress(f"Planned {started} refreshes", f"{started}টি হালনাগাদের পরিকল্পনা হয়েছে")
+        entered, left = refresh_news_list(deps, ctx.job["id"], now)
+        ctx.progress(f"In today's news: {entered} in, {left} out", f"আজকের খবরে: {entered}টি এসেছে, {left}টি গেছে")
         return f"Done, {len(ranked)} ranked"
     return run
+
+
+def refresh_news_list(deps: Deps, job_id: str, now) -> tuple[int, int]:
+    """Write the "In today's news" list from the tagged news and give both people a yellow change for each stock that entered or left.
+    Returns (entered, left)."""
+    from stockpilot import news_lists
+    since = (now - news_lists.FRESH).isoformat()
+    items = deps.query("select id, published_at, impact, source_count, line_en, line_bn, title from news_items "
+                       "where tagged_at is not null and impact >= ? and published_at >= ?", [news_lists.MIN_IMPACT, since])
+    touches: dict[str, list] = {}
+    for t in deps.query("select item_id, symbol, exchange, relation from news_tags where item_id in "
+                        "(select id from news_items where tagged_at is not null and impact >= ? and published_at >= ?)", [news_lists.MIN_IMPACT, since]):
+        touches.setdefault(t["item_id"], []).append(t)
+    old = deps.query("select * from lists where list_name = ?", [news_lists.LIST])
+    stamp = deps.stamp()
+    new = news_lists.rows(news_lists.pick(items, touches, now), old, stamp)
+    marks = news_lists.changes(new, old, job_id, stamp)
+    keep = {(r["symbol"], r["exchange"]) for r in new}
+    for o in old:
+        if (o["symbol"], o["exchange"]) not in keep:
+            deps.query("delete from lists where list_name = ? and symbol = ? and exchange = ?", [news_lists.LIST, o["symbol"], o["exchange"]])
+    was = {(o["symbol"], o["exchange"]): o for o in old}
+    for r in new:                                                  # D1 counts every write: leave a row that did not change alone
+        o = was.get((r["symbol"], r["exchange"]))
+        if not o or any(o[k] != r[k] for k in ("rank", "reason", "reason_bn", "since")):
+            upsert(deps.query, "lists", r)
+    for m in marks:
+        upsert(deps.query, "changes", m, ignore=True)
+    return sum(m["kind"] == "list_entered" for m in marks) // len(news_lists.PEOPLE), sum(m["kind"] == "list_left" for m in marks) // len(news_lists.PEOPLE)
 
 
 def _open_refreshes(query) -> list[dict]:

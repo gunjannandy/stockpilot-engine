@@ -124,3 +124,14 @@ def test_records_become_rows_in_the_contract_shape():
     contract = json.loads((Path(__file__).parents[1] / "schemas" / "live-contract.json").read_text())
     assert set(rows[0]) == set(contract["tables"]["asks"]["columns"])
     assert all(r["feedback_id"] == "fb_009" and r["issue_number"] is None for r in rows)
+
+
+def test_an_ask_that_needs_the_owner_is_stored_waiting_for_approval():
+    """AUDIT #18: the owner's Approve button shows only on a waiting_for_approval ask, and nothing else ever sets that status
+    for the father's asks. An ask the code routes to the owner must be stored that way; an auto ask stays understood."""
+    asks = fr.read(MESSAGES["10"]["text"], "father", recorded_model(), ["fake"])   # data, bug, data: owner, auto, owner
+    assert [a["route"] for a in asks] == ["owner_approval", "auto", "owner_approval"]
+    rows = fr.rows("fb_010", asks, now="2026-11-25T10:00:00+05:30")
+    for a, r in zip(asks, rows):
+        assert r["status"] == ("waiting_for_approval" if a["route"] == "owner_approval" else "understood")
+    assert any(r["status"] == "waiting_for_approval" for r in rows)

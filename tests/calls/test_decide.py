@@ -159,12 +159,21 @@ def test_a_sector_buy_in_the_last_week_leaves_no_room_for_a_different_stock():
     assert calls["B2"]["section"] == "buy" and calls["B1"]["section"] == "follow"
 
 
+def test_the_sector_warning_starts_at_25_percent_not_20():
+    # issue #6: banks at 15% plus the ₹80,000 buy is 23%: no warning (it warned at the old 20%); at 18% it is 26%: warning
+    assert decide.Rules().sector_warn_at == 0.25
+    at23 = by(run([item("NEW", 0.7)], sector_values={"Banks": 150_000}))["NEW"]
+    assert not any("this makes it" in w for w in at23["warnings"])
+    at26 = by(run([item("NEW", 0.7)], sector_values={"Banks": 180_000}))["NEW"]
+    assert any("18% in Banks; this makes it 26%" in w for w in at26["warnings"])
+
+
 def test_a_buy_that_lifts_a_sector_share_gets_one_warning_line():
     # banks are ₹2.8 lakh of ₹10 lakh (28%); an ₹80,000 buy makes it 36%
     c = by(run([item("NEW", 0.7)], sector_values={"Banks": 280_000}))["NEW"]
     assert any("28% in Banks; this makes it 36%" in w for w in c["warnings"])
     small = by(run([item("NEW", 0.7)], sector_values={"Banks": 10_000}))["NEW"]
-    assert not any("this makes it" in w for w in small["warnings"])      # below the 20% warning share
+    assert not any("this makes it" in w for w in small["warnings"])      # below the 25% warning share
 
 
 def test_a_repeat_buy_shows_the_first_day_of_its_run():

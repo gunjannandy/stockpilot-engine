@@ -26,6 +26,7 @@ RESULTS_WITHIN_DAYS = 10
 NEAR_200DMA = 0.01
 STRONG_MOMENTUM = 0.8
 LONG_TERM_SOON_DAYS = 30
+UNEVIDENCED_MOVE = 0.03      # points of chance the model may move from the base rate without citing a reason or news (verify check 10 uses the same)
 THREE_MONTHS = 63
 
 
@@ -374,6 +375,12 @@ def _run(db, r, day, analyse, runners, rules, budget_inr, floor, brief_dir, full
                 "level_flag": a["level_flag"], "change_reason": a["change_reason"], "would_buy_if": a["would_buy_if"] or "",
                 "for": a["for"], "against": a["against"], "unknowns": a["unknowns"]}
 
+    unevidenced = []                      # issue #17: a chance moved 3 points or more from the base rate with no reason and no news
+    for symbol, a in answers.items():     # is the model's guess, not evidence: the code-only call (the base rate) stands
+        rate = items_meta[symbol]["dossier"]["base_rate"]["rate"]
+        if rate is not None and abs(a["probability"] - rate) >= UNEVIDENCED_MOVE and not a["moved_by"] and not a["news_used"]:
+            a["probability"] = round(rate, 4)
+            unevidenced.append(symbol)
     items = [item_for(s, a) for s, a in answers.items()]
     skeptic = {}
     calibrate = track_record.calibrator(db)       # identity until 30 calls are scored; the line is read on the calibrated chance
@@ -425,7 +432,7 @@ def _run(db, r, day, analyse, runners, rules, budget_inr, floor, brief_dir, full
                     "block_buys": bool(block), "budget_line": line, "sector_notes": decided["sector_notes"],
                     "borderline": near, "runner": runner_name, "failures": failures, "full_review": full_review,
                     "universe": len(why), "checks": {s: v["triggers"] for s, v in checks.items()},
-                    "missing_change_reason": missing_reason, "reasoning_dropped": dropped[:40], "jargon": jargon[:20], "bn_rejected": bn_rejected[:40],
+                    "missing_change_reason": missing_reason, "unevidenced_reset": unevidenced, "reasoning_dropped": dropped[:40], "jargon": jargon[:20], "bn_rejected": bn_rejected[:40],
                     "sections": {s: sum(c["section"] == s for c in calls) for s in decide.SECTION_ORDER},
                     "portfolio_basis": "equity holdings" if pv else "unknown: no holdings, so no sizes"})
     return {"status": "ok", **{k: v for k, v in r.notes.items()}}

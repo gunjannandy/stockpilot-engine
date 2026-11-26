@@ -16,6 +16,8 @@ function loadWords() {
   vm.runInNewContext(src, ctx);
   vm.createContext(ctx);
   vm.runInContext(readFileSync(new URL("../public/screens/worth.js", import.meta.url), "utf8"), ctx);   // screens add their words first
+  vm.runInContext(readFileSync(new URL("../public/screens/changes.js", import.meta.url), "utf8"), ctx);   // AUDIT #19
+  vm.runInContext(readFileSync(new URL("../public/screens/news-live.js", import.meta.url), "utf8"), ctx);   // AUDIT #23
   vm.runInContext(src, ctx);
   return win.SP_WORDS;
 }
