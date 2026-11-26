@@ -15,7 +15,7 @@ from typing import Callable
 import pyrage
 from pyrage import passphrase, x25519
 
-from stockpilot import vault
+from stockpilot import migrate_v2, store, vault
 
 TAG = "market-backup"
 
@@ -157,3 +157,44 @@ def gh_upload(tag: str, paths: list[Path], run=subprocess.run) -> None:
 
 def gh_download(tag: str, dest: Path, run=subprocess.run) -> None:
     _gh(run, "release", "download", tag, "--dir", str(dest), "--clobber")
+
+
+# ---- nightly whole-database backup and the restore proof (ticket V3) ----------------------------------------------
+
+def _sha(db, table: str) -> str:
+    return migrate_v2.table_checksum(db, f"select * from {table} order by all")
+
+
+def nightly(db, root: Path | str, remote: str, keys: "vault.Keys", paths: list[str] | None = None) -> dict:
+    """`sp backup nightly`: every owner table to private/state/ with a manifest of row counts and checksums, then the vault
+    (one encrypted commit, replacing the last). Market data is not in it: it has its own weekly encrypted release."""
+    root = Path(root)
+    state = root / "private" / "state"
+    counts = export_state(db, state)
+    tables = {t: {"rows": counts[t], "sha256": _sha(db, t)} for t in STATE_TABLES}
+    (state / "manifest.json").write_text(json.dumps({"tables": tables}, indent=1, sort_keys=True))
+    vault.push(root, remote, keys, paths or ["private", ".env"])
+    return {"tables": counts}
+
+
+def prove_restore(remote: str, password: str, scratch: Path | str) -> dict:
+    """`sp backup prove`: restore the vault into a scratch folder and a scratch database, then compare every table's rows and
+    checksum with the manifest written at backup time. Everything in scratch is deleted afterwards, plaintext included."""
+    scratch = Path(scratch)
+    try:
+        scratch.mkdir(parents=True, exist_ok=True)
+        vault.restore(remote, password, scratch / "vault")
+        state = scratch / "vault" / "private" / "state"
+        manifest = json.loads((state / "manifest.json").read_text())["tables"]
+        fresh = store.open(scratch / "restored.duckdb")
+        try:
+            loaded = load_state(fresh, state)
+            wrong = [t for t, want in manifest.items()
+                     if loaded.get(t) != want["rows"] or _sha(fresh, t) != want["sha256"]]
+        finally:
+            fresh.close()
+        if wrong:
+            raise BackupError(f"The restore does not match the backup for: {', '.join(wrong)}.")
+        return {"ok": True, "tables": {t: loaded[t] for t in manifest}}
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)

@@ -31,10 +31,28 @@ def cmd_vault(args, cfg):
         keys = vault.Keys.load(keys_dir)
         vault.push(cfg.root, _remote_url(cfg), keys, cfg.get("vault.paths", ["private", ".env"]))
         print("Vault pushed.")
+    elif args.action == "rekey":
+        env = cfg.require("VAULT_PASSWORD", "VAULT_PASSWORD_NEW")
+        keys = vault.rekey(_remote_url(cfg), env["VAULT_PASSWORD"], env["VAULT_PASSWORD_NEW"],
+                           cfg.get("vault.paths", ["private", ".env"]))
+        keys.save(keys_dir)
+        print("Vault re-locked: only the new password opens it. config/vault.pub and vault-identity.age are new: commit them, "
+              "set VAULT_PASSWORD to the new password in .env, then run `sp backup market` so that backup uses the new key.")
     else:
         password = cfg.require("VAULT_PASSWORD")["VAULT_PASSWORD"]
         vault.restore(_remote_url(cfg), password, Path(args.dest))
         print(f"Vault restored into {args.dest}.")
+
+
+def cmd_migrate_v2(args, cfg):
+    """Copy every v1 record into the v2 stores and prove the counts (`--verify-only` checks an earlier copy again)."""
+    from stockpilot import migrate_v2
+    db = store.open(_db_path(cfg))
+    out = cfg.root / "private" / "v2"
+    report = migrate_v2.verify(db, out) if args.verify_only else migrate_v2.migrate(db, out)
+    for name, t in report["types"].items():
+        print(f"{name}: v1 {t['v1']} = v2 {t['v2']}")
+    print("All counts and checksums match." if report["ok"] else "MISMATCH")
 
 
 def _db_path(cfg) -> Path:
@@ -101,6 +119,12 @@ def cmd_backup(args, cfg):
         if args.tag:
             upload = lambda _tag, files: backup.gh_upload(args.tag, files)      # noqa: E731
         print("Market data uploaded:", backup.backup_market(db, recipient, upload))
+    elif args.action == "nightly":
+        print("Nightly backup pushed:", backup.nightly(db, cfg.root, _remote_url(cfg), _keys(cfg), cfg.get("vault.paths")))
+    elif args.action == "prove":
+        import tempfile
+        password = cfg.require("VAULT_PASSWORD")["VAULT_PASSWORD"]
+        print("Restore proof:", backup.prove_restore(_remote_url(cfg), password, Path(tempfile.mkdtemp(prefix="sp-prove-"))))
     else:
         password = cfg.require("VAULT_PASSWORD")["VAULT_PASSWORD"]
         print("Market data restored:", backup.restore_market(db, _keys(cfg).sealed_identity, password,
@@ -410,14 +434,17 @@ def main(argv=None):
     parser.add_argument("--root", default=".", help="project root (default: current directory)")
     sub = parser.add_subparsers(dest="command", required=True)
     v = sub.add_parser("vault", help="push or restore the encrypted vault")
-    v.add_argument("action", choices=["init", "push", "restore"])
+    v.add_argument("action", choices=["init", "push", "restore", "rekey"])
     v.add_argument("--dest", default="restored", help="where restore unpacks to")
     v.set_defaults(func=cmd_vault)
     bk = sub.add_parser("backup", help="back up the database, encrypted: owner state, or market data")
-    bk.add_argument("action", choices=["state", "load-state", "market", "restore-market"])
+    bk.add_argument("action", choices=["state", "load-state", "market", "restore-market", "nightly", "prove"])
     bk.add_argument("--tag", help="market: upload to this GitHub release instead of the backup's (the cloud snapshot)")
     bk.add_argument("--recipient-env", help="market: the .env name of the age public key to encrypt to, instead of the vault's")
     bk.set_defaults(func=cmd_backup)
+    mg = sub.add_parser("migrate-v2", help="copy every v1 record into the v2 stores and check the counts")
+    mg.add_argument("--verify-only", action="store_true", help="check an earlier copy against v1 again")
+    mg.set_defaults(func=cmd_migrate_v2)
     pb = sub.add_parser("publish", help="copy the code to the public engine repo, after the privacy scan")
     pb.add_argument("--remote", default="https://github.com/gunjannandy/stockpilot-engine.git", help="the public repo's git URL")
     pb.add_argument("--deny-file", default=publish_default_deny(), help="private list of names that must never leave (default: data/publish-deny.txt)")

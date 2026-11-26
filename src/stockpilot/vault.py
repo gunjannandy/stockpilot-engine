@@ -83,3 +83,27 @@ def restore(remote: str, password: str, dest: Path | str) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
         tar.extractall(dest, filter="data")
+
+
+MIN_PASSWORD = 12
+
+
+def rekey(remote: str, old_password: str, new_password: str, paths: list[str]) -> Keys:
+    """Re-lock the vault: open it with the old password, make a new key pair sealed with the new password, push one new commit,
+    then check that only the new password opens it. The old password is not re-used for anything. Returns the new keys; the
+    caller saves them to config/ (and the market backup is written again so its recipient is the new key). A wrong old password
+    or a short new one raises before anything is pushed."""
+    if len(new_password) < MIN_PASSWORD:
+        raise VaultError(f"The new vault password must be at least {MIN_PASSWORD} characters.")
+    with tempfile.TemporaryDirectory() as tmp:
+        restore(remote, old_password, tmp)
+        keys = create_keys(new_password)
+        push(tmp, remote, keys, paths)
+    with tempfile.TemporaryDirectory() as check:
+        restore(remote, new_password, check)           # the new password opens it
+    with tempfile.TemporaryDirectory() as leftover:
+        try:
+            restore(remote, old_password, leftover)
+        except VaultError:
+            return keys
+    raise VaultError("The vault still opens with the old password; it was not re-locked.")
