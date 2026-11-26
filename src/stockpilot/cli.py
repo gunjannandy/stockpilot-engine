@@ -97,6 +97,12 @@ def cmd_vm_jobs(args, cfg):
     return 0
 
 
+def cmd_minute(args, cfg):
+    """One firing of the one-minute check (ticket V1). The timer runs `python -m stockpilot.jobs.minute` to skip this module's imports."""
+    from stockpilot.jobs import minute
+    return minute.run(cfg)
+
+
 def cmd_backup(args, cfg):
     from stockpilot import backup
     state_dir = cfg.root / "private" / "state"
@@ -455,6 +461,7 @@ def main(argv=None):
     vj.add_argument("--dry-run", action="store_true", help="list what would run; run and push nothing")
     vj.add_argument("--queue", help="where the runner keeps its clone of branch vm-jobs")
     vj.set_defaults(func=cmd_vm_jobs)
+    sub.add_parser("minute", help="one firing of the one-minute check: model jobs, GitHub starts, stale alarm").set_defaults(func=cmd_minute)
     sub.add_parser("init-db", help="create or migrate the store").set_defaults(func=cmd_init_db)
     p = sub.add_parser("prices", help="ingest NSE bhavcopy for a day or a range")
     p.add_argument("start", help="YYYY-MM-DD")

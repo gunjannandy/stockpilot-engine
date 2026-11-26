@@ -234,7 +234,7 @@ ROOT = Path(__file__).parent.parent
 
 def test_every_job_in_the_brief_has_a_unit_and_timer():
     names = {p.stem for p in (ROOT / "ops" / "systemd").glob("*.timer")}
-    assert names == {"sp-tick", "sp-doctor", "sp-publish", "sp-backup"}
+    assert names == {"sp-tick", "sp-doctor", "sp-publish", "sp-backup", "sp-minute"}
 
 
 @pytest.mark.skipif(not Path("/usr/bin/systemd-analyze").exists(), reason="no systemd-analyze")
@@ -244,6 +244,8 @@ def test_units_pass_systemd_analyze_verify(tmp_path):
     fake.mkdir(parents=True)
     (fake / "sp").write_text("#!/bin/sh\n")
     (fake / "sp").chmod(0o755)
+    (fake / "python").write_text("#!/bin/sh\n")
+    (fake / "python").chmod(0o755)
     subprocess.run(["bash", str(ROOT / "ops" / "install.sh"), "--render", str(out), "--root", str(tmp_path / "proj"),
                     "--user", "nobody"], check=True)
     units = sorted(str(p) for p in out.iterdir())
@@ -333,8 +335,9 @@ def test_install_removes_units_that_are_no_longer_in_the_folder(tmp_path):
     done = subprocess.run(["bash", str(ROOT / "ops" / "install.sh"), "--render", str(out), "--root", str(tmp_path / "proj"),
                            "--user", "nobody"], check=True, capture_output=True, text=True)
     left = sorted(p.name for p in out.iterdir())
-    assert left == ["other.service", "sp-backup.service", "sp-backup.timer", "sp-doctor.service", "sp-doctor.timer", "sp-onfailure.service",
-                    "sp-publish.service", "sp-publish.timer", "sp-tick.service", "sp-tick.timer"]
+    assert left == ["other.service", "sp-backup.service", "sp-backup.timer", "sp-doctor.service", "sp-doctor.timer",
+                    "sp-minute.service", "sp-minute.timer", "sp-onfailure.service", "sp-publish.service", "sp-publish.timer",
+                    "sp-tick.service", "sp-tick.timer"]
     assert "Removed sp-daily.timer" in done.stdout
 
 

@@ -84,3 +84,7 @@ sector_index:
   Media Entertainment & Publication: Nifty Media
   Power: Nifty Energy
   Construction: Nifty Infrastructure
+
+# Cloudflare D1 (v2 live data). Not a secret.
+d1:
+  database_id: 1c803236-8efc-4ead-b183-76be75dca970

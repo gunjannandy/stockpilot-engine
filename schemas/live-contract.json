@@ -995,6 +995,49 @@
         ]
       },
       "served_by": "pages"
+    },
+    "universe_table": {
+      "path": "screen/universe.json",
+      "published_by": "github_public",
+      "desc": "One row per stock for the screener table, in columns of equal length: sector, P/E, profit growth, our 6-month chance, size, last price. Nulls where we hold no figure (ticket T25).",
+      "shape": {
+        "built_at": "time",
+        "n": "int",
+        "symbol": [
+          "str"
+        ],
+        "exchange": [
+          "enum(NSE|BSE)"
+        ],
+        "segment": [
+          "enum(NSE|NSE_SME|BSE|BSE_SME)"
+        ],
+        "name": [
+          "str"
+        ],
+        "sector": [
+          "str?"
+        ],
+        "pe": [
+          "num?"
+        ],
+        "growth": [
+          "num?"
+        ],
+        "chance_6m": [
+          "num?"
+        ],
+        "mcap_cr": [
+          "num?"
+        ],
+        "last": [
+          "num?"
+        ],
+        "day_change_pct": [
+          "num?"
+        ]
+      },
+      "served_by": "pages"
     }
   },
   "write_budget": {

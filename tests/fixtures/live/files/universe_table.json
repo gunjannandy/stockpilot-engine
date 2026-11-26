@@ -1,0 +1,48 @@
+{
+ "built_at": "2026-11-25T10:00:00+05:30",
+ "n": 2,
+ "symbol": [
+  "FIXA",
+  "FIXD"
+ ],
+ "exchange": [
+  "NSE",
+  "BSE"
+ ],
+ "segment": [
+  "NSE",
+  "BSE_SME"
+ ],
+ "name": [
+  "Fixture Alpha Ltd",
+  "Fixture Delta Industries"
+ ],
+ "sector": [
+  "Fixture sector",
+  null
+ ],
+ "pe": [
+  18.5,
+  null
+ ],
+ "growth": [
+  15.5,
+  null
+ ],
+ "chance_6m": [
+  0.61,
+  null
+ ],
+ "mcap_cr": [
+  5200.0,
+  null
+ ],
+ "last": [
+  103.0,
+  null
+ ],
+ "day_change_pct": [
+  1.2,
+  null
+ ]
+}

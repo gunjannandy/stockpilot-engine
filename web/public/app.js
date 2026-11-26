@@ -162,6 +162,18 @@ Object.assign(W.bn, {
   setData: "তথ্য", setDataP: "সব প্রতি সন্ধ্যায় নিজে হালনাগাদ হয়। কোনো সংখ্যা পুরনো লাগলে তবেই এগুলো চাপুন।", refreshDocs: "আমার document নতুন করুন", rerunNow: "আজকের analysis আবার চালান", signOut: "Sign out",
   ladder: "দাম কোথায় যেতে পারে", cWhyL: "সংক্ষেপে", snoozeShort: "30 দিন লুকান", cross: "আর দেখাবেন না",
 });
+/* T25: Every stock (screener) words */
+Object.assign(W.en, { universe: "Every stock", universeS: "All stocks", universeP: "Every NSE, BSE and SME stock. Filter or type a name, then click a row.",
+  uFilters: "Filters", uLoading: "Loading every stock...", uMissing: "The list of all stocks is not published yet. It appears after the next nightly update.", uFind: "Type a name or symbol", uAny: "Any", uOf: "of", uStocks: "stocks", uClear: "Clear filters", uMore: n => `Show ${n} more`, uNone: "No stock matches these filters. Try fewer filters.", uNoView: "No forecast yet",
+  uPe: "P/E", uGrowth: "Profit growth", uChance: "Chance to beat the Nifty", uSize: "Size", uExch: "Exchange", uSector: "Sector",
+  uPeLt15: "Under 15", uPeMid: "15 to 30", uPeGt30: "Over 30", uPeNone: "No P/E", uGrUp: "Over 15%", uGrSlow: "0 to 15%", uGrDown: "Shrinking",
+  uChP60: "60% or more", uChP50: "50 to 60%", uChLow: "Under 50%", uChNone: "No forecast", uSzLarge: "Large", uSzMid: "Mid", uSzSmall: "Small", uSzTiny: "Tiny", uNSE: "NSE", uBSE: "BSE", uSME: "SME" });
+Object.assign(W.bn, { universe: "সব স্টক", universeS: "সব স্টক", universeP: "NSE, BSE আর SME-র সব স্টক। filter দিন বা নাম লিখুন, তারপর লাইনে ক্লিক করুন।",
+  uFilters: "Filter", uLoading: "সব স্টক আনা হচ্ছে...", uMissing: "সব স্টকের তালিকা এখনও তৈরি হয়নি। আজ রাতের update-এর পরে দেখা যাবে।", uFind: "নাম বা symbol লিখুন", uAny: "যেকোনো", uOf: "-এর মধ্যে", uStocks: "টা স্টক", uClear: "filter মুছুন", uMore: n => `আরও ${n}টা দেখান`, uNone: "এই filter-এ কোনো স্টক মেলেনি। কম filter দিয়ে দেখুন।", uNoView: "এখনও পূর্বাভাস নেই",
+  uPe: "P/E", uGrowth: "মুনাফার বৃদ্ধি", uChance: "Nifty-কে হারানোর সম্ভাবনা", uSize: "আকার", uExch: "Exchange", uSector: "সেক্টর",
+  uPeLt15: "১৫-র নিচে", uPeMid: "১৫ থেকে ৩০", uPeGt30: "৩০-এর বেশি", uPeNone: "P/E নেই", uGrUp: "১৫%-এর বেশি", uGrSlow: "০ থেকে ১৫%", uGrDown: "কমছে",
+  uChP60: "৬০% বা বেশি", uChP50: "৫০ থেকে ৬০%", uChLow: "৫০%-এর কম", uChNone: "পূর্বাভাস নেই", uSzLarge: "বড়", uSzMid: "মাঝারি", uSzSmall: "ছোট", uSzTiny: "খুব ছোট", uNSE: "NSE", uBSE: "BSE", uSME: "SME" });
+if (window.SPFeedback) for (const l of ["en", "bn"]) for (const k in SPFeedback.words[l]) if (!(k in W[l])) W[l][k] = SPFeedback.words[l][k];   // T27: the Feedback screen's words
 window.SP_WORDS = W;   // read by the tests: every English word needs a Bengali one
 const w = (k, ...a) => { const v = (W[S.lang] && W[S.lang][k]) ?? W.en[k]; return typeof v === "function" ? v(...a) : (v ?? k); };
 
@@ -637,6 +649,7 @@ function pageHealth() {
    ${(QUEUE || h.queue || []).length ? `<div class="secttl"><h2>${w("hQueue")}</h2></div><table class="grid q"><tbody>${(QUEUE || h.queue).slice().reverse().slice(0, 20).map(q => `<tr><td class="num qt">${esc(String(q.at).replace("T", " ").slice(5, 16))}</td><td><b>${esc(q.kind)}</b> <span class="muted">${esc(q.payload?.symbol || q.payload?.month || "")}</span>${q.note ? `<div class="msg">${esc(q.note)}</div>` : ""}</td><td>${st(q.status === "done" ? "ok" : q.status === "failed" ? "failed" : w(qWords[q.status] || "qWait"))}</td></tr>`).join("")}</tbody></table>` : ""}</div>`;
 }
 function pageFeedback() {
+  if (LIVE && window.SPFeedback) return SPFeedback.pageHtml(w);   // T27: the v2 screen, in screens/feedback.js
   const f0 = D.feedback || {}, f = { ...f0 }, stw = W[S.lang].fbSt || W.en.fbSt;
   // What was sent but is not on the published list yet (waiting for the VM, or failed): show it here, not only on Health.
   const known = new Set((f.items || []).map(i => (i.text || "").trim()));
@@ -838,7 +851,7 @@ function openStock(sym) {
 }
 
 /* ---------- shell ---------- */
-const NAV = [["today", "wb_sunny"], ["follow", "star"], ["watchlist", "visibility"], ["ideas", "query_stats", "desk"], ["portfolio", "account_balance_wallet"], ["funds", "savings"], ["market", "newspaper", "desk"], ["record", "fact_check", "desk"]];
+const NAV = [["today", "wb_sunny"], ["follow", "star"], ["universe", "table_rows"], ["watchlist", "visibility"], ["ideas", "query_stats", "desk"], ["portfolio", "account_balance_wallet"], ["funds", "savings"], ["market", "newspaper", "desk"], ["record", "fact_check", "desk"]];
 const NAV2 = [["settings", "settings", "desk"], ["feedback", "rate_review", "desk"], ["health", "monitor_heart", "desk"]];
 function renderRail() {
   const bad = D.meta && D.meta.status && D.meta.status.ok === false, cur = S.tab === "stock" ? S.back : S.tab; if (cur === "calls") cur = "today";
@@ -867,12 +880,14 @@ function renderBar() {
    <button class="icb" id="lang" data-tip="${esc(w("langB"))}" aria-label="${esc(w("langB"))}"><span class="ms">translate</span><span class="icl">${S.lang === "bn" ? "English" : "বাংলা"}</span></button>
    <button class="icb" id="theme" data-tip="${esc(w("theme"))}" aria-label="${esc(w("theme"))}"><span class="ms">${dark ? "light_mode" : "dark_mode"}</span><span class="icl">${w(dark ? "themeLight" : "themeDark")}</span></button>`;
 }
-const PAGES = { today: pageToday, calls: pageCalls, settings: pageSettings, follow: pageFollow, watchlist: pageWatchlist, ideas: pageIdeas, portfolio: pagePortfolio, market: pageMarket, record: pageRecord, feedback: pageFeedback, health: pageHealth, stock: pageStock };
+const PAGES = { universe: () => '<div id="uni"></div>', today: pageToday, calls: pageCalls, settings: pageSettings, follow: pageFollow, watchlist: pageWatchlist, ideas: pageIdeas, portfolio: pagePortfolio, market: pageMarket, record: pageRecord, feedback: pageFeedback, health: pageHealth, stock: pageStock };
 function render() {
   CH.clear(); cid = 0; RO.forEach(r => r.disconnect()); RO = [];
   $("#view").innerHTML = (PAGES[S.tab] || pageToday)();
   hydrate(); hydrateSince(); renderRail();
+  if (S.tab === "feedback" && LIVE && window.SPFeedback) SPFeedback.mount({ t: w, lang: () => S.lang, toast });
   if (S.tab === "stock") fillStock();
+  if (S.tab === "universe" && window.SPUniverseScreen) SPUniverseScreen.mount($("#uni"), { w, esc, px });
   $$("[data-chart='NIFTYBEES'][data-days]").forEach(box => hist("NIFTYBEES").then(h => { if (!h) return; const draw = () => { box.dataset.w = box.clientWidth - 40; box.innerHTML = priceChart(null, h, box.clientWidth - 40, 250); }; draw(); watchSize(box, draw); }));
   $$("[data-bars]").forEach(box => { const mons = (D.own_record?.by_month || []).slice(-24).map(x => ({ label: x.month.slice(2).replace("-", "/"), v: x.gain, tip: `${x.month}: ${x.closed} trades closed, ${x.winners} made money; ${x.gain >= 0 ? "gain" : "loss"} ${inr(Math.abs(x.gain))}` })); box.innerHTML = bars(mons, box.clientWidth - 40); });
 }
@@ -958,7 +973,7 @@ addEventListener("hashchange", route);
 
 /* ================= round 10: app shell, one scroll, collapsible sections, workbenches ================= */
 let pageHoldings, pageTrading, pageTax;
-TABS.push("holdings", "tax", "tradrec");
+TABS.push("holdings", "tax", "tradrec", "universe");
 Object.assign(W.en, {
   hold: "Keep", none: "No view", holdings: "Holdings", holdingsS: "Holdings", tax: "Tax", taxS: "Tax", tradrec: "Trading record", tradrecS: "Trades",
   record: "Our record", recordS: "Our record", follow: "Worth following", followS: "Follow", market: "Market & news", marketS: "Market",
@@ -1065,7 +1080,7 @@ renderRail = function () {
    <div class="rail-foot">${w("upd")} ${esc((m.built_at || "").slice(11, 16))}${m.holdings?.days_old != null ? `<br>${w("synced")} ${w("ago", m.holdings.days_old)}` : ""}</div>`;
 };
 openMore = function () {
-  document.body.insertAdjacentHTML("beforeend", `<div id="scrim"></div><nav id="more" aria-label="${esc(w("moreNav"))}"><div class="grab"></div>${[["market", "newspaper"], ["tax", "receipt_long"], ["tradrec", "history"], ["record", "fact_check"], ["settings", "settings"], ["feedback", "rate_review"], ["health", "monitor_heart"]].map(([k, ic]) => `<a class="nav" href="#${k}"><span class="ms">${ic}</span><span>${w(k)}</span></a>`).join("")}</nav>`);
+  document.body.insertAdjacentHTML("beforeend", `<div id="scrim"></div><nav id="more" aria-label="${esc(w("moreNav"))}"><div class="grab"></div>${[["market", "newspaper"], ["tax", "receipt_long"], ["tradrec", "history"], ["record", "fact_check"], ...(window.SPJobs ? [["jobs", "schedule"]] : []), ["settings", "settings"], ["feedback", "rate_review"], ["health", "monitor_heart"]].map(([k, ic]) => `<a class="nav" href="#${k}"><span class="ms">${ic}</span><span>${w(k)}</span></a>`).join("")}</nav>`);
 };
 
 Object.assign(W.en, {
@@ -1634,6 +1649,18 @@ Object.assign(W.bn, {
   analystPane: "Analyst-এর নোট", whyPane: "আমরা কী দেখেছি", crossSure: "নিশ্চিত? আবার চাপুন", reviewWhy: "এটা আপনি বছরের পর বছর রাখেন, আর forecast কমেছে। সময় পেলে দেখুন।",
   firstA: (k, n, more) => ({ sell: `${more ? "আগে " : ""}${n} sell করুন।`, weak: `${more ? "আগে " : ""}${n} দেখুন।`, review: `${more ? "আগে " : ""}${n} Review করুন।`, buy: `${more ? "আগে " : ""}${n} কেনার কথা ভাবুন।` }[k]), thenN: n => `তারপর: আরও ${n}টা দেখার আছে।`,
 });
+
+/* ---------- T28: Jobs screen (screens/jobs.js); Health and Settings are restyled in screens/jobs.css ---------- */
+if (window.SPJobs) {
+  Object.assign(W.en, { jobs: "Jobs", jobsS: "Jobs" }); Object.assign(W.bn, { jobs: "Jobs", jobsS: "Jobs" });
+  TABS.push("jobs"); NAV2.unshift(["jobs", "schedule", "desk"]);
+  let me = null;
+  const jobsPaint = () => { if (S.tab === "jobs") { $("#view").innerHTML = pageJobs(); } };
+  const jobsLoad = () => { if (!me) fetch("/api/me").then(r => r.ok ? r.json() : null).then(j => { me = j?.person || "owner"; jobsPaint(); }).catch(() => { me = "owner"; }); SPJobs.load(fetch, jobsPaint); };
+  const pageJobs = () => SPJobs.page(SPJobs.state, S.lang, Date.now(), me || "owner");
+  PAGES.jobs = () => { clearInterval(S.jobsTimer); if (S.tab === "jobs") S.jobsTimer = setInterval(() => document.hidden || S.tab !== "jobs" ? 0 : SPJobs.load(fetch, jobsPaint), 5000); setTimeout(jobsLoad, 0); return pageJobs(); };
+  document.addEventListener("click", e => { const b = e.target.closest("[data-jn-rerun]"); if (b) { b.disabled = true; SPJobs.rerun(fetch, b.dataset.jnRerun, jobsPaint); } });
+}
 function boot() {
   const th = store.get("theme", null); root.dataset.theme = th || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   root.lang = S.lang === "bn" ? "bn" : "en";

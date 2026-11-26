@@ -30,4 +30,4 @@ packages = ["src/stockpilot"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["tests", "tests/sources", "tests/analysis", "tests/calls", "tests/book", "tests/trades", "tests/jobs"]   # tests mirror src/stockpilot; a few import each other by file name
+pythonpath = ["tests", "tests/sources", "tests/analysis", "tests/calls", "tests/book", "tests/trades", "tests/jobs", "tests/mechanical"]   # tests mirror src/stockpilot; a few import each other by file name

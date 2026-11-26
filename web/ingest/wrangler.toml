@@ -6,4 +6,4 @@ compatibility_date = "2026-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "stockpilot"
-database_id = "REPLACE_WITH_D1_ID_ON_DEPLOY"
+database_id = "1c803236-8efc-4ead-b183-76be75dca970"
