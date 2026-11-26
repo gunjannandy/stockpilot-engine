@@ -1,0 +1,372 @@
+[
+ {
+  "key": "MOVE",
+  "wave": 0,
+  "title": "Move the engine into the v3 layout by script; Python into py/ with CI green; VM code deleted",
+  "blocked": [],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "SKELETON",
+  "wave": 0,
+  "title": "Walking skeleton, code half: contract generator, Zod to JSON Schema, the Ping screen and the Ping Job",
+  "blocked": [
+   "MOVE"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "CHECKS1",
+  "wave": 0,
+  "title": "Write wave 1's acceptance checks as failing tests",
+  "blocked": [
+   "MOVE"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "CIGATES",
+  "wave": 1,
+  "title": "CI gates: privacy, never-order, check-files rule, trace rule, baselines, budgets, Renovate",
+  "blocked": [
+   "MOVE",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": true
+ },
+ {
+  "key": "FIXTURES",
+  "wave": 1,
+  "title": "Fake-data generator and the golden-day replay",
+  "blocked": [
+   "MOVE",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "PYIO",
+  "wave": 1,
+  "title": "Python I/O adapter: Parquet history, private tables by job key, writes through the ingest door; Job entry points",
+  "blocked": [
+   "SKELETON",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "PYDOMAIN",
+  "wave": 1,
+  "title": "New numbers in Python: the dated tax-rules file, XIRR, concentration, Nifty -10%, 'calls like this'",
+  "blocked": [
+   "MOVE",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": true
+ },
+ {
+  "key": "SHELL",
+  "wave": 1,
+  "title": "Shell: rail from the inventory, search with /, English and Bengali, themes, text size, keys, one scroll",
+  "blocked": [
+   "SKELETON",
+   "CHECKS1"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "INSTANT",
+  "wave": 1,
+  "title": "Instant and honest opens: cached first paint, updating state, installable app, last-good banner, freshness",
+  "blocked": [
+   "SHELL",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "JOBSCORE",
+  "wave": 1,
+  "title": "Jobs that cannot double up, the market calendar, model budget and cache, provenance on every row",
+  "blocked": [
+   "PYIO",
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "ADMINPROTO",
+  "wave": 1,
+  "title": "Admin prototype round on a preview page",
+  "blocked": [
+   "SKELETON"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "CHECKS2",
+  "wave": 1,
+  "title": "Write wave 2's acceptance checks as failing tests",
+  "blocked": [
+   "CHECKS1"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "STOCK",
+  "wave": 2,
+  "title": "Stock page and price data: history, chart with Open in, load on demand, near-live price",
+  "blocked": [
+   "SHELL",
+   "JOBSCORE",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "FACTS",
+  "wave": 2,
+  "title": "Stock facts in plain words against the sector, from XBRL filings first, with similar companies",
+  "blocked": [
+   "STOCK",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "CALLS",
+  "wave": 2,
+  "title": "Call card and pane from the nightly screen and forecast, append-only, with compare",
+  "blocked": [
+   "STOCK",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "LISTS",
+  "wave": 2,
+  "title": "Worth following (List and Table screener) and Watchlist with star, Not now and Undo",
+  "blocked": [
+   "CALLS",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "PORTFOLIO",
+  "wave": 2,
+  "title": "Portfolio: All / Kite / Smallcase, holdings, target mix and budget, worth a look, our holding on the stock page",
+  "blocked": [
+   "STOCK",
+   "PYDOMAIN",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "TAXRSU",
+  "wave": 2,
+  "title": "Portfolio's money tabs: tax and harvest, ITR download, RSUs, XIRR, risk, Nifty -10%, dividends calendar",
+  "blocked": [
+   "PORTFOLIO",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "TODAY",
+  "wave": 2,
+  "title": "Today: the day's call line, money left, market health, portfolio summary, groups, print on one A4",
+  "blocked": [
+   "CALLS",
+   "PORTFOLIO",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "FUNDS",
+  "wave": 2,
+  "title": "Funds: every fund searchable, fund page with NAV chart and our buys, returns against category and Nifty, falls, cost, size",
+  "blocked": [
+   "STOCK",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "FUNDOVERLAP",
+  "wave": 2,
+  "title": "Fund overlap with our stocks, from the 10 largest fund houses' monthly portfolios",
+  "blocked": [
+   "FUNDS",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "RECORD",
+  "wave": 2,
+  "title": "Record: our forecasts against the Nifty, are we adding value, our own trading, Smallcase against our trades",
+  "blocked": [
+   "CALLS",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "FEEDBACK",
+  "wave": 2,
+  "title": "Feedback: one box, status per ask, owner's review, Reviewed becomes a ticket by code",
+  "blocked": [
+   "SHELL",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "ADMIN",
+  "wave": 2,
+  "title": "Admin: Needs you, freshness, job runs with Try again, Waiting for you with Approve, Pause releases, usage counts",
+  "blocked": [
+   "ADMINPROTO",
+   "JOBSCORE",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "MARKS",
+  "wave": 2,
+  "title": "Change marks and 'why is this here' chips on every screen",
+  "blocked": [
+   "TODAY",
+   "LISTS",
+   "PORTFOLIO",
+   "FUNDS",
+   "RECORD",
+   "CHECKS2"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "CHECKS3",
+  "wave": 2,
+  "title": "Write wave 3's acceptance checks as failing tests",
+  "blocked": [
+   "CHECKS2"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "MODELS",
+  "wave": 3,
+  "title": "Analyse in 5 minutes on public data, Bengali in the same call, and the Haiku vs Sonnet forecast bench",
+  "blocked": [
+   "CALLS",
+   "CHECKS3"
+  ],
+  "ui": false,
+  "approve": true
+ },
+ {
+  "key": "MODELNOTES",
+  "wave": 3,
+  "title": "Fund calls and fund Analyse, post-mortems on missed calls, and the nightly portfolio note",
+  "blocked": [
+   "MODELS",
+   "FUNDS",
+   "RECORD",
+   "PORTFOLIO",
+   "CHECKS3"
+  ],
+  "ui": false,
+  "approve": true
+ },
+ {
+  "key": "NEWSIMPACT",
+  "wave": 3,
+  "title": "News every 15 minutes judged once per stock into one append-only impact table",
+  "blocked": [
+   "MODELS",
+   "STOCK",
+   "CHECKS3"
+  ],
+  "ui": false,
+  "approve": true
+ },
+ {
+  "key": "NEWSSCREENS",
+  "wave": 3,
+  "title": "Market & news screen, the stock's news, Today's In the news, and news exposure per holding",
+  "blocked": [
+   "NEWSIMPACT",
+   "TODAY",
+   "PORTFOLIO",
+   "CHECKS3"
+  ],
+  "ui": true,
+  "approve": true
+ },
+ {
+  "key": "OPS",
+  "wave": 3,
+  "title": "Operations code: dependency checks and fallbacks, the D1 archive Job, the restore-drill compare, runbooks",
+  "blocked": [
+   "ADMIN",
+   "MODELS",
+   "CHECKS3"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "EMAIL",
+  "wave": 3,
+  "title": "Morning email HTML: the owner's full version and the father's short one, as a pure renderer",
+  "blocked": [
+   "TODAY",
+   "FEEDBACK",
+   "CHECKS3"
+  ],
+  "ui": false,
+  "approve": false
+ },
+ {
+  "key": "RETIRE",
+  "wave": 3,
+  "title": "Retire every v2 path in the engine and leave short agent docs",
+  "blocked": [
+   "CUTOVER"
+  ],
+  "ui": false,
+  "approve": false
+ }
+]
