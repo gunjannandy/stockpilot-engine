@@ -1,15 +1,17 @@
 """Ship: build the site, publish status, archive, deploy. The end of every daily run, and what a button press
 that changes the page runs."""
+import fcntl
 import io
 import json
 import os
 import shutil
 import subprocess
+from contextlib import contextmanager
 from datetime import date, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
-from stockpilot import backup, journal, ops, weekly
+from stockpilot import backup, journal, ops, store, weekly
 
 from stockpilot.calls import record
 
@@ -114,6 +116,57 @@ def deploy_site(cfg, run=subprocess.run) -> str:
     return "Dashboard deployed."
 
 
+@contextmanager
+def site_lock(root):
+    """One build-and-deploy of `site/` at a time on the 1 GB VM: the evening ship and `sp redeploy` share this lock. A second
+    one raises `store.Busy`, which both callers already treat as "not a fault, try again" (exit 75)."""
+    path = Path(root) / "data" / "site.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(path, "w")
+    try:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            raise store.Busy(None) from None
+        yield
+    finally:
+        handle.close()
+
+
+def node_path() -> str:
+    found = os.environ.get("NODE") or shutil.which("node")
+    if not found:
+        raise RuntimeError("node was not found: the safe deploy (scripts/cutover) needs it on PATH or in $NODE")
+    return found
+
+
+def deploy_safe(cfg, run=subprocess.run, node: str | None = None, wrangler: str | None = None) -> str:
+    """The deploy rule (orchestration-decisions section 3): `scripts/cutover/cutover.mjs deploy --target production` deploys,
+    checks the four hard blocks on the new deployment and rolls production back on a failure. Raises with the reason, so the
+    caller writes the problem row; the live site is then the one that was live before."""
+    script = cfg.root / "scripts" / "cutover" / "cutover.mjs"
+    done = run([node or node_path(), str(script), "deploy", "--target", "production"], cwd=cfg.root / "web",
+               capture_output=True, text=True, env={**os.environ, "WRANGLER": wrangler or wrangler_path()}, timeout=1200)
+    if done.returncode == 0:
+        return "Dashboard deployed."
+    out = (done.stdout or "") + (done.stderr or "")
+    result = {}
+    for line in reversed(out.strip().splitlines()):
+        try:
+            result = json.loads(line)
+            break
+        except ValueError:
+            continue
+    if done.returncode == 3 or result.get("stage") == "preflight":
+        raise RuntimeError(f"preflight failed, nothing deployed: {out.strip()[-300:]}")
+    failed = ", ".join(result.get("failed") or []) or result.get("error") or out.strip()[-200:]
+    if result.get("error", "").startswith("rollback failed") or result.get("rolledBack") is False and result.get("failed"):
+        raise RuntimeError(f"hard block {failed}; production was NOT rolled back: {result.get('error', '')}")
+    if result.get("rolledBack"):
+        raise RuntimeError(f"hard block {failed}; rolled back to the previous deployment")
+    raise RuntimeError(f"deploy failed: {failed}")
+
+
 def _release(db) -> None:
     getattr(db, "suspend", lambda: None)()
 
@@ -175,6 +228,11 @@ def ops_cfg(cfg) -> dict:
 
 
 def ship(m, db, now) -> dict:
+    with site_lock(m.root):
+        return _ship(m, db, now)
+
+
+def _ship(m, db, now) -> dict:
     """The end of the daily run: score old calls, build the site, then (database let go) push status and the archive
     and deploy. A rerun runs it again; the archive refuses a day it already holds."""
     day = now.date()

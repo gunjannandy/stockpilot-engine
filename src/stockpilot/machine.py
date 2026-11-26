@@ -143,7 +143,7 @@ def real(cfg) -> Machine:
         cfg=cfg, fetch=http.fetch, fetch_json=fetch_json, fetch_file=fetch_file,
         worker=kite.Worker(cfg.get("worker.url"), key) if key else None,
         bridge=lambda: docs.bridge_from(cfg), analyse=lambda b, role, rs: analyse(b, role, rs), runners=runners,
-        yahoo=fundamentals.yahoo, yahoo_history=usprices.yahoo_history, deploy=lambda: ship.deploy_site(cfg),
+        yahoo=fundamentals.yahoo, yahoo_history=usprices.yahoo_history, deploy=lambda: ship.deploy_safe(cfg),
         push_status=lambda status: ops.push_status(remote(), status),
         push_archive=lambda day, payload: ops.archive_push(remote(), day, payload),
         push_vault=push_vault, upload_market=backup.gh_upload, gh=doctor.gh_cli(cfg.root), git=git,

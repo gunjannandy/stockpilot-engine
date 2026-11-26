@@ -167,7 +167,7 @@ def cmd_watchlist(args, cfg):
 
 
 # How long each timed job waits for the database before it gives up and records `skipped`, in seconds.
-WAITS = {"tick": 5 * 60, "daily": 45 * 60, "ship": 30 * 60, "nav": 30 * 60, "weekly": 60 * 60, "kite": 10 * 60, "queue": 0, "doctor": 0, "ownership": 30 * 60}
+WAITS = {"tick": 5 * 60, "daily": 45 * 60, "ship": 30 * 60, "nav": 30 * 60, "weekly": 60 * 60, "kite": 10 * 60, "queue": 0, "redeploy": 5 * 60, "doctor": 0, "ownership": 30 * 60}
 EX_TEMPFAIL = 75      # busy, or the day's source is not out yet: not a fault, try again
 
 
@@ -194,6 +194,14 @@ def cmd_tick(args, cfg):
     report = tick.run(_machine(cfg, "tick"))
     print(report)
     return tick.exit_code(report)
+
+
+def cmd_redeploy(args, cfg):
+    """The v2 site deploy timer: daily slots and a change on main; hard blocks and rollback inside the deploy."""
+    from stockpilot.jobs import redeploy
+    report = redeploy.run(_machine(cfg, "redeploy"))
+    print(report)
+    return redeploy.exit_code(report)
 
 
 def cmd_daily(args, cfg):
@@ -473,6 +481,7 @@ def main(argv=None):
     w.add_argument("path", nargs="?")
     w.set_defaults(func=cmd_watchlist)
     sub.add_parser("tick", help="every 10 minutes: the queue, then the one job that is due").set_defaults(func=cmd_tick)
+    sub.add_parser("redeploy", help="v2 site deploy timer: daily slots and changes on main, hard blocks and rollback").set_defaults(func=cmd_redeploy)
     d = sub.add_parser("daily", help="the whole evening job now: ingest, Kite, documents, calls, ship")
     d.add_argument("--date", help="YYYY-MM-DD (default: today)")
     d.set_defaults(func=cmd_daily)

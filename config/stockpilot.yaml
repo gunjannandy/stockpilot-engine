@@ -92,3 +92,9 @@ sector_index:
 # Cloudflare D1 (v2 live data). Not a secret.
 d1:
   database_id: 1c803236-8efc-4ead-b183-76be75dca970
+
+# The two antigravity accounts (owner 2026-11-26): each has its own HOME with its own token.
+minute:
+  env:
+    gemini-a: {HOME: /home/ubuntu/stockpilot/data/agy/a}
+    gemini-b: {HOME: /home/ubuntu/stockpilot/data/agy/b}

@@ -55,7 +55,7 @@ def test_skipped_lines_become_runs_on_the_next_open(root, held):
 
 def test_waits_per_job(root):
     assert cli.WAITS == {"tick": 5 * 60, "daily": 45 * 60, "ship": 30 * 60, "nav": 30 * 60, "weekly": 60 * 60, "kite": 10 * 60,
-                         "queue": 0, "doctor": 0, "ownership": 30 * 60}
+                         "queue": 0, "redeploy": 5 * 60, "doctor": 0, "ownership": 30 * 60}
 
 
 def test_flush_skipped_with_no_file_is_a_no_op(tmp_path):

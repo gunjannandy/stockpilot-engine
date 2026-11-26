@@ -234,7 +234,7 @@ ROOT = Path(__file__).parent.parent
 
 def test_every_job_in_the_brief_has_a_unit_and_timer():
     names = {p.stem for p in (ROOT / "ops" / "systemd").glob("*.timer")}
-    assert names == {"sp-tick", "sp-doctor", "sp-publish", "sp-backup", "sp-minute"}
+    assert names == {"sp-tick", "sp-deploy", "sp-doctor", "sp-publish", "sp-backup", "sp-minute"}
 
 
 @pytest.mark.skipif(not Path("/usr/bin/systemd-analyze").exists(), reason="no systemd-analyze")
@@ -335,7 +335,8 @@ def test_install_removes_units_that_are_no_longer_in_the_folder(tmp_path):
     done = subprocess.run(["bash", str(ROOT / "ops" / "install.sh"), "--render", str(out), "--root", str(tmp_path / "proj"),
                            "--user", "nobody"], check=True, capture_output=True, text=True)
     left = sorted(p.name for p in out.iterdir())
-    assert left == ["other.service", "sp-backup.service", "sp-backup.timer", "sp-doctor.service", "sp-doctor.timer",
+    assert left == ["other.service", "sp-backup.service", "sp-backup.timer",
+                    "sp-deploy.service", "sp-deploy.timer", "sp-doctor.service", "sp-doctor.timer",
                     "sp-minute.service", "sp-minute.timer", "sp-onfailure.service", "sp-publish.service", "sp-publish.timer",
                     "sp-tick.service", "sp-tick.timer"]
     assert "Removed sp-daily.timer" in done.stdout
@@ -347,3 +348,9 @@ def test_the_tick_timer_runs_at_3_past_every_10_minutes_and_the_unit_accepts_75(
     assert "OnCalendar=*-*-* *:03/10:00 Asia/Kolkata" in timer
     assert "TimeoutStartSec=3h" in unit and "SuccessExitStatus=75" in unit and "OnFailure=sp-onfailure.service" in unit
     assert "ExecStopPost" not in unit                  # ship is the end of the daily job, not a stop hook
+
+
+def test_the_deploy_unit_is_a_oneshot_timer_with_an_alarm_never_a_daemon():
+    deploy = (ROOT / "ops" / "systemd" / "sp-deploy.service").read_text()
+    assert "Type=oneshot" in deploy and "redeploy" in deploy and "OnFailure=sp-onfailure.service" in deploy
+    assert "Restart=" not in deploy and "OnCalendar=" in (ROOT / "ops" / "systemd" / "sp-deploy.timer").read_text()
