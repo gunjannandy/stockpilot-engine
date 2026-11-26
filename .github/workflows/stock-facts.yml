@@ -1,6 +1,7 @@
 name: stock-facts
 # Public job (runs in stockpilot-engine): NSE filings and yfinance only, nothing private. Weekly: results and
 # shareholding change slowly. Needs search/index.json from the search-index job (release data-latest).
+run-name: "${{ inputs.job_id || github.workflow }}"   # the job id names the run, so the one-minute check can find it
 on:
   schedule:
     - cron: "30 20 * * 6"    # Sunday 02:00 IST
@@ -8,6 +9,15 @@ on:
     inputs:
       limit:
         description: "Only the first N stocks (a trial run)"
+        required: false
+      job_id:
+        description: "The stockpilot job this run belongs to (set by the one-minute check)"
+        required: false
+      symbol:
+        description: "Load one stock only (job kind load_stock); its file is added to the weekly set"
+        required: false
+      exchange:
+        description: "NSE or BSE, with symbol"
         required: false
 permissions:
   contents: write
@@ -28,10 +38,19 @@ jobs:
         run: |
           mkdir -p out/search
           gh release download data-latest -p search-index.json -O out/search/index.json --clobber
+      - name: Keep the stocks already loaded (one-stock runs add to them)
+        if: inputs.symbol != ''
+        run: |
+          mkdir -p out/facts
+          gh release download data-latest -p stock-facts.tar.gz -D out || true
+          [ -f out/stock-facts.tar.gz ] && tar -xzf out/stock-facts.tar.gz -C out/facts || true
       - name: Build the facts
+        env:
+          SP_ONLY_SYMBOL: ${{ inputs.symbol }}
         shell: bash
         run: uv run python -m stockpilot.sources.facts_sources out/search/index.json out/facts ${{ inputs.limit }} | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Check coverage is not collapsed
+        if: inputs.symbol == ''
         run: |
           python3 - <<'PY'
           import json
@@ -40,5 +59,7 @@ jobs:
           PY
       - name: Publish to the data-latest release
         run: |
-          tar -czf out/stock-facts.tar.gz -C out/facts .
-          gh release upload data-latest out/stock-facts.tar.gz out/facts/facts-coverage.json --clobber
+          tar -czf out/stock-facts.tar.gz -C out/facts --exclude=facts-coverage.json .
+          gh release upload data-latest out/stock-facts.tar.gz --clobber
+          # a one-stock run must not replace the whole-market coverage report
+          [ -n "${{ inputs.symbol }}" ] || gh release upload data-latest out/facts/facts-coverage.json --clobber

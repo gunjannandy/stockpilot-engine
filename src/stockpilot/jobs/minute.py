@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime, timedelta
 
 from stockpilot.jobrun import CONTRACT, IST, JobFailed, JobRunner
+from stockpilot.jobs import wire
 
 QUOTA = "Usage is used up. Try again in about an hour."
 QUOTA_BN = "ব্যবহারের সীমা শেষ। প্রায় এক ঘণ্টা পরে আবার চেষ্টা করুন।"
@@ -45,9 +46,11 @@ class Chain:
         raise JobFailed(QUOTA, QUOTA_BN)
 
 
-def chain_for(kind: str, make) -> Chain:
-    """`make(name)` builds one backend by name; the chain for a kind is fixed here."""
-    return Chain([make(name) for name in CHAINS[kind]])
+def chain_for(kind: str, make, payload: dict | None = None) -> Chain:
+    """`make(name)` builds one backend by name; the chain for a kind is fixed here. A refresh the news planner marked medium
+    (`reason` news_medium) takes the cheap chain, as decided (round 4): Gemini, then Haiku."""
+    names = TAGGING if kind == "refresh_call" and (payload or {}).get("reason") == "news_medium" else CHAINS[kind]
+    return Chain([make(name) for name in names])
 
 
 class CliBackend:
@@ -75,9 +78,6 @@ class CliBackend:
         return done.stdout.strip()
 
 
-ANALYSE_PROMPT = ("Analyse the stock {symbol} on {exchange} for a long-term Indian investor. Reply in plain English, short: "
-                  "what to do today (buy, hold, sell or nothing), the chance it is right, the price range you expect, "
-                  "and the two reasons that matter most.")
 GITHUB_FAIL = "Could not start this on GitHub. The owner has been told."
 STALE_AFTER = timedelta(hours=26)
 ALARM_EVERY = timedelta(hours=6)
@@ -99,32 +99,67 @@ def _stale(last_nightly, now, state) -> bool:
     return not last or now - datetime.fromisoformat(last) >= ALARM_EVERY
 
 
-def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, now, budget_s=240) -> dict:
-    """One firing. `source.pending()` is the only read: `{"queued": [job rows], "last_nightly": time or None}`.
-    A job whose kind has no handler (or runs elsewhere) stays queued for whoever owns it."""
+def tick(source, sink, *, make_backend, handlers, start_github, alarm, state, now, budget_s=240, enqueue=None,
+         check_github=None) -> dict:
+    """One firing. `source.pending()` is the only read when nothing is happening:
+    `{"queued": [rows], "last_nightly": time or None}` plus, when the source has them, `running_github` (started GitHub jobs to
+    check), `last_weekly`, `untagged` (a count) and `open_kinds`. A job whose kind has no handler stays queued for whoever owns it."""
     started = now()
     seen = source.pending()
     ran = began = 0
+    finished = 0
+    tagged = False
+    for row in seen.get("running_github") or ():
+        finished += _finish_github(sink, row, check_github, now)
     for row in seen["queued"]:
         runs_on = CONTRACT["job_kinds"].get(row["kind"], {}).get("runs_on")
         if runs_on == "github_public":
             began += _start_github(sink, row, start_github, now)
         elif runs_on in ("vm_model", "vm_private") and row["kind"] in handlers and now() - started < timedelta(seconds=budget_s):
             _adopt(sink, row)
-            runner = JobRunner(sink, model=chain_for(row["kind"], make_backend) if row["kind"] in CHAINS else None, clock=now)
+            runner = JobRunner(sink, model=chain_for(row["kind"], make_backend, row["payload"]) if row["kind"] in CHAINS else None, clock=now)
             runner.register(row["kind"], handlers[row["kind"]])
             runner.run(row["id"])
             ran += 1
+            tagged = tagged or (row["kind"] == "news_tag" and sink.jobs[row["id"]]["status"] == "done")
+    made = []
+    if enqueue is not None:
+        made = wire.schedule(seen, source, enqueue, started, ran_tag=tagged)
     raised = _stale(seen.get("last_nightly"), started, state)
     if raised:
         alarm(STALE_TEXT)
         state["last_alarm"] = started.isoformat()
-    return {"ran": ran, "started": began, "alarm": raised}
+    return {"ran": ran, "started": began, "alarm": raised, **({"finished": finished} if finished else {}),
+            **({"enqueued": made} if made else {})}
 
 
 def _adopt(sink, row):
     if row["id"] not in sink.jobs:
         sink.create_job(row)
+
+
+def _finish_github(sink, row, check_github, now) -> int:
+    """A GitHub job that was started: when its run has finished, close the job (done or failed) in plain words."""
+    if check_github is None:
+        return 0
+    verdict = check_github(row)
+    if verdict is None:
+        return 0
+    row = dict(row)
+    nlines = int(row.pop("nlines", 0) or 0)
+    sink.jobs[row["id"]] = row                                    # already running in D1; the cache learns it, nothing is rewritten
+    sink.lines[row["id"]] = [{}] * nlines
+    sink.history[row["id"]] = ["queued", "running"]
+    stamp = now().astimezone(IST).replace(microsecond=0).isoformat()
+    ok = verdict == "success"
+    text = "Finished on GitHub" if ok else GITHUB_FAIL
+    sink.append_line({"job_id": row["id"], "seq": len(sink.lines[row["id"]]) + 1, "at": stamp, "state": "ok" if ok else "fail",
+                      "text": "Done" if ok else text, "text_bn": None if ok else "গিটহাবে কাজটি শুরু করা যায়নি। মালিককে জানানো হয়েছে।"})
+    if ok:
+        sink.update_job(row["id"], status="done", result="Done", finished_at=stamp)
+    else:
+        sink.update_job(row["id"], status="failed", error=text, error_bn="গিটহাবে কাজটি শেষ হয়নি। মালিককে জানানো হয়েছে।", finished_at=stamp)
+    return 1
 
 
 def _start_github(sink, row, start_github, now) -> int:
@@ -146,9 +181,18 @@ def _start_github(sink, row, start_github, now) -> int:
 
 # ---- D1 over HTTP (stdlib only: an idle firing must stay far under 20 MB) ----------------------------------------
 _COLS = "id, kind, payload, asked_by, status, result, error, error_bn, created_at, started_at, finished_at"
-PENDING_SQL = (f"select {_COLS}, null as last_nightly from jobs where status = 'queued' "
-               f"union all select null, null, null, null, null, null, null, null, null, null, null, max(finished_at) "
-               f"from jobs where kind = 'nightly' and status = 'done' order by created_at")
+GITHUB_KINDS = tuple(k for k, v in CONTRACT["job_kinds"].items() if v["runs_on"] == "github_public")
+_KINDS_SQL = ",".join(f"'{k}'" for k in GITHUB_KINDS)
+_NULLS = ", ".join(["null"] * 11)
+PENDING_SQL = (f"select {_COLS}, (select count(*) from job_lines where job_id = jobs.id) as nlines, null as last_nightly, "
+               f"null as last_weekly, null as untagged, null as open_kinds from jobs "
+               f"where status = 'queued' or (status = 'running' and kind in ({_KINDS_SQL})) "
+               f"union all select {_NULLS}, null, "
+               f"(select max(finished_at) from jobs where kind = 'nightly' and status = 'done'), "
+               f"(select max(created_at) from jobs where kind = 'weekly_review'), "
+               f"(select count(*) from news_items where tagged_at is null), "
+               f"(select group_concat(distinct kind) from jobs where status in ('queued', 'running') and kind in ('news_tag', 'news_rank')) "
+               f"order by created_at")
 
 
 def cloudflare_query(account: str, database: str, token: str, post=None):
@@ -187,7 +231,7 @@ class D1Db:
 
 
 class D1Source:
-    """`pending()` is one query: the queued jobs, oldest first, plus when the last nightly job finished."""
+    """`pending()` is one query: the queued jobs (and started GitHub jobs) oldest first, plus the facts the schedule needs."""
 
     def __init__(self, query):
         self.query = query
@@ -195,20 +239,32 @@ class D1Source:
     def pending(self) -> dict:
         import json
         rows = self.query(PENDING_SQL)
-        queued = [{**{k: v for k, v in r.items() if k != "last_nightly"}, "payload": json.loads(r["payload"])}
-                  for r in rows if r["id"] is not None]
-        last = next((r["last_nightly"] for r in rows if r["id"] is None), None)
-        return {"queued": queued, "last_nightly": last}
+        jobs = [{**{k: v for k, v in r.items() if k not in ("last_nightly", "last_weekly", "untagged", "open_kinds")
+                    and (k != "nlines" or r["status"] == "running")}, "payload": json.loads(r["payload"])}
+                for r in rows if r["id"] is not None]
+        meta = next((r for r in rows if r["id"] is None), {})
+        return {"queued": [j for j in jobs if j["status"] == "queued"], "running_github": [j for j in jobs if j["status"] == "running"],
+                "last_nightly": meta.get("last_nightly"), "last_weekly": meta.get("last_weekly"),
+                "untagged": meta.get("untagged") or 0, "open_kinds": set((meta.get("open_kinds") or "").split(",")) - {""}}
+
+    def untagged(self, limit=wire.TAG_BATCH) -> list[dict]:
+        return wire.untagged(self.query, limit)
 
 
-def gh_starter(workflows: dict, run=subprocess.run, repo="gunjannandy/stockpilot"):
-    """`start_github(job)`: `gh workflow run` the file mapped to the job's kind, passing the job id and payload as inputs."""
+def gh_starter(workflows: dict, run=subprocess.run, repo=wire.ENGINE):
+    """`start_github(job)`: `gh workflow run` the file mapped to the job's kind in the public engine repo. A mapping that is
+    a plain file name passes the job id and the payload as they are; one from `wire.WORKFLOWS` renames the payload to the
+    workflow's declared inputs."""
     def start(row):
         wf = workflows.get(row["kind"])
         if not wf:
             raise NotWired(row["kind"])
-        args = ["gh", "workflow", "run", wf, "--repo", repo, "-f", f"job_id={row['id']}"]
-        for key, value in row["payload"].items():
+        if isinstance(wf, dict):
+            file, inputs = wf["file"], wire.workflow_inputs(row["kind"], row["payload"], row["id"])
+        else:
+            file, inputs = wf, {"job_id": row["id"], **{k: str(v) for k, v in row["payload"].items()}}
+        args = ["gh", "workflow", "run", file, "--repo", repo]
+        for key, value in inputs.items():
             args += ["-f", f"{key}={value}"]
         done = run(args, capture_output=True, text=True, timeout=60)
         if done.returncode != 0:
@@ -216,12 +272,34 @@ def gh_starter(workflows: dict, run=subprocess.run, repo="gunjannandy/stockpilot
     return start
 
 
-def _handlers(cfg) -> dict:
-    """Kinds the VM runs itself: `analyse` through the model chain, `sync` through the Worker's Kite read."""
+def gh_checker(workflows: dict, run=subprocess.run, repo=wire.ENGINE, grace=timedelta(minutes=30)):
+    """`check_github(job)`: None while the run is going, "success" or "failure" once it ended. The workflows name each run
+    after the job id (`run-name`), so the run is found by title. A run that never shows up within `grace` counts as failed."""
+    import json
+
+    def check(row):
+        wf = workflows.get(row["kind"])
+        file = wf["file"] if isinstance(wf, dict) else wf
+        if not file:
+            return None
+        done = run(["gh", "run", "list", "--repo", repo, "--workflow", file, "--limit", "30", "--json", "displayTitle,status,conclusion"],
+                   capture_output=True, text=True, timeout=60)
+        if done.returncode != 0:
+            return None
+        for r in json.loads(done.stdout or "[]"):
+            if r["displayTitle"] == row["id"]:
+                return None if r["status"] != "completed" else "success" if r["conclusion"] == "success" else "failure"
+        started = datetime.fromisoformat(row["started_at"]) if row.get("started_at") else None
+        return "failure" if started and datetime.now(IST) - started > grace else None
+    return check
+
+
+def _handlers(cfg, deps) -> dict:
+    """Every kind the VM runs itself (see `wire.handlers`), and `sync` through the Worker's Kite read when the key is set."""
     from stockpilot import store
     from stockpilot.jobs import sync
     from stockpilot.sources import kite
-    handlers = {"analyse": ask_handler(ANALYSE_PROMPT)}
+    handlers = wire.handlers(deps)
     key, url = cfg.secret("SP_VM_KEY"), cfg.get("worker.url")
     if key and url:
         path = cfg.root / cfg.get("store.path", "data/stockpilot.duckdb")
@@ -259,15 +337,20 @@ def run(cfg) -> int:
         print("ALARM:", text, file=sys.stderr)
 
     query = cloudflare_query(account, database, token)
-    out = tick(D1Source(query), SqliteSink(D1Db(query)),
-               make_backend=lambda name: CliBackend(name, env={**env, **(cfg.get(f"minute.env.{name}", {}) or {})}),
-               handlers=_handlers(cfg),
-               start_github=gh_starter(cfg.get("minute.workflows", {}) or {}), alarm=alarm, state=state,
-               now=lambda: datetime.now(IST))
-    if out["alarm"]:
+    sink, now = SqliteSink(D1Db(query)), (lambda: datetime.now(IST))
+    make = lambda name: CliBackend(name, env={**env, **(cfg.get(f"minute.env.{name}", {}) or {})})  # noqa: E731
+    enqueue = lambda kind, payload, by: JobRunner(sink, clock=now).enqueue(kind, payload, by)  # noqa: E731
+    deps = wire.production_deps(cfg, query, now, state, enqueue, make)
+    workflows = {**wire.WORKFLOWS, **(cfg.get("minute.workflows", {}) or {})}
+    repo = cfg.get("public_data.repo", wire.ENGINE)
+    before = json.dumps(state, sort_keys=True)
+    out = tick(D1Source(query), sink, make_backend=make, handlers=_handlers(cfg, deps),
+               start_github=gh_starter(workflows, repo=repo), alarm=alarm, state=state, now=now, enqueue=enqueue,
+               check_github=gh_checker(workflows, repo=repo))
+    if json.dumps(state, sort_keys=True) != before:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state))
-    if out["ran"] or out["started"] or out["alarm"]:
+    if out["ran"] or out["started"] or out["alarm"] or len(out) > 3:
         print(out)
     return 0
 

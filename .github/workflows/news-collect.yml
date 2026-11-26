@@ -3,10 +3,15 @@ name: news-collect
 # NSE and BSE announcements, Google News (market topics and a rotating slice of the universe) and six publisher feeds,
 # groups reports of one event, and writes links-only rows through the ingest Worker. The public repo holds no deploy
 # token: only the Worker's own write key. The seen-events state and the monthly archive files live on the release `data-latest`.
+run-name: "${{ inputs.job_id || github.workflow }}"   # the job id names the run, so the one-minute check can find it
 on:
   schedule:
     - cron: "7,22,37,52 * * * *"   # off the :00/:15/:30/:45 marks the nightly jobs use
   workflow_dispatch:
+    inputs:
+      job_id:
+        description: "The stockpilot job this run belongs to (set by the one-minute check)"
+        required: false
 permissions:
   contents: write
 concurrency:

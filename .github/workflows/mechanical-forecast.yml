@@ -3,10 +3,15 @@ name: mechanical-forecast
 # release `history-prices`, fits the number-only forecast, tests it walk-forward, and attaches the nightly results file and
 # the report to the rolling release `mechanical-latest`. Runs after history-daily (21:00 IST); the 22:00 IST start sits
 # inside the forecast window the build lanes keep clear of.
+run-name: "${{ inputs.job_id || github.workflow }}"   # the job id names the run, so the one-minute check can find it
 on:
   schedule:
     - cron: "30 16 * * 1-5"    # 22:00 IST on weekdays
   workflow_dispatch:
+    inputs:
+      job_id:
+        description: "The stockpilot job this run belongs to (set by the one-minute check)"
+        required: false
 permissions:
   contents: write
 concurrency:

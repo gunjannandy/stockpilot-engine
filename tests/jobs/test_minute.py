@@ -186,7 +186,8 @@ def seed(db, row):
 def test_d1_source_idle_is_one_query_with_the_last_nightly():
     db, query, calls = local_d1()
     src = minute.D1Source(query)
-    assert src.pending() == {"queued": [], "last_nightly": None} and len(calls) == 1
+    assert src.pending() == {"queued": [], "running_github": [], "last_nightly": None, "last_weekly": None, "untagged": 0,
+                             "open_kinds": set()} and len(calls) == 1
     db.execute("insert into jobs (id,kind,payload,asked_by,status,created_at,finished_at) values ('n1','nightly','{}','system','done','2026-11-25T02:00:00+05:30','2026-11-25T02:30:00+05:30')")
     assert src.pending()["last_nightly"] == "2026-11-25T02:30:00+05:30"
 

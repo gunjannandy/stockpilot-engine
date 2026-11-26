@@ -3,9 +3,13 @@ name: history-backfill
 # into Parquet files attached to the release `history-prices`. A rerun carries on where it stopped: files already on the
 # release are downloaded first, and a day already asked is not asked again.
 # NSE from 1994-11-03, BSE from 2006-09-01. Run it as: gh workflow run history-backfill.yml -f exchange=NSE -f from_year=1994 -f to_year=2026
+run-name: "${{ inputs.job_id || github.workflow }}"   # the job id names the run, so the one-minute check can find it
 on:
   workflow_dispatch:
     inputs:
+      job_id:
+        description: "The stockpilot job this run belongs to (set by the one-minute check)"
+        required: false
       exchange:
         description: "NSE or BSE"
         default: "NSE"

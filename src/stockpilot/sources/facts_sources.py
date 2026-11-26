@@ -149,6 +149,7 @@ def live_gather(session, fetch, yf_info, today: date):
 def main(argv=None):
     """python -m stockpilot.sources.facts_sources SEARCH_INDEX.json OUT_DIR [LIMIT]: the public weekly job's entry point."""
     import json
+    import os
     import sys
     from stockpilot.sources.http import fetch
     from stockpilot.sources.nse_api import Session
@@ -156,6 +157,11 @@ def main(argv=None):
     index = json.loads(Path(a[0]).read_text())["entries"]
     universe = [{"symbol": e["symbol"], "exchange": e["exchange"], "name": e["name"], "sector": ""} for e in index
                 if e["segment"] in ("NSE", "NSE_SME")][: int(a[2]) if len(a) > 2 else None]
+    only = os.environ.get("SP_ONLY_SYMBOL")
+    if only:                                  # job kind load_stock: one stock, the rest of the files stay as they are
+        universe = [u for u in universe if u["symbol"] == only]
+        if not universe:
+            sys.exit(f"{only} is not in the search index")
     import yfinance as yf
     cache = {}
 
