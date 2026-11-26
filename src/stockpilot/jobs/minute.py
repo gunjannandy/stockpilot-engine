@@ -80,7 +80,7 @@ def chain_for(kind: str, make, payload: dict | None = None) -> Chain:
     return Chain([make(name) for name in names])
 
 
-TIMEOUTS = {"sonnet": 170, "haiku": 170, "gemini-a": 75, "gemini-b": 75}   # seconds; agy waits 60 s for a login before it gives up
+TIMEOUTS = {"sonnet": 170, "haiku": 170, "gemini-a": 150, "gemini-b": 150}   # seconds; on the 1 GB VM even a one-word agy reply takes 25-45 s
 START_BUDGET_S = 150                  # no new model job starts after this many seconds of one firing
 LEAN_CLAUDE = ["--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
                "--setting-sources", "project"]          # no tools, no MCP, no user settings: a cheaper start; auth stays the setup token
