@@ -828,11 +828,13 @@ let ENGINE = null;
 function buildEngine() {   // Fuse over the full index (search/index.json); the old short list stays as the fallback
   const ents = D.searchIndex?.entries;
   if (!ents?.length || !window.Fuse || !window.SPSearch) return;
-  ENGINE = SPSearch.createSearch(Fuse, ents, { boost: sym => (BY.has(sym) ? 3 : 0) + (HELD.has(sym) ? 2 : 0) + (WL.has(sym) ? 1 : 0) });
+  const fe = (window.SPFundsScreen?.entries() || []).map(f => ({ symbol: "fund:" + f.id, name: f.name + (f.amc ? " " + f.amc : ""), exchange: "AMFI", segment: "FUND", isin: f.isin }));   // T26: every fund is searchable here too
+  ENGINE = SPSearch.createSearch(Fuse, fe.length ? ents.concat(fe) : ents, { boost: sym => (BY.has(sym) ? 3 : 0) + (HELD.has(sym) ? 2 : 0) + (WL.has(sym) ? 1 : 0) });
   indexSMAP();
 }
 function indexSMAP() {
   const nse = new Map(); for (const e of D.searchIndex?.entries || []) if (!nse.has(e.symbol) || e.exchange === "NSE") nse.set(e.symbol, e);
+  for (const f of window.SPFundsScreen?.entries() || []) nse.set("fund:" + f.id, { symbol: "fund:" + f.id, name: f.name, exchange: "AMFI", segment: "FUND", isin: f.isin, fund: f.id });
   SMAP = new Map([...nse, ...SMAP]);
 }
 function find(q) {
@@ -858,7 +860,9 @@ function searchShow() {
 function searchClose() { $("#sr").hidden = true; $(".search").classList.remove("open"); $("#q").setAttribute("aria-expanded", "false"); if (S.addMode) { S.addMode = false; $("#q").placeholder = w("search"); } }
 function pick(sym) {
   const add = S.addMode; searchClose(); $("#q").value = ""; $("#q").blur();
-  if (add) { if (!WL.has(sym)) addWatch(sym); return; }
+  const fs = SMAP.get(sym)?.fund;   // T26: a fund opens its own page, and watching it uses its ISIN like every other fund
+  if (add) { const id = fs ? SMAP.get(sym).isin : sym; if (id && !WL.has(id)) addWatch(id); return; }
+  if (fs) { location.hash = "funds/" + fs; return; }
   openStock(sym);
 }
 
@@ -1668,6 +1672,67 @@ function pageFunds() {
 }
 Object.assign(PAGES, { funds: pageFunds, today: pageToday, holdings: pageHoldings, follow: pageFollow, watchlist: pageWatchlist, ideas: pageIdeas, tax: pageTax, tradrec: pageTrading, record: pageRecord, market: pageMarket, portfolio: pageHoldings, stock: pageStock });
 
+/* ---------- T26: Mutual funds screen (screens/funds.js); every fixed word has a Bengali one (T30 gate) ---------- */
+Object.assign(W.en, {
+  fxP: "Every mutual fund, not only the ones we follow. Type a name, pick a kind or a fund house, and open any fund for its price chart, returns, falls, cost and overlap with what you own.",
+  fxFind: "Find a fund by name or fund house", fxKind: "Kind", fxHouse: "Fund house", fxSort: "Order by",
+  fxSort_rel: "Best match", fxSort_r3: "3-year return", fxSort_cost: "Lowest cost", fxSort_size: "Biggest", fxSort_name: "Name",
+  fxOf: "of", fxFunds: "funds", fxNone: "No fund matches. Try fewer letters or clear a filter.",
+  fxColFund: "Fund", fxCol1y: "1 year", fxCol3y: "3 years a year", fxColVs: "Against its kind", fxColCost: "Cost a year", fxColSize: "Size",
+  fxVariants: n => `${n} versions`, fxVs_ahead: "Ahead", fxVs_behind: "Behind", fxVs_level: "About level",
+  fxLoading: "Loading funds...", fxUnavailable: "The list of funds is not available right now. Try again in a little while.", fxMissing: "We could not find that fund.", fxBack: "All funds",
+  fxChartAria: "Fund price over time", fxBuyTip: (d, q) => `You bought ${q} units on ${d}`, fxNav: "price",
+  fxNavOn: d => `Price on ${d}`, fxYouHold: "You hold it", fxUnits: "units", fxRange: "Time range", fxAll: "All",
+  fxChartP: d => `Price of one unit since the fund started on ${d}. Move the mouse over the chart to read any day.`, fxBuysP: "Yellow dots are your own buys.", fxNoNav: "We hold no price history for this fund yet.",
+  fxFcT: "Our view", fxFcP: "Funds you hold or watch are reviewed every week. For any other fund, press the button.", fxFcNone: "No forecast is possible for this fund.", fxNoFc: "No forecast yet for this fund.",
+  fxAnalyse: "Analyse this fund", fxAnalysing: "Working on it...", fxFailed: "That did not finish. Try again in a few minutes.", fxFcOld: "This forecast is out of date.", fxChance: c => `${c} out of 100 chance`,
+  fxCall_keep: "Keep", fxCall_add: "Add", fxCall_stop: "Stop adding", fxCall_switch: "Switch", fxCall_review: "Review", fxCall_buy: "Buy", fxCall_hold: "Hold", fxCall_sell: "Sell", fxCall_wait: "Wait",
+  fxRetT: "Returns, a year", fxRetP: "What the fund made each year, against the middle fund of its kind and against the Nifty.", fxR1: "Last year", fxR3: "Last 3 years", fxR5: "Last 5 years", fxR10: "Last 10 years",
+  fxThisFund: "This fund", fxKindMid: "Middle fund of its kind", fxNifty: "Nifty", fxTooYoung: "The fund is too young for this.",
+  fxRollT: "Any 3 years you could have held", fxRollP: "Start on any day since launch and hold for 3 years. This is the range of what you would have got.",
+  fxRollWorst: "Worst stretch", fxRollMid: "Middle stretch", fxRollBest: "Best stretch", fxRollLoss: "Stretches that lost money",
+  fxRollLine: n => `Based on ${n} monthly starting points.`, fxRollNifty: (a, b) => `The Nifty ranged from ${a} to ${b} a year over the same kind of stretch.`,
+  fxFallT: "How it fell in bad markets", fxFallP: "The biggest drop from top to bottom in each bad patch for the market.", fxNoFalls: "The fund did not exist in any of the big falls.",
+  fxM_gfc: "2008 crash", fxM_covid: "2020 Covid fall", fxM_slide22: "2022 slide", fxFall_less: "Fell less", fxFall_more: "Fell more", fxFall_same: "About the same",
+  fxConsT: "How steady it is", fxConsP: "In how many 1-year stretches the fund did better than the others. Higher means steadier.", fxConsCat: "Beat the middle fund of its kind", fxConsNifty: "Beat the Nifty", fxWorst: "Worst fall since launch",
+  fxCostT: "Cost and size", fxCostP: "Cost is taken from your money every year, whether the fund does well or not. Direct has no agent, so it costs less.",
+  fxTerDirect: "Cost a year, Direct", fxTerRegular: "Cost a year, Regular", fxAum: "Money in the fund", fxLakh: n => `Regular costs about ₹${n} a year more than Direct on every ₹1 lakh.`, fxSmall: "A small fund, under ₹500 crore. Small funds can be closed or merged.",
+  fxOvT: "Overlap with what you own", fxOvP: "How much of this fund is in shares you already hold. A high number means you would own the same thing twice.",
+  fxOvNone: "Overlap is only available for funds of the 10 biggest fund houses.", fxOvNoHold: "You hold no shares we know of, so there is nothing to overlap.", fxOvZero: "None of its shares are shares you hold.", fxOvOf: "of this fund is in shares you hold.",
+  fxNA: x => `Not available for this fund: ${x}.` });
+Object.assign(W.bn, {
+  fxP: "সব mutual fund, শুধু আমরা যেগুলো দেখি সেগুলো নয়। নাম লিখুন, ধরন বা fund house বেছে নিন, তারপর যে কোনো fund খুলে দেখুন তার দামের chart, লাভ, পতন, খরচ আর আপনার শেয়ারের সঙ্গে মিল।",
+  fxFind: "নাম বা fund house দিয়ে fund খুঁজুন", fxKind: "ধরন", fxHouse: "Fund house", fxSort: "সাজান",
+  fxSort_rel: "সবচেয়ে মিল", fxSort_r3: "3 বছরের লাভ", fxSort_cost: "সবচেয়ে কম খরচ", fxSort_size: "সবচেয়ে বড়", fxSort_name: "নাম",
+  fxOf: "-এর মধ্যে", fxFunds: "টা fund", fxNone: "কোনো fund মিলল না। কম অক্ষর লিখুন বা একটা filter সরান।",
+  fxColFund: "Fund", fxCol1y: "1 বছর", fxCol3y: "3 বছরে বছরে", fxColVs: "একই ধরনের সঙ্গে", fxColCost: "বছরে খরচ", fxColSize: "আকার",
+  fxVariants: n => `${n}টা সংস্করণ`, fxVs_ahead: "এগিয়ে", fxVs_behind: "পিছিয়ে", fxVs_level: "প্রায় সমান",
+  fxLoading: "Fund আসছে...", fxUnavailable: "এখন fund-এর তালিকা পাওয়া যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।", fxMissing: "ওই fund-টা খুঁজে পাওয়া গেল না।", fxBack: "সব fund",
+  fxChartAria: "সময়ের সঙ্গে fund-এর দাম", fxBuyTip: (d, q) => `আপনি ${d} তারিখে ${q} unit কিনেছেন`, fxNav: "দাম",
+  fxNavOn: d => `${d} তারিখের দাম`, fxYouHold: "আপনার আছে", fxUnits: "unit", fxRange: "সময়ের পরিসর", fxAll: "সব",
+  fxChartP: d => `${d} তারিখে fund শুরু হওয়ার পর থেকে এক unit-এর দাম। যে কোনো দিনের দাম দেখতে chart-এর উপর mouse নিন।`, fxBuysP: "হলুদ বিন্দু মানে আপনার নিজের কেনা।", fxNoNav: "এই fund-এর দামের ইতিহাস এখনও আমাদের কাছে নেই।",
+  fxFcT: "আমাদের মত", fxFcP: "আপনার থাকা বা নজরে রাখা fund প্রতি সপ্তাহে দেখা হয়। অন্য যে কোনো fund-এর জন্য button চাপুন।", fxFcNone: "এই fund-এর forecast করা যাচ্ছে না।", fxNoFc: "এই fund-এর forecast এখনও নেই।",
+  fxAnalyse: "এই fund-এর বিশ্লেষণ করুন", fxAnalysing: "কাজ চলছে...", fxFailed: "এটা শেষ হয়নি। কয়েক মিনিট পরে আবার চেষ্টা করুন।", fxFcOld: "এই forecast পুরোনো হয়ে গেছে।", fxChance: c => `100-তে ${c} chance`,
+  fxCall_keep: "রাখুন", fxCall_add: "আরও কিনুন", fxCall_stop: "আরও কেনা থামান", fxCall_switch: "বদলান", fxCall_review: "নিজে দেখুন", fxCall_buy: "Buy", fxCall_hold: "Hold", fxCall_sell: "Sell", fxCall_wait: "অপেক্ষা",
+  fxRetT: "বছরে লাভ", fxRetP: "fund বছরে কত করেছে, একই ধরনের মাঝের fund আর Nifty-র সঙ্গে মিলিয়ে।", fxR1: "গত বছর", fxR3: "গত 3 বছর", fxR5: "গত 5 বছর", fxR10: "গত 10 বছর",
+  fxThisFund: "এই fund", fxKindMid: "একই ধরনের মাঝের fund", fxNifty: "Nifty", fxTooYoung: "এর জন্য fund-টা এখনও নতুন।",
+  fxRollT: "আপনি যে কোনো 3 বছর ধরে রাখলে", fxRollP: "শুরুর পর যে কোনো দিনে কিনে 3 বছর রাখলে আপনি কী পেতেন, তার পরিসর।",
+  fxRollWorst: "সবচেয়ে খারাপ সময়", fxRollMid: "মাঝামাঝি সময়", fxRollBest: "সবচেয়ে ভালো সময়", fxRollLoss: "যতবার টাকা কমেছে",
+  fxRollLine: n => `প্রতি মাসের ${n}টা শুরুর দিনের হিসেবে।`, fxRollNifty: (a, b) => `একই রকম সময়ে Nifty বছরে ${a} থেকে ${b}-এর মধ্যে ছিল।`,
+  fxFallT: "খারাপ বাজারে কতটা পড়েছে", fxFallP: "বাজারের প্রতিটা খারাপ সময়ে উপর থেকে নিচ পর্যন্ত সবচেয়ে বড় পতন।", fxNoFalls: "বড় পতনগুলোর কোনোটার সময় fund-টা ছিল না।",
+  fxM_gfc: "2008-এর ধস", fxM_covid: "2020-র Covid পতন", fxM_slide22: "2022-এর পতন", fxFall_less: "কম পড়েছে", fxFall_more: "বেশি পড়েছে", fxFall_same: "প্রায় একই",
+  fxConsT: "কতটা ধারাবাহিক", fxConsP: "কতগুলো 1 বছরের সময়ে fund-টা অন্যদের চেয়ে ভালো করেছে। যত বেশি, তত ধারাবাহিক।", fxConsCat: "একই ধরনের মাঝের fund-কে হারিয়েছে", fxConsNifty: "Nifty-কে হারিয়েছে", fxWorst: "শুরুর পর সবচেয়ে বড় পতন",
+  fxCostT: "খরচ আর আকার", fxCostP: "fund ভালো করুক বা না করুক, প্রতি বছর আপনার টাকা থেকে খরচ কাটা হয়। Direct-এ মাঝের লোক নেই, তাই খরচ কম।",
+  fxTerDirect: "বছরে খরচ, Direct", fxTerRegular: "বছরে খরচ, Regular", fxAum: "Fund-এ মোট টাকা", fxLakh: n => `প্রতি ₹1 লাখে Regular-এ Direct-এর চেয়ে বছরে প্রায় ₹${n} বেশি খরচ।`, fxSmall: "ছোট fund, ₹500 কোটির কম। ছোট fund বন্ধ বা মিশে যেতে পারে।",
+  fxOvT: "আপনার শেয়ারের সঙ্গে মিল", fxOvP: "এই fund-এর কতটা আপনার ইতিমধ্যে থাকা শেয়ারে। বেশি হলে একই জিনিস দুবার কেনা হয়ে যাবে।",
+  fxOvNone: "মিল দেখা শুধু সবচেয়ে বড় 10টা fund house-এর fund-এর জন্য।", fxOvNoHold: "আমাদের জানা কোনো শেয়ার আপনার নেই, তাই মেলানোর কিছু নেই।", fxOvZero: "এর কোনো শেয়ারই আপনার শেয়ার নয়।", fxOvOf: "এই fund আপনার থাকা শেয়ারে আছে।",
+  fxNA: x => `এই fund-এর জন্য নেই: ${x}।` });
+if (window.SPFundsScreen && LIVE) {
+  let benchP = null;
+  const bench = () => benchP || (benchP = hist("NIFTYBEES").then(h => h && h.dates && h.close ? { dates: h.dates, nav: h.close } : null).catch(() => null));
+  const heldIsins = () => new Set([...HELD.keys()].map(s => SMAP.get(s)?.isin).filter(Boolean));
+  PAGES.funds = () => { setTimeout(() => { const el = $("#fxv"); if (el && S.tab === "funds") SPFundsScreen.mount(el, { w, esc, inr, lang: () => S.lang, bench, holding: isin => isin ? HELD.get(isin) : null, heldIsins, starBtn }, S.sub.funds || ""); }, 0); return '<div id="fxv"></div>'; };
+}
 /* ---------- T24: Worth following, one list (screens/worth.js) ---------- */
 if (window.SPWorth && window.SPLive) {
   const live = window.SP_LIVE || (window.SP_LIVE = SPLive.createClient({ fetch: (u, i) => fetch(u, i), document, setTimeout: (f, m) => setTimeout(f, m), clearTimeout: t => clearTimeout(t), person: "father" }));
@@ -1753,7 +1818,8 @@ function boot() {
   const rc = window.SPRecords ? SPRecords.load(fetch, getJSON) : Promise.resolve(null);   // T29: portfolio, smallcase, record, own_record from /api/v2/views
   const names = ["meta", "today", "calls", "market", "watchlist", "ideas", "search", "health", "feedback", "settings", "learned", "funds", "fund_research", "indices", "flows", "trades_closed", "calls_outcomes"];
   const ip = fetch("search/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null);
-  Promise.all([qp, ip, rc, ...names.map(n => getJSON(n).catch(() => null))]).then(([q, idx, live, ...v]) => {
+  const fundsP = window.SPFundsScreen ? SPFundsScreen.load().catch(() => null) : Promise.resolve(null);   // T26
+  Promise.all([qp, ip, rc, fundsP, ...names.map(n => getJSON(n).catch(() => null))]).then(([q, idx, live, , ...v]) => {
     QUEUE = q; D.searchIndex = idx; names.forEach((n, i) => D[n] = v[i]);
     if (live) for (const n of SPRecords.VIEWS) { D[n] = live.docs[n]; if (live.live[n]) SIG[n] = fp(JSON.stringify(live.docs[n])); } for (const k of ["today", "portfolio", "health", "record", "market", "calls", "watchlist"]) if (D[k]) D[k] = deepPlain(D[k]); settleLtm(); model(); buildEngine(); renderAlerts();
     const [h, sb] = location.hash.slice(1).split("/"); S.tab = TABS.includes(h) ? h : "today"; if (S.tab === "stock" && !S.sym) S.tab = "today"; S.sub[S.tab] = sb || null;

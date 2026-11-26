@@ -1066,6 +1066,44 @@
         ]
       },
       "served_by": "pages"
+    },
+    "fund_stats": {
+      "path": "funds/stats.json",
+      "published_by": "github_public",
+      "desc": "Yearly returns over 1, 3 and 5 years for every fund with history, and each category's middle fund month by month (1-year return), so a fund page can compare with its kind (ticket T26).",
+      "shape": {
+        "built_at": "time",
+        "funds": {
+          "id": [
+            "str"
+          ],
+          "r1": [
+            "num?"
+          ],
+          "r3": [
+            "num?"
+          ],
+          "r5": [
+            "num?"
+          ]
+        },
+        "categories": [
+          {
+            "name": "str",
+            "n": "int",
+            "r1": "num?",
+            "r3": "num?",
+            "r5": "num?",
+            "months": [
+              "str"
+            ],
+            "med1y": [
+              "num"
+            ]
+          }
+        ]
+      },
+      "served_by": "pages"
     }
   },
   "write_budget": {

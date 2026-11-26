@@ -17,6 +17,7 @@ from pathlib import Path
 
 from stockpilot import fundgroups
 from stockpilot.sources.fundcosts import scheme_key
+from stockpilot.sources import fund_stats
 
 NAVALL_URL = "https://portal.amfiindia.com/spages/NAVAll.txt"
 HISTORY_URL = "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt={start}&todt={end}"
@@ -285,6 +286,7 @@ def publish(funds: list[dict], nav: dict, out: Path, built_at: str, schemes_tota
             "nav": {"code": f["primary_code"], "dates": [d for d, _ in series], "nav": [v for _, v in series]},
             "not_available": missing})
     _write(out / "funds" / "index.json", {"built_at": built_at, "entries": entries, "counts": cov})
+    _write(out / "funds" / "stats.json", fund_stats.build(entries, nav, built_at))   # T26: returns per fund, category middle lines
     return cov
 
 
@@ -293,7 +295,7 @@ def publish(funds: list[dict], nav: dict, out: Path, built_at: str, schemes_tota
 def fetch_costs(fetch, today: date) -> tuple[dict, dict]:
     """(ter, aum) name-keyed tables from AMFI's own APIs, as fundcosts reads them, without a database. A house or page that
     does not answer is skipped; this month's TER file falls back to last month's when it is not out yet."""
-    from stockpilot.sources import fundcosts as fc
+    from stockpilot.sources import fundcosts as fc, fund_stats
     ids = fc.mf_ids_from(fetch(fc.TER_PAGE))
     ter: dict = {}
     for as_of in (today, today.replace(day=1) - timedelta(days=1)):

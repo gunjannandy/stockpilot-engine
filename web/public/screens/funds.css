@@ -1,0 +1,32 @@
+/* T26: Mutual funds. Reuses the deployed look (.tools, .fchip, .grid, .lead, .chip, .fgrid). Tokens only: works in light and dark. */
+.fxfil{display:flex;flex-wrap:wrap;gap:10px 16px;margin:0 0 12px}
+.fxfil label{display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:650;color:var(--on2)}
+.fxfil select{height:34px;max-width:260px;border-radius:9px;border:1px solid var(--line);background:var(--surf);color:var(--on);padding:0 8px;font:inherit;font-weight:500}
+.fxg .nm b{display:block;font-weight:650} .fxg .sy{font-size:12.5px;margin-top:1px}
+.fxg tr.r{cursor:pointer} .fxg tr.r:hover td{background:var(--c1)} .fxg tr.r:focus-visible{outline:2px solid var(--pri);outline-offset:-2px}
+.fxv{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12.5px;font-weight:700;background:var(--c1);color:var(--on2)}
+.fxv-ahead{color:var(--gain)} .fxv-behind{color:var(--loss)}
+.fxback{margin:0 0 8px}
+.fxhead{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}
+.fxh1{margin:0 0 4px;font-size:clamp(22px,2.6vw,30px);line-height:1.2}
+.fxvars{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.fxpx{text-align:right;display:grid;gap:4px;justify-items:end} .fxpx .px{font-size:30px;font-weight:700}
+.fxsec{padding:18px 0;border-top:1px solid var(--line)} .fxsec h3{display:flex;gap:8px;align-items:center;margin:0 0 4px;font-size:17px}
+.fxsec h3 .ms{font-size:22px;color:var(--pri)} .fxp{margin:2px 0 12px;max-width:70ch;line-height:1.5}
+.fxchart{border-top:0;padding-top:4px}
+.fxbar{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:6px;min-height:36px}
+.fxranges{display:flex;gap:6px;flex-wrap:wrap} .fxranges .fchip{height:32px;padding:0 12px;font-size:13.5px}
+.fxread{font-size:13.5px}
+.fxsvg{display:block;touch-action:pan-y;overflow:visible}
+.fxgrid{stroke:var(--line);stroke-width:1} .fxax{fill:var(--on2);font-size:11.5px}
+.fxline{fill:none;stroke:var(--pri);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke} .fxarea{fill:var(--pri);opacity:.1}
+.fxbuy{fill:var(--warn,#f2b705);stroke:var(--surf);stroke-width:2} .fxcur{stroke:var(--on2);stroke-width:1;stroke-dasharray:3 3}
+.fxr td,.fxr th{padding:9px 10px} .fxr .sy{font-size:12.5px}
+.fxbig{font-size:18px;margin:4px 0 8px} .fxbig b{font-weight:700}
+.fxwarn{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;padding:10px 12px;border-radius:9px;background:var(--c1);border-left:3px solid var(--warn,#f2b705);max-width:70ch}
+.fxwarn .ms{font-size:18px}
+.fxov{list-style:none;margin:0;padding:0;max-width:520px} .fxov li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.fxjob ol{margin:8px 0 0;padding-left:20px} .fxjob li[data-state="done"]{color:var(--on2)}
+@media (max-width:600px){.fxpx{text-align:left;justify-items:start}.fxr td,.fxr th{padding:8px 6px}.fxfil select{max-width:100%}.fxfil label{width:100%;justify-content:space-between}}
+.fxvn{margin-left:6px}
+.fxr th button,.fxg th button{cursor:default}
