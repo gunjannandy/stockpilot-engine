@@ -11,12 +11,14 @@ import yaml
 
 from stockpilot import jobrun
 from stockpilot.jobs import minute, wire
+from stockpilot.jobs.buttons import BUTTON_KINDS
 from test_forecast_form import good  # noqa: E402 - tests/ is on the path (pyproject pythonpath)
 
 ROOT = Path(__file__).resolve().parents[2]
 IST = timezone(timedelta(hours=5, minutes=30))
 NOW = datetime(2026, 11, 25, 9, 15, tzinfo=IST)               # a Wednesday
 SATURDAY = datetime(2026, 11, 28, 9, 15, tzinfo=IST)
+WORKFLOW_DIR = ROOT / "ops" / "public" / "workflows" if (ROOT / "ops").is_dir() else ROOT / ".github" / "workflows"   # the public code copy lands them in .github
 MIGRATIONS = [ROOT / "web" / "migrations" / n for n in ("0001_live_contract.sql", "0002_views.sql")]
 
 
@@ -86,7 +88,7 @@ class Rig:
                               mechanical=lambda s, e: {"as_of": "2026-11-25", "result": MECH} if s == "FIXA" else None,
                               facts=lambda s: FACTS if s == "FIXA" else None, archive=archive, backup=lambda: "Done, backup saved",
                               enqueue=lambda k, p, by: jobrun.JobRunner(self.sink, clock=lambda: self.now).enqueue(k, p, by))
-        self.handlers = {**wire.handlers(self.deps), "sync": lambda ctx: "Done, 0 changes"}
+        self.handlers = {**wire.handlers(self.deps), "sync": lambda ctx: "Done, 0 changes", **{k: (lambda ctx: "Done") for k in BUTTON_KINDS}}
 
     def backend(self, name):
         return self.models.setdefault(name, Scripted(name, {"Tag each news item": tag_answer, "You read one message": FEEDBACK_ANSWER,
@@ -122,7 +124,12 @@ SAMPLE = {"sync": {}, "analyse": {"symbol": "FIXA", "exchange": "NSE"},
           "refresh_call": {"symbol": "FIXA", "exchange": "NSE", "reason": "news_high"}, "feedback_read": {"feedback_id": "fb1"},
           "news_tag": {"batch": [{"id": "n9", "title": "Fixa wins an order", "source": "Wire"}]}, "news_rank": {},
           "load_stock": {"symbol": "FIXA", "exchange": "NSE"}, "news_collect": {}, "history_backfill": {"from": "1994-11-03", "to": "2026-11-25"},
-          "nightly": {}, "weekly_review": {}, "backup": {}}
+          "nightly": {}, "weekly_review": {}, "backup": {},
+          "watchlist_add": {"symbol": "FIXA", "exchange": "NSE"}, "watchlist_remove": {"symbol": "FIXA", "exchange": "NSE"},
+          "budget_set": {"month": "2026-12", "amount": 1000}, "allocation_approve": {"target": {}}, "refresh_docs": {}, "rerun": {"job": "daily"},
+          "build_tax_pack": {}, "not_now": {"symbol": "FIXA", "scope": "any", "for": "week"}, "snooze": {"symbol": "FIXA", "scope": "any"},
+          "dismiss": {"symbol": "FIXA", "scope": "any"}, "not_now_undo": {"id": 1}, "learned_forget": {"pattern": "x"},
+          "long_term_mark": {"symbol": "FIXA", "on": True}}
 
 
 def test_every_contract_job_kind_has_a_handler_or_a_workflow():
@@ -158,7 +165,7 @@ def test_walk_every_contract_kind_through_the_one_minute_check():
 # ---- GitHub kinds ---------------------------------------------------------------------------------------------------------
 def test_each_workflow_exists_declares_the_inputs_it_is_given_and_names_its_run_after_the_job():
     for kind, spec in wire.WORKFLOWS.items():
-        doc = yaml.safe_load((ROOT / "ops" / "public" / "workflows" / spec["file"]).read_text())
+        doc = yaml.safe_load((WORKFLOW_DIR / spec["file"]).read_text())
         on = doc.get(True) or doc.get("on")                                    # YAML reads a bare `on` as True
         declared = set(on["workflow_dispatch"]["inputs"])
         given = set(wire.workflow_inputs(kind, SAMPLE[kind], "job_1"))

@@ -25,6 +25,8 @@ _NEEDS_PRIVATE_TREE = (
     "tests/test_ops.py", "tests/test_wrangler_path.py", "tests/test_heartbeat.py", "tests/test_publish.py::test_public_workflows_exist",
     "tests/test_publish.py::test_keep_alive_is_scheduled", "tests/jobs/test_vmjobs.py::test_the_timer_unit_is_a_oneshot",
     "tests/sources/test_history.py::test_public_workflows_parse", "tests/verify/test_model_checks.py::test_the_real_baseline_table",
+    "tests/jobs/test_modelfix.py::test_the_batch_is_small_and_the_worst_case_job_fits_inside_the_unit_timeout",
+    "tests/test_publish.py::test_data_jobs_no_longer_live_in_the_private_workflows_folder",
 )
 
 

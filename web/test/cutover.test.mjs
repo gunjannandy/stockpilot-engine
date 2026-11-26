@@ -5,7 +5,7 @@ import { parseDotenv, parseDeployUrl, px, inr, pct, compareToday, verdict } from
 import { runPreflight, REQUIRED, formatReport, setCommand } from "../../scripts/cutover/preflight.mjs";
 import { runCutover, proveRollback } from "../../scripts/cutover/cutover.mjs";
 import { verifySession } from "../lib/auth.js";
-import { mintCookie } from "../../scripts/cutover/check.mjs";
+import { mintCookie, probeBrowser } from "../../scripts/cutover/check.mjs";
 
 const SECRET = "SENTINEL-do-not-print-0123456789abcdef0123456789";
 const goodEnv = {
@@ -270,4 +270,60 @@ test("preflight: no SP_PEOPLE in .env and no SP_OWNER anywhere is still a proble
   const r = runPreflight({ env, toml, remote: remote(Object.keys(goodEnv)), target: "production" });
   assert.equal(r.ok, false);
   assert.ok(r.problems.some((p) => p.name === "SP_OWNER"));
+});
+
+// SAFECHECK (#63): a check that crashes after an upload must count as a failed check, and the browser must be proven first.
+test("production: a check that throws after the upload is a failed check and rolls back", async () => {
+  const w = world();
+  let n = 0;
+  w.deps.check = async (url) => { w.calls.push(["check", url]); if (n++ === 0) throw new Error("Cannot find module 'playwright'"); return { ok: true, failed: [] }; };
+  const r = await runCutover({ target: "production", project: "stockpilotgn", ...w.deps });
+  assert.equal(r.ok, false);
+  assert.equal(r.rolledBack, true);
+  assert.deepEqual(w.calls.find((c) => c[0] === "rollback"), ["rollback", "prev-1"]);
+  assert.deepEqual(r.failed, ["check_crashed"]);
+  assert.match(r.error, /playwright/);
+});
+
+test("production: the re-check after a rollback may crash too, and is reported, not thrown", async () => {
+  const w = world();
+  w.deps.check = async () => { throw new Error("boom"); };
+  const r = await runCutover({ target: "production", project: "stockpilotgn", ...w.deps });
+  assert.equal(r.rolledBack, true);
+  assert.equal(r.liveAfterRollback, false);
+});
+
+test("a browser that cannot launch stops the deploy before anything is uploaded", async () => {
+  for (const target of ["production", "preview"]) {
+    const w = world();
+    w.deps.browserProbe = async () => ({ ok: false, text: "Browser check cannot run: no playwright" });
+    const r = await runCutover({ target, branch: "cutover-preview", project: "stockpilotgn", ...w.deps });
+    assert.equal(r.ok, false);
+    assert.equal(r.stage, "preflight");
+    assert.ok(!w.calls.some((c) => c[0] === "run"), "nothing uploaded");
+  }
+});
+
+test("proveRollback: a crashing check is reported cleanly, and a missing browser stops it before upload", async () => {
+  const w = world();
+  w.deps.makeBroken = async () => "/tmp/broken-site";
+  w.deps.check = async () => { throw new Error("no browser"); };
+  const r = await proveRollback({ project: "stockpilotgn", branch: "cutover-proof", ...w.deps });
+  assert.equal(r.ok, false);
+  assert.match(r.error, /check crashed/i);
+  const w2 = world();
+  w2.deps.makeBroken = async () => "/tmp/broken-site";
+  w2.deps.browserProbe = async () => ({ ok: false, text: "no browser" });
+  const r2 = await proveRollback({ project: "stockpilotgn", branch: "cutover-proof", ...w2.deps });
+  assert.equal(r2.stage, "preflight");
+  assert.ok(!w2.calls.some((c) => c[0] === "run"));
+});
+
+test("probeBrowser launches and closes, and reports a launch failure in words", async () => {
+  let closed = false;
+  assert.equal((await probeBrowser({ launch: async () => ({ close: async () => { closed = true; } }) })).ok, true);
+  assert.equal(closed, true);
+  const bad = await probeBrowser({ launch: async () => { throw new Error("Cannot find module 'playwright'"); } });
+  assert.equal(bad.ok, false);
+  assert.match(bad.text, /npm i --no-save playwright@1\.65\.1/);
 });

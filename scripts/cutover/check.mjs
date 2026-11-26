@@ -11,9 +11,22 @@ export async function mintCookie(env, person = "owner") {
 
 const SETTLE_MS = 6000;
 
+const defaultLaunch = async () => createRequire(import.meta.url)("playwright").chromium.launch({ args: ["--no-sandbox"] });
+
+// Proves the browser check can run: loads playwright and launches then closes chromium. Run BEFORE anything is uploaded.
+export async function probeBrowser({ launch = defaultLaunch } = {}) {
+  try {
+    const b = await launch();
+    await b.close();
+    return { ok: true, text: "Browser check can run." };
+  } catch (e) {
+    return { ok: false, text: `The browser check cannot run (${String(e?.message || e).slice(0, 160)}), so no deploy. On the VM run at the repo root: npm i --no-save playwright@1.65.1 (ops/install.sh does it), then try again.` };
+  }
+}
+
 // launch: () => Promise<browser>; defaults to Playwright's Chromium (pre-installed on the VM and in cloud sessions).
 export async function checkUrl(url, { cookie, launch, timeoutMs = 30000 } = {}) {
-  launch ||= async () => createRequire(import.meta.url)("playwright").chromium.launch({ args: ["--no-sandbox"] });
+  launch ||= defaultLaunch;
   const browser = await launch();
   const out = { url, loaded: false, gate: false, pageErrors: [], rows: 0, expectedRows: 0, nothingLine: false, mismatches: [], notes: [] };
   try {

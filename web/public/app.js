@@ -1,4 +1,4 @@
-/* stockpilot dashboard, round 8. Reads data/<name>.json (what `sp build-site` writes) and posts every edit to /api/queue.
+/* stockpilot dashboard, round 8. Reads data/<name>.json (what `sp build-site` writes) and posts every edit as a D1 job (buttons.js).
    Plain JS, no build step. One page scroll: every tab and every stock is its own page. Anything marked TODO(backend)
    is worked out here only until site.py ships it. */
 (() => {
@@ -334,15 +334,14 @@ function toast(text, undo) {
 }
 async function queue(kind, payload, done, revert) {
   if (!LIVE) { toast(`${done} ${w("proto")}`, revert && (async () => { revert(); toast(w("undone")); })); return true; }
-  try {
-    const r = await fetch("/api/queue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind, payload }) });
-    if (r.status === 401) { location.href = "/login"; return false; }
-    if (r.status === 429) { revert?.(); toast(w(kind === "ask_analyst" ? "askCap" : "capAll")); return false; }
-    if (!r.ok) throw new Error(String(r.status));
-    const { id } = await r.json();
-    toast(done, async () => { const d = await fetch(`/api/queue/${id}`, { method: "DELETE" }); if (d.ok) { revert?.(); toast(w("undone")); } else toast(w("fail")); });
+  const r = await SPButtons.send(fetch, kind, payload);      // a D1 job (or the feedback route); the VM runs it within a minute
+  if (r.ok) {
+    const back = SPButtons.inverse(kind, payload);
+    toast(done, back && (async () => { const u = await SPButtons.send(fetch, back.kind, back.payload); if (u.ok) { revert?.(); toast(w("undone")); } else toast(w("fail")); }));
     return true;
-  } catch { revert?.(); toast(w("fail")); return false; }
+  }
+  if (r.status === 401) { location.href = "/login"; return false; }
+  revert?.(); toast(w(r.status === 429 ? (kind === "ask_analyst" ? "askCap" : "capAll") : "fail")); return false;
 }
 
 /* ---------- calls: one row each; the full reasoning is on the stock page ---------- */
@@ -894,9 +893,9 @@ function renderRail() {
 }
 const qWords = { pending: "qWait", taken: "qWork", received: "qWork", done: "qDone", failed: "qFail" };
 function renderAlerts() {
-  const seen = store.get("qseen", 0), bad = (QUEUE || []).filter(q => q.status === "failed" && +q.id > seen && q.note);
+  const seen = store.get("qseen", ""), bad = (QUEUE || []).filter(q => q.status === "failed" && (q.at || "") > seen && q.note);
   const el = $("#alerts"); if (!el) return;
-  el.innerHTML = bad.slice(0, 2).map(q => `<div class="flag" role="alert"><span class="ms" style="color:var(--warn)">info</span><span>${esc(q.note)}</span><button class="btn x" data-qok="${esc(q.id)}">${w("ok")}</button></div>`).join("");
+  el.innerHTML = bad.slice(0, 2).map(q => `<div class="flag" role="alert"><span class="ms" style="color:var(--warn)">info</span><span>${esc(q.note)}</span><button class="btn x" data-qok="${esc(q.at)}">${w("ok")}</button></div>`).join("");
 }
 const freshHTML = () => {
   const m = D.meta; if (!m) return ""; const stale = m.holdings?.stale || m.documents?.stale;
@@ -926,7 +925,7 @@ function renderAll() { root.lang = S.lang === "bn" ? "bn" : "en"; renderBar(); r
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
   hideTip(); const el = sel => e.target.closest(sel); let x;
-  if ((x = el("[data-qok]"))) { store.set("qseen", Math.max(store.get("qseen", 0), +x.dataset.qok)); x.closest(".flag").remove(); return; }
+  if ((x = el("[data-qok]"))) { store.set("qseen", x.dataset.qok); x.closest(".flag").remove(); return; }
   if ((x = el("[data-approve]"))) { const t = JSON.parse(x.dataset.approve); x.replaceWith(Object.assign(document.createElement("span"), { className: "muted", textContent: w("approvedWait") })); return queue("allocation_approve", { target: t }, w("approvedT")); }
   if ((x = el("[data-taxpack]"))) { x.replaceWith(Object.assign(document.createElement("span"), { className: "muted", textContent: w("packWait") })); return queue("build_tax_pack", {}, w("packAsked")); }
   if ((x = el("[data-pick]"))) return pick(x.dataset.pick);
@@ -1829,7 +1828,7 @@ function boot() {
   root.lang = S.lang === "bn" ? "bn" : "en";
   document.body.insertAdjacentHTML("beforeend", `<div id="app"><nav id="rail" aria-label="Main"></nav><main id="main"><div class="topbar" id="bar"></div><div id="alerts"></div><div id="view"><p class="muted" style="padding:40px 4px">${w("load")}</p></div></main></div><div id="tip" role="tooltip"></div><div id="toasts" role="status" aria-live="polite"></div>`);
   renderBar();
-  const qp = LIVE ? fetch("/api/queue", { cache: "no-store", signal: AbortSignal.timeout(2500) }).then(r => r.ok ? r.json() : null).then(j => j?.items || null).catch(() => null) : Promise.resolve(null);
+  const qp = LIVE ? fetch("/api/v2/jobs?limit=100", { cache: "no-store", signal: AbortSignal.timeout(2500) }).then(r => r.ok ? r.json() : null).then(j => j?.jobs ? SPButtons.items(j.jobs) : null).catch(() => null) : Promise.resolve(null);   // owner only: the father gets null and no queue list
   const rc = window.SPRecords ? SPRecords.load(fetch, getJSON) : Promise.resolve(null);   // T29: portfolio, smallcase, record, own_record from /api/v2/views
   const names = ["meta", "today", "calls", "market", "watchlist", "ideas", "search", "health", "feedback", "settings", "learned", "funds", "fund_research", "indices", "flows", "trades_closed", "calls_outcomes"];
   const ip = fetch("search/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null);

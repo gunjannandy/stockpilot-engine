@@ -2,6 +2,8 @@
 
 Steps are said as progress lines, so the page can show "logged in, fetching holdings, done, 3 changes". Kite is read through
 the Worker's `GET /api/vm/kite` only (the token never leaves the Worker); no order endpoint exists in this module."""
+import sys
+
 from stockpilot.jobrun import JobFailed
 from stockpilot.sources import kite
 
@@ -26,8 +28,12 @@ def _result(n: int) -> tuple[str, str]:
     return (f"Done, {n} change{'s' if n != 1 else ''}", f"হয়ে গেছে, {n}টি বদল")
 
 
-def handler(open_db, worker, close=lambda db: None):
-    """A job handler for kind `sync`. `open_db()` gives the store, `worker` is a `kite.Worker`."""
+VIEWS_LATE = "Holdings are saved; Holdings and Tax update at the next build."
+
+
+def handler(open_db, worker, close=lambda db: None, publish_views=None):
+    """A job handler for kind `sync`. `open_db()` gives the store, `worker` is a `kite.Worker`.
+    `publish_views(db)` writes the D1 views from the store (#115); if it fails the sync still stands."""
     def run(ctx):
         ctx.progress("Checking Kite login", "Kite লগইন দেখা হচ্ছে")
         try:
@@ -41,7 +47,15 @@ def handler(open_db, worker, close=lambda db: None):
             before = _positions(db)
             kite.store_payload(db, payload)
             changes = count_changes(before, _positions(db))
+            late = False
+            if publish_views:
+                ctx.progress("Updating Holdings, Tax and Our record", "Holdings, Tax আর আমাদের রেকর্ড হালনাগাদ হচ্ছে")
+                try:
+                    publish_views(db)
+                except Exception as err:  # noqa: BLE001 - the holdings are saved; only the screens wait for the next build
+                    print(f"sync: views not written: {type(err).__name__}", file=sys.stderr)
+                    late = True
         finally:
             close(db)
-        return _result(changes)[0]      # the runner writes the final ok line with these words
+        return _result(changes)[0] + (" " + VIEWS_LATE if late else "")      # the runner writes the final ok line with these words
     return run

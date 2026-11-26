@@ -3,7 +3,7 @@ Each kind has one handler. A later stage adds its kind with @handler; an unknown
 import json
 import re
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Callable
 
 from stockpilot import feedback, learn, watchlist
@@ -237,3 +237,22 @@ def poll(db, worker, ctx: Context | None = None) -> dict:
         counts[status] += 1
         _ack(db, worker, row_id, item["id"], status, note)
     return counts
+
+
+RETIRE_AFTER_DAYS = 7
+
+
+def retire_ready(worker, now, days: int = RETIRE_AFTER_DAYS) -> tuple[bool, str]:
+    """Is the KV queue safe to delete (#114)? Yes when nothing waits and the page has not called it for `days` days.
+    Returns (ready, plain words). A Worker that cannot say is never ready."""
+    code, got = worker.get("/api/vm/queue/status")
+    if code != 200:
+        return False, f"The Worker could not say (answered {code})."
+    if got.get("pending"):
+        return False, f"{got['pending']} requests still wait in the KV queue."
+    last = got.get("last_call_at")
+    if last:
+        quiet = now - datetime.fromisoformat(last.replace("Z", "+00:00"))
+        if quiet < timedelta(days=days):
+            return False, f"The page called the KV queue {quiet.days} days ago; wait for {days} quiet days."
+    return True, f"No call to the KV queue for {days} days and nothing waiting: safe to retire."

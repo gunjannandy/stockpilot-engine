@@ -5,7 +5,7 @@
 //   node scripts/cutover/cutover.mjs deploy --target production
 //   node scripts/cutover/cutover.mjs check <url>                  (no deploy; the four checks only)
 //   node scripts/cutover/cutover.mjs prove-rollback [--branch cutover-proof]   (preview only; see docs/status/cutover-runbook.md)
-// Exit 0 = pass, 1 = a hard block failed (and rollback ran for production), 3 = preflight failed (nothing deployed), 2 = usage.
+// Exit 0 = pass, 1 = a hard block failed or the check crashed (and rollback ran for production), 3 = preflight failed or the browser cannot launch (nothing deployed), 2 = usage.
 // Never prints a secret, a cookie or an email address.
 import fs from "node:fs";
 import os from "node:os";
@@ -14,7 +14,7 @@ import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseDeployUrl, parseDotenv } from "./lib.mjs";
 import { runPreflight, formatReport } from "./preflight.mjs";
-import { checkUrl, mintCookie } from "./check.mjs";
+import { checkUrl, mintCookie, probeBrowser } from "./check.mjs";
 import { createCf } from "./cf.mjs";
 
 const PRODUCTION_BRANCH = "main";
@@ -30,15 +30,22 @@ async function deployAndCheck({ project, branch, site, run, check, log }) {
   const url = parseDeployUrl(done.stdout);
   if (!url) return { error: "wrangler did not print a deployment URL" };
   log(`Deployed to ${url}. Checking the four hard blocks.`);
-  const res = await check(url);
+  let res;
+  try { res = await check(url); } catch (err) {
+    // A crashed check proves nothing: treat it as a failed one so production rolls back instead of staying unchecked.
+    const msg = String(err?.message || err).slice(0, 200);
+    res = { ok: false, failed: ["check_crashed"], crashed: msg };
+    log(`The check crashed (${msg}); treating it as failed.`);
+  }
   log(res.ok ? "All four hard blocks pass." : `Hard block failed: ${res.failed.join(", ")}`);
   return { url, check: res };
 }
 
-export async function runCutover({ target, branch, project, preflight, siteOk, cf, run, check, prodUrl, log, site }) {
+export async function runCutover({ target, branch, project, preflight, browserProbe, siteOk, cf, run, check, prodUrl, log, site }) {
   if (target === "preview" && (!branch || branch === PRODUCTION_BRANCH)) throw new Error(`a preview needs a branch other than the production branch (${PRODUCTION_BRANCH})`);
   const pre = await preflight();
   if (!pre.ok) { log(pre.text); return { ok: false, stage: "preflight" }; }
+  if (browserProbe) { const b = await browserProbe(); if (!b.ok) { log(b.text); return { ok: false, stage: "preflight" }; } }
   if (!siteOk()) { log("The built site folder is missing or has no index.html and data/today.json. Build it first."); return { ok: false, stage: "site" }; }
 
   const previous = target === "production" ? await cf.currentProduction() : null;
@@ -47,6 +54,7 @@ export async function runCutover({ target, branch, project, preflight, siteOk, c
   if (r.check.ok) return { ok: true, url: r.url, rolledBack: false };
 
   const out = { ok: false, url: r.url, failed: r.check.failed, rolledBack: false };
+  if (r.check.crashed) out.error = `the check crashed: ${r.check.crashed}`;
   if (target !== "production") { log("Preview left as it is for inspection; nothing rolled back."); return out; }
   if (!previous) { log("No previous production deployment is recorded, so there is nothing to roll back to."); return out; }
   try {
@@ -56,7 +64,8 @@ export async function runCutover({ target, branch, project, preflight, siteOk, c
     log(out.error);
     return out;
   }
-  const after = await check(prodUrl);
+  let after;
+  try { after = await check(prodUrl); } catch (err) { after = { ok: false, failed: ["check_crashed"] }; }
   out.rolledBack = true;
   out.liveAfterRollback = after.ok;
   log(after.ok ? `Rolled back to ${previous}; the live site passes the checks.` : `Rolled back to ${previous}, but the live site still fails: ${after.failed.join(", ")}.`);
@@ -65,16 +74,19 @@ export async function runCutover({ target, branch, project, preflight, siteOk, c
 
 // Preview analogue of a rollback (Pages can only roll back production): deploy a deliberately broken copy of the site to a
 // preview branch and require the checks to catch it, then redeploy the good site to the same branch and require a pass.
-export async function proveRollback({ project, branch, preflight, run, check, makeBroken, log, site }) {
+export async function proveRollback({ project, branch, preflight, browserProbe, run, check, makeBroken, log, site }) {
   if (!branch || branch === PRODUCTION_BRANCH) throw new Error(`a preview needs a branch other than the production branch (${PRODUCTION_BRANCH})`);
   if (preflight) { const pre = await preflight(); if (!pre.ok) { log(pre.text); return { ok: false, stage: "preflight" }; } }
+  if (browserProbe) { const b = await browserProbe(); if (!b.ok) { log(b.text); return { ok: false, stage: "preflight" }; } }
   const broken = await makeBroken();
   const bad = await deployAndCheck({ project, branch, site: broken, run, check, log });
   if (bad.error) return { ok: false, error: bad.error };
+  if (bad.check.crashed) return { ok: false, error: `the check crashed, so the proof is void: ${bad.check.crashed}`, url: bad.url };
   if (bad.check.ok) return { ok: false, error: "the broken preview was not caught by the checks", url: bad.url };
   log(`Broken preview caught (${bad.check.failed.join(", ")}). Redeploying the known-good site to the same branch.`);
   const good = await deployAndCheck({ project, branch, site: site || "../site", run, check, log });
   if (good.error) return { ok: false, error: good.error };
+  if (good.check.crashed) return { ok: false, error: `the check crashed on the good redeploy: ${good.check.crashed}`, url: good.url };
   if (!good.check.ok) return { ok: false, error: `the good site failed after the redeploy: ${good.check.failed.join(", ")}`, url: good.url };
   return { ok: true, brokenUrl: bad.url, goodUrl: good.url, caught: bad.check.failed };
 }
@@ -136,7 +148,7 @@ async function main(argv) {
       const b = await exec(path.join(root, ".venv/bin/sp"), ["--root", root, "build-site"], { cwd: root });
       if (b.code !== 0) { log(`build-site failed: ${String(b.stderr).slice(-300)}`); return 1; }
     }
-    const r = await runCutover({ target, branch: arg(rest, "--branch", "cutover-preview"), project, preflight, siteOk, cf: cf || {}, run, check, prodUrl: `https://${project}.pages.dev`, log });
+    const r = await runCutover({ target, branch: arg(rest, "--branch", "cutover-preview"), project, preflight, browserProbe: () => probeBrowser(), siteOk, cf: cf || {}, run, check, prodUrl: `https://${project}.pages.dev`, log });
     log(JSON.stringify({ ok: r.ok, stage: r.stage, url: r.url, failed: r.failed, rolledBack: r.rolledBack, liveAfterRollback: r.liveAfterRollback, error: r.error }));
     return r.ok ? 0 : r.stage === "preflight" ? 3 : 1;
   }
@@ -152,7 +164,7 @@ async function main(argv) {
       fs.writeFileSync(js, `throw new Error("cutover proof: deliberate page error");\n${original}`);
       return dst;
     };
-    const r = await proveRollback({ project, branch: arg(rest, "--branch", "cutover-proof"), preflight, run, check, makeBroken, log, site: siteDir });
+    const r = await proveRollback({ project, branch: arg(rest, "--branch", "cutover-proof"), preflight, browserProbe: () => probeBrowser(), run, check, makeBroken, log, site: siteDir });
     log(JSON.stringify(r));
     return r.ok ? 0 : 1;
   }

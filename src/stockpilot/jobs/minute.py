@@ -93,9 +93,14 @@ def _binary(name: str) -> str:
     return "agy" if name.startswith("gemini") else "claude"
 
 
+def _tail(text: str, n: int = 300) -> str:
+    """The end of a backend's output, one line, secrets and every URL hidden: the cause is usually the last thing it printed."""
+    return URL.sub("[url]", scrub(" ".join((text or "").split())))[-n:]
+
+
 class CliBackend:
     """One model through its command line, in an empty folder. `claude` reads the prompt on stdin; `agy` takes it as the value
-    of -p. A quota or load message is a `Refused`; a login prompt or missing binary marks that binary down for 30 minutes in
+    of -p. A quota or load message is a `Refused`; a login prompt or missing binary marks that backend (by name, so one account's failure never skips another) down for 30 minutes in
     `state` so the next backend and the next firing do not wait on it again."""
 
     def __init__(self, name, env=None, run=subprocess.run, timeout=None, state=None, now=None):
@@ -109,12 +114,12 @@ class CliBackend:
         return ["agy", "-p", prompt], None
 
     def _mark_down(self):
-        self.state.setdefault("backend_down", {})[_binary(self.name)] = (self.now() + DOWN_FOR).isoformat()
+        self.state.setdefault("backend_down", {})[self.name] = (self.now() + DOWN_FOR).isoformat()
 
     def ask(self, prompt):
-        until = self.state.get("backend_down", {}).get(_binary(self.name))
+        until = self.state.get("backend_down", {}).get(self.name)
         if until and self.now() < datetime.fromisoformat(until):
-            raise Refused(f"{self.name}: {_binary(self.name)} is marked down until {until}")
+            raise Refused(f"{self.name} is marked down until {until}")
         argv, stdin = self.command(prompt)
         with tempfile.TemporaryDirectory(prefix="sp-min-") as empty:
             try:
@@ -126,6 +131,7 @@ class CliBackend:
                 raise Unavailable(f"{self.name}: {err}") from err
         text = (done.stdout or "") + (done.stderr or "")
         if done.returncode != 0:
+            print(f"{self.name} exited {done.returncode}: stderr: {_tail(done.stderr)} | stdout: {_tail(done.stdout)}", file=sys.stderr)
             low = text.lower()
             if any(w in low for w in AUTH_WORDS):
                 self._mark_down()
@@ -375,17 +381,38 @@ def gh_checker(workflows: dict, run=subprocess.run, repo=wire.ENGINE, grace=time
     return check
 
 
+def _button_handlers(cfg, store) -> dict:
+    """The page's buttons (#114): each opens the private store when its job arrives. The heavy ones get the machine's pieces
+    through `cfg` alone: the tax pack builder, the document reader and the v1 rerun file."""
+    from stockpilot.jobs import buttons, docs, due, ship
+    path = cfg.root / cfg.get("store.path", "data/stockpilot.duckdb")
+
+    def sync_docs(db):
+        bridge, pan = docs.bridge_from(cfg)
+        return docs.sync_docs(db, bridge, pan)
+
+    return buttons.handlers(lambda: store.open(path, job="button", wait_s=120), close=lambda db: db.close(),
+                            build_pack=lambda db: ship.build_tax_pack(db, cfg), sync_docs=sync_docs,
+                            rerun=lambda job: due.ask_rerun(cfg.root, job))
+
+
 def _handlers(cfg, deps) -> dict:
     """Every kind the VM runs itself (see `wire.handlers`), and `sync` through the Worker's Kite read when the key is set."""
     from stockpilot import store
     from stockpilot.jobs import sync
     from stockpilot.sources import kite
     handlers = wire.handlers(deps)
+    handlers.update(_button_handlers(cfg, store))
     key, url = cfg.secret("SP_VM_KEY"), cfg.get("worker.url")
     if key and url:
         path = cfg.root / cfg.get("store.path", "data/stockpilot.duckdb")
-        handlers["sync"] = sync.handler(lambda: store.open(path, job="sync", wait_s=120), kite.Worker(url, key),
-                                        close=lambda db: db.close())
+        from stockpilot import views
+        budget = cfg.get("budget.monthly_default_inr", 100000)
+        publish = lambda db: views.write_from_store(db, deps.query, deps.now().astimezone(IST).date(), deps.stamp(), budget,  # noqa: E731
+                                                    views.previous(deps.query))
+        handlers["sync"] = wire.then_refresh_lists(
+            sync.handler(lambda: store.open(path, job="sync", wait_s=120), kite.Worker(url, key), close=lambda db: db.close(),
+                         publish_views=publish), deps)
     return handlers
 
 
@@ -428,6 +455,14 @@ def run(cfg) -> int:
     out = tick(D1Source(query), sink, make_backend=make, handlers=_handlers(cfg, deps),
                start_github=gh_starter(workflows, repo=repo), alarm=alarm, state=state, now=now, enqueue=enqueue,
                check_github=gh_checker(workflows, repo=repo))
+    try:                                                   # ASKS: file tickets for asks that are due, move finished ones to Done
+        from stockpilot import ask_tickets
+        gh_run = lambda args: subprocess.run(["gh", *args], cwd=cfg.root, capture_output=True, text=True, check=True, timeout=60).stdout  # noqa: E731
+        ticketed = ask_tickets.run(query, gh_run, now().replace(microsecond=0).isoformat(), cfg.get("asks.repo", ask_tickets.REPO))
+        if ticketed["filed"] or ticketed["done"]:
+            print({"asks": ticketed})
+    except Exception as err:  # noqa: BLE001 - a GitHub or D1 hiccup is retried next minute and never fails the check
+        log_error("asks", err)
     if json.dumps(state, sort_keys=True) != before:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state))

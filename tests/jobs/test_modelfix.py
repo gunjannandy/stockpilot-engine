@@ -105,13 +105,32 @@ def test_not_logged_in_marks_the_backend_down_for_a_while_so_the_next_firing_doe
     a, calls = backend("gemini-a", [Done(1, "Authentication required https://x.test/l", "")], state=state)
     with pytest.raises(Exception):
         a.ask("q")
-    assert "agy" in state["backend_down"]
-    again, calls2 = backend("gemini-b", [], state=state, now=lambda: T0 + timedelta(minutes=5))
+    assert "gemini-a" in state["backend_down"]
+    again, calls2 = backend("gemini-a", [], state=state, now=lambda: T0 + timedelta(minutes=5))
     with pytest.raises(minute.Refused):
         again.ask("q")
-    assert calls2 == []                                          # agy was not started: gemini-b shares the login
-    later, calls3 = backend("gemini-b", [Done(out="ok")], state=state, now=lambda: T0 + timedelta(hours=2))
+    assert calls2 == []                                          # gemini-a was not started again
+    later, calls3 = backend("gemini-a", [Done(out="ok")], state=state, now=lambda: T0 + timedelta(hours=2))
     assert later.ask("q") == "ok"
+
+
+@pytest.mark.parametrize("failed, other", [("gemini-a", "gemini-b"), ("haiku", "sonnet")])
+def test_one_backend_down_does_not_skip_the_other_that_shares_its_binary(failed, other):
+    state = {}
+    a, _ = backend(failed, [Done(1, "Authentication required", "")], state=state)
+    with pytest.raises(Exception):
+        a.ask("q")
+    b, calls = backend(other, [Done(out="ok")], state=state, now=lambda: T0 + timedelta(minutes=5))
+    assert b.ask("q") == "ok" and len(calls) == 1
+
+
+def test_a_non_zero_exit_logs_the_end_of_stderr_and_stdout_without_urls_or_secrets(capsys):
+    b, _ = backend("sonnet", [Done(3, "x" * 500 + "stdout-cause https://x.test/p?sig=zzz", "y" * 500 + "stderr-cause token=abc123")])
+    with pytest.raises(minute.Unavailable):
+        b.ask("q")
+    err = capsys.readouterr().err
+    assert "stdout-cause" in err and "stderr-cause" in err and "sonnet exited 3" in err
+    assert "http" not in err and "abc123" not in err and "sig=zzz" not in err and len(err) < 900
 
 
 # ---- 4: the real error reaches stderr ---------------------------------------------------------------------------------------

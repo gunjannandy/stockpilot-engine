@@ -4,7 +4,7 @@ The one-minute check (`jobs/minute.py`) runs idle most of the time, so this modu
 `jobrun` at the top. Every heavy import (model forms, duckdb, tarfile readers) sits inside the function that needs it.
 
 Kinds and where they run (`coverage()` lists them, and a test walks the contract and fails if one is missing):
-  handler   analyse, refresh_call, feedback_read, news_tag, news_rank, weekly_review, backup, sync (sync lives in minute.py)
+  handler   analyse, refresh_call, feedback_read, news_tag, news_rank, weekly_review, backup, sync and the page's button kinds (those live in minute.py)
   workflow  load_stock, news_collect, history_backfill, nightly: `gh workflow run` in the public engine repo
 
 All reads and writes go through `deps.query(sql, params) -> rows` (D1 over HTTP in production, SQLite in tests), the model is
@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Callable
 
 from stockpilot.jobrun import CONTRACT, IST, JobFailed
+from stockpilot.jobs.buttons import BUTTON_KINDS
 from stockpilot.modeljson import json_in
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -48,7 +49,7 @@ def workflow_inputs(kind: str, payload: dict, job_id: str) -> dict:
 
 
 # ---- what every kind runs as ----------------------------------------------------------------------------------------
-HANDLER_KINDS = ("analyse", "refresh_call", "feedback_read", "news_tag", "news_rank", "weekly_review", "backup", "sync")
+HANDLER_KINDS = ("analyse", "refresh_call", "feedback_read", "news_tag", "news_rank", "weekly_review", "backup", "sync") + BUTTON_KINDS   # buttons: jobs/buttons.py, added by minute._handlers
 
 
 def coverage() -> dict[str, str]:
@@ -74,6 +75,9 @@ class Deps:
     nifty: Callable | None = None                     # () -> [(date, close)]
     backup: Callable | None = None                    # () -> "Done, ..." words
     hurdle: float = 0.02
+    holdings: Callable | None = None                  # () -> [{symbol, exchange, reason, reason_bn}] held equities, or None if unreadable
+    watching: Callable | None = None                  # () -> the same for the watchlist
+    candidates: Callable | None = None                # () -> [{symbol, exchange, chance_3m, chance_6m}] from the nightly numbers
 
     def stamp(self) -> str:
         return self.now().astimezone(IST).replace(microsecond=0).isoformat()
@@ -340,6 +344,7 @@ def rank_handler(deps: Deps):
                 started += 1
             st.update(day=gov.day.isoformat(), used=gov.used_today, done=sorted(gov._done), running=sorted(gov.running))
         ctx.progress(f"Planned {started} refreshes", f"{started}টি হালনাগাদের পরিকল্পনা হয়েছে")
+        refresh_lists_safely(deps, ctx.job["id"], now)
         entered, left = refresh_news_list(deps, ctx.job["id"], now)
         ctx.progress(f"In today's news: {entered} in, {left} out", f"আজকের খবরে: {entered}টি এসেছে, {left}টি গেছে")
         return f"Done, {len(ranked)} ranked"
@@ -373,6 +378,54 @@ def refresh_news_list(deps: Deps, job_id: str, now) -> tuple[int, int]:
     for m in marks:
         upsert(deps.query, "changes", m, ignore=True)
     return sum(m["kind"] == "list_entered" for m in marks) // len(news_lists.PEOPLE), sum(m["kind"] == "list_left" for m in marks) // len(news_lists.PEOPLE)
+
+
+def refresh_lists(deps: Deps, job_id: str, now) -> dict:
+    """AUDIT #19: write the Holdings, Watchlist and Worth following lists and give both people a yellow change for each stock that
+    entered or left. A source that is missing or unreadable leaves its list alone. Returns {list: (entered, left)}."""
+    from stockpilot import list_writers
+    at = now.astimezone(IST).replace(microsecond=0).isoformat()
+    sources = {"holdings": deps.holdings, "watchlist": deps.watching}
+    desired: dict[str, list[dict]] = {}
+    for name, source in sources.items():
+        got = source() if source else None
+        if got is not None:
+            desired[name] = got
+    old = {n: deps.query("select * from lists where list_name = ?", [n]) for n in list_writers.NAMES}
+    held = {r["symbol"] for r in (desired.get("holdings") if "holdings" in desired else old["holdings"])}
+    cands = deps.candidates() if deps.candidates else None
+    if cands is not None:
+        desired["worth_following"] = list_writers.worth_following(cands, held, {o["symbol"] for o in old["worth_following"]})
+    out = {}
+    for name, rows in desired.items():
+        moved = held if name == "worth_following" else frozenset()
+        new, drop, marks = list_writers.diff(name, rows, old[name], job_id, at, moved)
+        for sym, ex in drop:
+            deps.query("delete from lists where list_name = ? and symbol = ? and exchange = ?", [name, sym, ex])
+        for r in new:
+            upsert(deps.query, "lists", r)
+        for m in marks:
+            upsert(deps.query, "changes", m, ignore=True)
+        out[name] = (sum(m["kind"] == "list_entered" for m in marks) // len(PEOPLE), sum(m["kind"] == "list_left" for m in marks) // len(PEOPLE))
+    return out
+
+
+def refresh_lists_safely(deps: Deps, job_id: str, now) -> None:
+    """The list writers ride on other jobs (Sync, ranking): a failure here is logged for the journal and never fails the job."""
+    try:
+        refresh_lists(deps, job_id, now)
+    except Exception as err:  # noqa: BLE001 - a list that could not be written must not fail a Sync the father pressed
+        import sys
+        print(f"lists: {type(err).__name__}: {err}"[:300], file=sys.stderr)
+
+
+def then_refresh_lists(inner, deps: Deps):
+    """Wrap a job handler so the lists are refreshed after it succeeds (used for `sync`)."""
+    def run(ctx):
+        result = inner(ctx)
+        refresh_lists_safely(deps, ctx.job["id"], deps.now())
+        return result
+    return run
 
 
 def _open_refreshes(query) -> list[dict]:
@@ -539,6 +592,14 @@ class PublicFiles:
         row = rows.get((symbol, exchange))
         return {"as_of": as_of, "result": row} if row else None
 
+    def candidates(self) -> list[dict] | None:
+        """Every stock's two chances from the latest nightly file, for Worth following; None when no file is there yet."""
+        self.mechanical("", "")
+        as_of, rows = self._mech or ("", {})
+        if not rows:
+            return None
+        return [{"symbol": s, "exchange": e, "chance_3m": r["chance_3m"], "chance_6m": r["chance_6m"]} for (s, e), r in rows.items()]
+
     def facts(self, symbol: str):
         import tarfile
         path = self._get("data-latest", "stock-facts.tar.gz", 3)
@@ -595,10 +656,48 @@ def backup_via_sp(root: Path, run=None):
     return go
 
 
+def private_lists(store_path: Path, now: Callable[[], datetime]):
+    """(holdings, watching): the held equities and the watchlist from the VM's own store, opened read-only for a moment.
+    Either returns None when the store cannot be read just now (a writer holds it): the list is then left as it is."""
+    def _read(fn):
+        def read():
+            import duckdb
+            if not store_path.exists():
+                return None
+            try:
+                con = duckdb.connect(str(store_path), read_only=True)
+            except Exception:  # noqa: BLE001 - busy or missing
+                return None
+            try:
+                return fn(con)
+            except Exception:  # noqa: BLE001 - an older store without the table: no list rather than a wrong one
+                return None
+            finally:
+                con.close()
+        return read
+
+    def held(con):
+        from stockpilot.book import positions
+        day = now().astimezone(IST).date()
+        seen, rows = set(), []
+        for p in sorted(positions.held(con, day), key=lambda p: p.symbol):
+            if p.kind == "equity" and p.quantity > 0 and p.symbol not in seen:
+                seen.add(p.symbol)
+                rows.append({"symbol": p.symbol, "exchange": "NSE", "reason": "You hold this.", "reason_bn": "এটি আপনার কাছে আছে।"})
+        return rows
+
+    def watching(con):
+        return [{"symbol": s, "exchange": e if e in ("NSE", "BSE") else "NSE", "reason": "On the watchlist", "reason_bn": "নজরে রাখা তালিকায়"}
+                for s, e in con.execute("select symbol, exchange from watchlist where removed_at is null order by symbol, exchange").fetchall()]
+    return _read(held), _read(watching)
+
+
 def production_deps(cfg, query, now, state, enqueue, make_backend) -> Deps:
     cache = Path.home() / ".cache" / "stockpilot-minute"
     files = PublicFiles(cache, now, repo=cfg.get("public_data.repo", ENGINE))
+    private = private_lists(cfg.root / cfg.get("store.path", "data/stockpilot.duckdb"), now)
     return Deps(query=query, now=now, state=state, enqueue=enqueue, make_backend=make_backend,
                 mechanical=files.mechanical, facts=files.facts, archive=JsonlArchive(cfg.root / "data" / "calls-archive.jsonl"),
                 prices=files.prices, nifty=nifty_from(cfg.root / cfg.get("store.path", "data/stockpilot.duckdb")),
-                backup=backup_via_sp(cfg.root), hurdle=float(cfg.get("forecast.hurdle", 0.02)))
+                backup=backup_via_sp(cfg.root), hurdle=float(cfg.get("forecast.hurdle", 0.02)),
+                holdings=private[0], watching=private[1], candidates=files.candidates)

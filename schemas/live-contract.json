@@ -771,6 +771,101 @@
       "runs_on": "vm_private",
       "payload": [],
       "desc": "Encrypted copy of the database into the private repo."
+    },
+    "watchlist_add": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "exchange"
+      ],
+      "desc": "Star a stock or fund on the watchlist. A page button (ticket #114)."
+    },
+    "watchlist_remove": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "exchange"
+      ],
+      "desc": "Take a stock or fund off the watchlist. A page button (ticket #114)."
+    },
+    "budget_set": {
+      "runs_on": "vm_private",
+      "payload": [
+        "month",
+        "amount"
+      ],
+      "desc": "Set the month's budget. A page button (ticket #114)."
+    },
+    "allocation_approve": {
+      "runs_on": "vm_private",
+      "payload": [
+        "target"
+      ],
+      "desc": "Approve the target allocation. A page button (ticket #114)."
+    },
+    "refresh_docs": {
+      "runs_on": "vm_private",
+      "payload": [],
+      "desc": "Read the owner's documents again. A page button (ticket #114)."
+    },
+    "rerun": {
+      "runs_on": "vm_private",
+      "payload": [
+        "job"
+      ],
+      "desc": "Ask the next tick to run a v1 job again (until sp-tick stops). A page button (ticket #114)."
+    },
+    "build_tax_pack": {
+      "runs_on": "vm_private",
+      "payload": [],
+      "desc": "Build the tax pack for the current year. A page button (ticket #114)."
+    },
+    "not_now": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "scope",
+        "for"
+      ],
+      "desc": "Keep a stock out of calls for a week, a month or for good. A page button (ticket #114)."
+    },
+    "snooze": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "scope"
+      ],
+      "desc": "Hide a stock's calls for 30 days. A page button (ticket #114)."
+    },
+    "dismiss": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "scope"
+      ],
+      "desc": "Dismiss a stock's calls until undone. A page button (ticket #114)."
+    },
+    "not_now_undo": {
+      "runs_on": "vm_private",
+      "payload": [
+        "id"
+      ],
+      "desc": "Undo a not-now, snooze or dismiss. A page button (ticket #114)."
+    },
+    "learned_forget": {
+      "runs_on": "vm_private",
+      "payload": [
+        "pattern"
+      ],
+      "desc": "Forget a learned pattern for a while. A page button (ticket #114)."
+    },
+    "long_term_mark": {
+      "runs_on": "vm_private",
+      "payload": [
+        "symbol",
+        "on"
+      ],
+      "desc": "Mark or unmark a stock as held for years. A page button (ticket #114)."
     }
   },
   "progress_line": {

@@ -140,7 +140,10 @@ DATA_JOBS = {f"{n}.yml" for n in (
 RELEASE_PUBLISHERS = set(DATA_JOBS)
 ALLOWED_SECRETS = {"SP_INGEST_URL", "SP_INGEST_KEY"}
 
-WORKFLOWS = sorted((Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS).glob("*.yml"))
+_ROOT = Path(__file__).parent.parent
+# Private repo: ops/public/workflows. Public code copy: the same files, landed in .github/workflows by the publish script.
+PUBLIC_DIR = _ROOT / publish.PUBLIC_WORKFLOWS if (_ROOT / publish.PUBLIC_WORKFLOWS).is_dir() else _ROOT / ".github" / "workflows"
+WORKFLOWS = sorted(PUBLIC_DIR.glob("*.yml"))
 
 
 def test_public_workflows_exist():
@@ -193,19 +196,19 @@ def test_schedules_do_not_collide():
             seen.setdefault(cron, []).append(wf.name)
     assert all(len(v) == 1 for v in seen.values()), seen
     # news every 15 minutes must not sit on the quarter hours the nightly jobs use
-    news = (Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS / "news-collect.yml").read_text()
+    news = (PUBLIC_DIR / "news-collect.yml").read_text()
     minutes = re.search(r'cron:\s*"([^ ]+) ', news).group(1).split(",")
     assert len(minutes) == 4 and not {"0", "15", "30", "45"} & set(minutes)
 
 
 def test_screen_universe_builds_and_publishes_the_table():
-    text = (Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS / "screen-universe.yml").read_text()
+    text = (PUBLIC_DIR / "screen-universe.yml").read_text()
     assert "stockpilot.sources.screen_table" in text and "data-latest" in text
     assert "mechanical-latest" in text      # the chance column comes from the nightly mechanical file
 
 
 def test_keep_alive_is_scheduled():
-    text = (Path(__file__).parent.parent / publish.PUBLIC_WORKFLOWS / "keep-alive.yml").read_text()
+    text = (PUBLIC_DIR / "keep-alive.yml").read_text()
     assert "schedule:" in text and "cron:" in text and "actions: write" in text
 
 

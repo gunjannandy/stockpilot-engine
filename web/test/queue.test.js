@@ -29,7 +29,7 @@ describe("queue", () => {
     expect((await send(e, "place_order", {})).status).toBe(400);
     expect((await post(ctx(`${O}/api/queue`, e, { data: { person: "father" }, init: { method: "POST", body: "nope" } }))).status).toBe(400);
     expect((await send(e, "rerun", {}, null)).status).toBe(401);
-    expect(e.SP.m.size).toBe(0);
+    expect([...e.SP.m.keys()].filter((k) => k.startsWith("q:"))).toEqual([]);
   });
 
   it("?after= returns only newer requests, in order", async () => {
@@ -161,12 +161,25 @@ describe("lane W kinds", () => {
     const e = env(); at(noon);
     expect((await send(e, "ask_analyst", {})).status).toBe(400);
     expect((await send(e, "long_term_mark", { symbol: "TCS" })).status).toBe(400);   // `on` is missing
-    expect(e.SP.m.size).toBe(0);
+    expect([...e.SP.m.keys()].filter((k) => k.startsWith("q:"))).toEqual([]);
   });
 
   it("the kinds file lists both new kinds with their keys", async () => {
     const { PAYLOAD_KEYS } = await import("../lib/queue.js");
     expect(PAYLOAD_KEYS.long_term_mark).toEqual(["symbol", "on"]);
     expect(PAYLOAD_KEYS.ask_analyst).toEqual(["symbol"]);
+  });
+});
+
+describe("retiring the KV queue (#114)", () => {
+  it("every call to /api/queue leaves a last-call stamp, and the VM can read it with the pending count", async () => {
+    const { onRequestGet: status } = await import("../functions/api/vm/queue/status.js");
+    const e = env();
+    expect(await (await status(ctx(`${O}/api/vm/queue/status`, e))).json()).toEqual({ last_call_at: null, pending: 0 });
+    await send(e, "rerun", { job: "kite" });
+    await listMine(ctx(`${O}/api/queue`, e));
+    const got = await (await status(ctx(`${O}/api/vm/queue/status`, e))).json();
+    expect(Date.parse(got.last_call_at)).not.toBeNaN();
+    expect(got.pending).toBe(1);
   });
 });

@@ -52,6 +52,28 @@ def build_site(db, cfg, out: str = "site", today: date | None = None, now=None) 
     return meta
 
 
+def d1_query(cfg):
+    """D1 over HTTP for the VM's writes, or None when this machine has no Cloudflare keys (a test box, a fresh VM)."""
+    account, token, database = cfg.secret("CLOUDFLARE_ACCOUNT_ID"), cfg.secret("CLOUDFLARE_API_TOKEN"), cfg.get("d1.database_id")
+    if not (account and token and database):
+        return None
+    from stockpilot.jobs.minute import cloudflare_query
+    return cloudflare_query(account, database, token)
+
+
+def write_views(cfg, site_dir, now, query=None) -> str:
+    """After a build: put Holdings, Tax and the record pages into D1 (#115). Never stops a ship; a failure is a Health problem."""
+    from stockpilot import views
+    query = query or d1_query(cfg)
+    if query is None:
+        return "skipped: no D1 keys on this machine"
+    try:
+        done = views.write_from_site(site_dir, query, now.astimezone(views.IST).replace(microsecond=0).isoformat(), now.date())
+    except Exception as err:  # noqa: BLE001
+        return f"failed: {type(err).__name__}"
+    return "wrote " + ", ".join(done) if done else "nothing to write"
+
+
 def ship_public_files(cfg, site_dir) -> None:
     """Release assets send no CORS header, so the public data files (search index, universe table, funds, mechanical
     results) ride along with the site. Off unless `public_data.repo` is set. A failure leaves the files already there."""
@@ -239,6 +261,9 @@ def _ship(m, db, now) -> dict:
     out = {"scored": record.score(db, day)}
     meta, verified = build_verified(m, db, day, now)
     out["site"] = meta["as_of"]
+    out["views"] = write_views(m.cfg, m.root / "site", now)
+    if out["views"].startswith("failed"):
+        journal.problem(db, "ship", f"D1 views not written ({out['views']}); the screens use the static files.", key="views-write")
     status = ops.build_status(db, ops_cfg(m.cfg), now, m.root)
     payload = ops.archive_payload(db, day, m.root)
     out["vault"] = protect_state(m, db, "daily")

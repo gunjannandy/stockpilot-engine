@@ -28,6 +28,11 @@ export async function add(env, kind, payload, by) {
   return item;
 }
 
+// Retirement (#114): the page now posts D1 jobs. Every call that still reaches /api/queue is stamped, so a week of silence says it is safe to delete.
+const LAST = "queue:last_call";
+export const noteCall = (env) => env.SP.put(LAST, new Date().toISOString());
+export const lastCall = (env) => env.SP.get(LAST);
+
 export const get = (env, id) => env.SP.get(key(id), "json");
 export const remove = (env, id) => env.SP.delete(key(id));
 

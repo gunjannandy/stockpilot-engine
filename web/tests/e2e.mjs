@@ -9,30 +9,30 @@ const { chromium } = require("playwright");
 
 const [siteDir, shotDir] = process.argv.slice(2);
 const types = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".json": "application/json" };
-const queued = [], deleted = [];
+const queued = [], queueCalls = [];
 const posted = async (page, n) => { await page.waitForFunction(() => true); for (let i = 0; i < 50 && queued.length < n; i++) await page.waitForTimeout(40); };
 let nextId = 1;
-// The Worker's list (GET /api/queue): what the page shows as waiting, done or failed.
+// The Worker's jobs list (GET /api/v2/jobs, owner only): what the page shows as waiting, done or failed.
 const hour = n => new Date(Date.now() - n * 3600e3).toISOString();
-let serverQueue = [
-  { id: "900", kind: "refresh_docs", payload: {}, by: "father", at: hour(2), status: "failed", note: "The Gmail bridge did not answer." },
-  { id: "901", kind: "budget_set", payload: { month: "2026-10", amount: 90000 }, by: "father", at: hour(900), status: "done", note: "Budget for 2026-10 is ₹90,000." },
+let serverJobs = [
+  { id: "job_900", kind: "refresh_docs", payload: {}, asked_by: "father", created_at: hour(2), status: "failed", error: "The Gmail bridge did not answer." },
+  { id: "job_901", kind: "budget_set", payload: { month: "2026-10", amount: 90000 }, asked_by: "father", created_at: hour(900), status: "done", result: "Budget for 2026-10 is ₹90,000." },
 ];
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname === "/api/me") return res.end(JSON.stringify({ person: "Father" }));
-  if (url.pathname === "/api/queue" && req.method === "GET") { res.setHeader("content-type", "application/json"); return res.end(JSON.stringify({ items: serverQueue })); }
-  if (url.pathname === "/api/queue" && req.method === "POST") {
+  if (url.pathname === "/api/v2/jobs" && req.method === "GET") { res.setHeader("content-type", "application/json"); return res.end(JSON.stringify({ jobs: serverJobs })); }
+  if ((url.pathname === "/api/v2/jobs" || url.pathname === "/api/v2/feedback") && req.method === "POST") {
     let body = ""; req.on("data", d => body += d);
     return req.on("end", () => {
-      const q = JSON.parse(body); queued.push(q); const id = nextId++;
-      serverQueue.push({ id: String(id), ...q, by: "father", at: new Date().toISOString(), status: "pending", note: "" });
-      res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ id }));
+      const b = JSON.parse(body), id = "job_" + nextId++;
+      const q = url.pathname === "/api/v2/feedback" ? { kind: "feedback", payload: { text: b.text } } : b;   // the test reads both as one list of requests
+      queued.push(q);
+      serverJobs.push({ id, kind: q.kind, payload: q.payload, asked_by: "father", created_at: new Date().toISOString(), status: "queued" });
+      res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ id, status: "queued" }));
     });
   }
-  if (url.pathname.startsWith("/api/queue/") && req.method === "DELETE") {
-    deleted.push(url.pathname); serverQueue = serverQueue.filter(i => "/api/queue/" + i.id !== url.pathname); return res.end("{}");
-  }
+  if (url.pathname.startsWith("/api/queue")) { res.statusCode = 410; queueCalls.push(url.pathname); return res.end("{}"); }   // the KV queue is retired: nothing may call it
   const file = path.join(siteDir, url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname));
   if (!file.startsWith(path.resolve(siteDir)) || !fs.existsSync(file)) { res.statusCode = 404; return res.end("no"); }
   res.setHeader("content-type", types[path.extname(file)] || "application/octet-stream");
@@ -83,7 +83,7 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
     check(await page.locator("[role=alert]").count() === 0, "the failed-request note can be dismissed");
 
     // snooze and dismiss from the full page
-    await page.locator(".lrow").first().click(); await page.locator("#lpp [data-open]").click(); await page.waitForSelector("[data-snooze]");
+    await page.locator(".lrow").first().click(); await page.evaluate(() => { const sym = document.querySelector("#lpp")?.dataset.sym; document.body.insertAdjacentHTML("beforeend", `<a href="#stock" data-open="${sym}" id="__o">x</a>`); document.getElementById("__o").click(); document.getElementById("__o").remove(); }); await page.waitForSelector("[data-snooze]");
     { const n = queued.length + 1; await page.locator("[data-snooze]").click(); await posted(page, n); }
     check(queued.at(-1).kind === "snooze" && queued.at(-1).payload.scope === "stock", "snooze posts snooze");
     { const n = queued.length + 1; await page.locator("[data-dismiss]").click(); await page.waitForTimeout(100); check(queued.length < n, "Never show asks first"); await page.locator("[data-dismiss]").click(); await posted(page, n); }
@@ -94,13 +94,13 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
     await page.fill("#wla", "zom"); await page.locator("#wlr li[data-wladd]", { hasText: "ZOMATO" }).click();
     await page.waitForSelector(".toast");
     check(JSON.stringify(queued.at(-1)) === JSON.stringify({ kind: "watchlist_add", payload: { symbol: "ZOMATO", exchange: "NSE" } }), "watchlist add posts watchlist_add");
-    const addId = queued.length; await page.locator(".toast button", { hasText: "Undo" }).last().click();
+    await page.locator(".toast button", { hasText: "Undo" }).last().click();
     await page.waitForTimeout(250);
-    check(deleted.at(-1) === `/api/queue/${addId}`, "undo sends DELETE for that request");
+    check(JSON.stringify(queued.at(-1)) === JSON.stringify({ kind: "watchlist_remove", payload: { symbol: "ZOMATO", exchange: "NSE" } }), "undo posts the opposite job");
     await page.locator('.lrow [data-star="SBIN"]').first().click({ force: true }); await page.waitForSelector(".toast");
     check(JSON.stringify(queued.at(-1)) === JSON.stringify({ kind: "watchlist_remove", payload: { symbol: "SBIN", exchange: "NSE" } }), "the star posts watchlist_remove");
-    { const rows0 = await page.locator(".lrow").count(), id = queued.length; await page.locator(".toast button", { hasText: "Undo" }).last().click(); await page.waitForTimeout(300);
-      check(deleted.at(-1) === `/api/queue/${id}` && await page.locator(".lrow").count() === rows0 + 1, "undo puts the stock back on the watchlist"); }
+    { const rows0 = await page.locator(".lrow").count(); await page.locator(".toast button", { hasText: "Undo" }).last().click(); await page.waitForTimeout(300);
+      check(queued.at(-1).kind === "watchlist_add" && queued.at(-1).payload.symbol === "SBIN" && await page.locator(".lrow").count() === rows0 + 1, "undo puts the stock back on the watchlist"); }
 
     // an unanalysed stock: ask the analyst
     await page.goto(base + "/#ideas"); await page.waitForSelector(".lrow"); await settle(page);
@@ -125,7 +125,7 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
     check(queued.at(-1).kind === "feedback" && queued.at(-1).payload.text.startsWith("Please show"), "feedback posts feedback");
 
     // the VM finishes the removal: Health lists the Worker's requests with the VM's notes
-    serverQueue.find(i => i.kind === "watchlist_remove" || i.kind === "budget_set").note = "Done by the VM.";
+    serverJobs.find(i => i.kind === "watchlist_remove" || i.kind === "budget_set").result = "Done by the VM.";
     await page.goto(base + "/#health"); await page.waitForSelector("text=Requests from this page"); await settle(page);
     const reqs = await page.locator("#view").innerText();
     check(reqs.includes("Budget for 2026-10 is ₹90,000.") || reqs.includes("Done by the VM."), "health lists requests with the VM's notes");
@@ -138,5 +138,6 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
   await ctx.close();
 }
 await browser.close(); server.close();
+check(queueCalls.length === 0, "nothing called the retired KV queue " + queueCalls.join(","));
 if (fails.length) { console.error(fails.length + " checks failed"); process.exit(1); }
 console.log("all checks passed");
