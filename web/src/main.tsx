@@ -12,7 +12,6 @@ import { createRoot } from "react-dom/client";
 import { discoverPanes, discoverWords } from "./areas";
 import { makeClient, persistClient } from "./cache/persist";
 import { installErrorReporting } from "./panekit";
-import { useSyncedAt } from "./panes/sync/useSynced";
 import { morePane, Shell, samplePanes } from "./shell";
 import "./shell/shell.css";
 import { registerApp } from "./sw/register";
@@ -38,14 +37,11 @@ registerApp();
 const words = discoverWords(wordFiles, getLang());
 
 const root = createRootRoute({
-  component: function Root() {
-    const syncedAt = useSyncedAt();
-    return (
-      <WordsProvider value={words}>
-        <Shell panes={panes} syncedAt={syncedAt} />
-      </WordsProvider>
-    );
-  },
+  component: () => (
+    <WordsProvider value={words}>
+      <Shell panes={panes} />
+    </WordsProvider>
+  ),
 });
 const children = panes.map((p) =>
   createRoute({ getParentRoute: () => root, path: p.path, component: p.Component }),
