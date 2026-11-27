@@ -2,7 +2,8 @@
 from orch_helpers import NOW, ago
 import watch
 
-CFG = {"accounts": [{"name": "primary", "slots": 2}, {"name": "secondary", "slots": 2}], "quiet_minutes": 60}
+CFG = {"accounts": [{"name": "secondary", "slots": 2}, {"name": "primary", "slots": 2, "reserve": True}],
+       "quiet_minutes": 60}
 
 
 def t(number, key, **kw):
@@ -17,19 +18,18 @@ def events(tickets, me="primary", state=None):
     return ev
 
 
-def test_a_ready_ticket_is_started_on_primary_first():
-    assert events([t(1, "A")]) == [{"kind": "start", "account": "primary", "number": 1, "key": "A"}]
-    assert events([t(1, "A")], me="secondary") == []
+def test_a_ready_ticket_is_started_on_secondary_first():
+    assert events([t(1, "A")], me="secondary") == [{"kind": "start", "account": "secondary", "number": 1, "key": "A"}]
+    assert events([t(1, "A")]) == []
 
 
 def building(account, minutes_ago=5, session="s1"):
     return {"account": account, "session": session, "at": ago(minutes_ago)}
 
 
-def test_secondary_takes_what_primary_has_no_slot_for_but_never_a_ui_ticket():
-    full = [t(1, "A", claim=building("primary")), t(2, "B", claim=building("primary"))]
-    assert events(full + [t(3, "C")], me="secondary") == [
-        {"kind": "start", "account": "secondary", "number": 3, "key": "C"}]
+def test_the_reserve_account_waits_while_secondary_is_merely_full():
+    full = [t(1, "A", claim=building("secondary")), t(2, "B", claim=building("secondary"))]
+    assert events(full + [t(3, "C")]) == []
     assert events(full + [t(3, "C", ui=True)], me="secondary") == []
 
 
@@ -38,9 +38,9 @@ def test_blocked_or_waiting_tickets_never_start():
 
 
 def test_an_account_at_its_limit_starts_nothing_and_resumes_once_the_reset_passes():
-    limited = {"limited_until": {"primary": ago(-30)}}
-    assert events([t(1, "A")], state=limited, me="secondary")[0]["account"] == "secondary"
-    assert events([t(1, "A")], state=limited) == []
+    limited = {"limited_until": {"secondary": ago(-30)}}
+    assert events([t(1, "A")], state=limited)[0]["account"] == "primary"
+    assert events([t(1, "A")], state=limited, me="secondary") == []
     passed = {"limited_until": {"primary": ago(1)}}
     ev, st = watch.decide([], passed, NOW, CFG, "primary")
     assert ev == [{"kind": "resume", "account": "primary"}]
@@ -62,6 +62,7 @@ def test_a_merged_ticket_is_reported_done_once_with_its_builder_and_left_overs()
 def test_another_accounts_builders_are_not_mine_to_report():
     x = t(1, "A", claim=building("secondary"), pr=pr("merged"))
     assert events([x]) == []
+    assert events([x], me="secondary")[0]["kind"] == "done"
 
 
 def test_a_builder_quiet_on_github_for_an_hour_is_checked_then_rechecked_an_hour_later():
@@ -108,3 +109,27 @@ def test_an_issue_becomes_a_ticket_with_its_claim_blockers_and_left_over_key():
     assert x["claim"] == {"account": "secondary", "session": "s2", "at": ago(10)}
     left = watch.to_ticket({"number": 198, "title": "y", "labels": [], "body": "Left over from SIGNIN."}, [], set())
     assert left["key"] == "LO198" and left["claim"] is None
+
+
+def test_a_usage_limit_is_read_from_the_accounts_own_transcripts(tmp_path):
+    f = tmp_path / "s.jsonl"
+    f.write_text('{"type":"assistant","timestamp":"2026-12-01T08:00:00Z","error":"rate_limit","isApiErrorMessage":true,'
+                 '"message":{"content":[{"type":"text","text":"You\'ve hit your 5-hour limit \u00b7 resets 5:20pm '
+                 '(Asia/Kolkata)"}]}}\n')
+    assert watch.limit_from_transcripts([f], NOW) == "2026-12-01T17:20:00+05:30"
+    assert watch.limit_from_transcripts([f], "2026-12-01T12:00:00+00:00") is None
+
+
+def test_every_ticket_gets_one_status_label_agents_can_list():
+    tickets = [t(1, "A"), t(2, "B", open_blockers=[1]), t(3, "C", claim=building("secondary")),
+               t(4, "D", claim=building("secondary"), pr=pr()), t(5, "E", labels=["prototype-waiting"],
+               claim=building("secondary")), t(6, "F", labels=["needs-planner"])]
+    assert [watch.status(x) for x in tickets] == ["status:ready", "status:blocked", "status:building",
+                                                  "status:pr", "status:prototype", "status:stuck"]
+
+
+def test_a_red_main_wakes_the_active_account_once_per_commit():
+    ev, st = watch.decide([], {}, NOW, CFG, "secondary", main={"sha": "m1", "ci": "red"})
+    assert ev == [{"kind": "main-red", "account": "secondary", "sha": "m1"}]
+    assert watch.decide([], st, NOW, CFG, "secondary", main={"sha": "m1", "ci": "red"})[0] == []
+    assert watch.decide([], {}, NOW, CFG, "primary", main={"sha": "m1", "ci": "red"})[0] == []
