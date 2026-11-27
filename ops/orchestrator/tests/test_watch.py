@@ -159,7 +159,7 @@ def test_an_owner_reply_on_a_ticket_that_needs_him_wakes_its_orchestrator_once()
 def test_prototypes_waiting_for_the_owner_do_not_fill_the_slots():
     waiting = [t(i, "P%d" % i, ui=True, labels=["v3-ui", "prototype-waiting"], claim=building("primary", session="s%d" % i))
                for i in (1, 2, 3)]
-    ev = events(waiting + [t(4, "D", ui=True)])
+    ev = events(waiting + [t(4, "D", ui=True)], state={"limited_until": {"secondary": "2099-01-01T00:00:00Z"}})
     assert [e["number"] for e in ev if e["kind"] == "start"] == [4]
 
 
