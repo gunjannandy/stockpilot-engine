@@ -2,7 +2,18 @@ import { z } from "zod";
 import { IstTime } from "./time";
 
 /** Every part that must beat. A part that is missing from this list is not watched. */
-export const PARTS = ["worker", "job.ping", "check_runner"] as const;
+export const PARTS = [
+  "worker",
+  "job.ping",
+  "check_runner",
+  "duty.scheduler",
+  "duty.quotes",
+  "duty.watcher",
+  "duty.digest",
+  "job.calendar",
+  "job.backup",
+  "job.drill",
+] as const;
 export type Part = (typeof PARTS)[number];
 
 export const Colour = z.enum(["green", "amber", "red"]);

@@ -11,6 +11,7 @@ import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { checkResults, flags, heartbeats, whatsnew, writeBudget } from "../../drizzle/core";
 import { type Ctx, istDay, istText, rawBody } from "../app";
+import { calendarStatus, loadCalendar } from "../calendar/routes";
 
 const RANK: Record<Colour, number> = { green: 0, amber: 1, red: 2 };
 
@@ -86,6 +87,13 @@ export default function routes(ctx: Ctx) {
 
   app.get("/api/health", ctx.guard.secret, async (c) => {
     const parts = await healthParts(ctx);
+    // The calendar's own coverage check folds into its part: too few days ahead turns it amber.
+    const cal = calendarStatus(await loadCalendar(ctx), istDay(ctx.now()));
+    const calPart = parts.find((p) => p.part === "job.calendar");
+    if (calPart && cal.status !== "green") {
+      if (RANK[cal.status] > RANK[calPart.status]) calPart.status = cal.status;
+      calPart.error = calPart.error ? `${calPart.error}; ${cal.message}` : cal.message;
+    }
     const checks = (await ctx.db.select().from(checkResults).orderBy(checkResults.checkId)).map(
       (r) => ({
         id: r.checkId,
