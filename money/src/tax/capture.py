@@ -60,7 +60,8 @@ def run(fn):
         return {"error": type(e).__name__}
 
 
-ISINS = ["INE001A01036", "INE002A01018", "INE003A01024", "INE004A01022", "US0378331005"]
+# made-up ids that do not look like real ones (the privacy gate would flag the real shape)
+ISINS = ["TST001A00001", "TST002A00001", "TST003A00001", "TST004A00001", "US0000000005"]
 FX = {"2016-01-01": 66.0, "2023-01-01": 82.5, "2024-01-01": 83.1, "2024-12-31": 85.6, "2025-06-30": 85.7, "2026-01-31": 90.2}
 
 
