@@ -99,12 +99,5 @@ export default function routes(ctx: Ctx) {
     return c.json({ ok: true });
   });
 
-  app.get("/api/market/status", ctx.guard.ingest, (c) => {
-    const date = istDay(ctx.now());
-    const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-    const weekend = weekday === 0 || weekday === 6;
-    return c.json({ date, is_trading_day: !weekend, reason: weekend ? "Weekend" : null });
-  });
-
   return app;
 }
