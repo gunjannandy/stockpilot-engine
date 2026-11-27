@@ -14,12 +14,12 @@ import {
   clearedCookie,
   cookieKey,
   cookieName,
+  devMode,
   IP_LIMIT,
   IP_WINDOW_SECONDS,
   knownPerson,
   LINK_SECONDS,
   newToken,
-  openAccess,
   ownerOnly,
   people,
   personForEmail,
@@ -223,12 +223,7 @@ export default function routes(ctx: Ctx) {
   // Every other page needs a signed-in person; signed out goes to sign-in. Signed in gets the web build.
   app.all("*", async (c, next) => {
     const path = new URL(c.req.url).pathname;
-    if (
-      openAccess(env) ||
-      path.startsWith("/api/") ||
-      path === "/login" ||
-      path.startsWith("/login/")
-    )
+    if (devMode(env) || path.startsWith("/api/") || path === "/login" || path.startsWith("/login/"))
       return next();
     if (!(await sessionPerson(ctx, c.req.raw))) {
       const here = path + new URL(c.req.url).search;
