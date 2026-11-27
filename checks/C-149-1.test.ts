@@ -10,12 +10,9 @@ import { scaffold } from "../tools/new-area/scaffold";
 
 const AREA = "zzscaffold";
 const inside = (f: string) =>
-  [
-    `contract/src/${AREA}/`,
-    `api/src/${AREA}/`,
-    `web/src/panes/${AREA}/`,
-    `web/src/words/${AREA}.`,
-  ].some((p) => f.startsWith(p));
+  [`contract/src/${AREA}/`, `api/src/${AREA}/`, `web/src/panes/${AREA}/`, `web/src/words/${AREA}.`].some((p) =>
+    f.startsWith(p),
+  );
 
 describe("C-149-1 new-area", () => {
   it("creates every piece and stays inside the area's own folders", () => {
@@ -34,9 +31,7 @@ describe("C-149-1 new-area", () => {
           `web/src/words/${AREA}.bn.json`,
         ]),
       );
-      expect(files.some((f) => f.includes("/migrations/") && f.endsWith(`_${AREA}.sql`))).toBe(
-        true,
-      );
+      expect(files.some((f) => f.includes("/migrations/") && f.endsWith(`_${AREA}.sql`))).toBe(true);
       expect(files.filter((f) => !inside(f))).toEqual([]);
       expect(() => scaffold(root, AREA)).toThrow(/taken/);
       expect(() => scaffold(root, "Bad Name")).toThrow(/lowercase/);
@@ -58,7 +53,7 @@ describe("C-149-1 new-area", () => {
       expect(scaffold(root, "withreg", { registry: true })).toContain("contract/src/datasets.ts");
       const text = readFileSync(join(root, "contract/src/datasets.ts"), "utf8");
       expect(text).toContain('table: "withreg"');
-      expect(text).toContain("import { WithregRow }");
+      expect(text).toContain('import { WithregRow }');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -69,22 +64,14 @@ describe("C-149-1 new-area", () => {
       scaffold(repoRoot, AREA);
       const out = execFileSync(
         "pnpm",
-        [
-          "exec",
-          "vitest",
-          "run",
-          "--config",
-          "api/vitest.config.ts",
-          `api/src/${AREA}/${AREA}.test.ts`,
-        ],
+        ["exec", "vitest", "run", "--config", "api/vitest.config.ts", `api/src/${AREA}/${AREA}.test.ts`],
         { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
       );
       expect(out).toContain("1 passed");
     } finally {
       for (const d of [`contract/src/${AREA}`, `api/src/${AREA}`, `web/src/panes/${AREA}`])
         rmSync(join(repoRoot, d), { recursive: true, force: true });
-      for (const l of ["en", "bn"])
-        rmSync(join(repoRoot, `web/src/words/${AREA}.${l}.json`), { force: true });
+      for (const l of ["en", "bn"]) rmSync(join(repoRoot, `web/src/words/${AREA}.${l}.json`), { force: true });
     }
   });
 });
