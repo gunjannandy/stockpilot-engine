@@ -1,11 +1,11 @@
 // Theme, text size and language are per-device choices: kept in localStorage, applied to <html>
 // before the first paint so a reload never flashes. Storage can be blocked; the page still works.
-export type ThemeChoice = "auto" | "light" | "dark";
+export type ThemeChoice = "light" | "dark";
 export type SizeChoice = "normal" | "large" | "xlarge";
 export type LangChoice = "en" | "bn";
 
 const KEYS = { theme: "sp.theme", size: "sp.size", lang: "sp.lang" } as const;
-const THEMES: ThemeChoice[] = ["auto", "light", "dark"];
+const THEMES: ThemeChoice[] = ["light", "dark"];
 const SIZES: SizeChoice[] = ["normal", "large", "xlarge"];
 const LANGS: LangChoice[] = ["en", "bn"];
 
@@ -25,14 +25,18 @@ function write(key: string, value: string) {
   }
 }
 
-export const getTheme = () => read(KEYS.theme, THEMES, "auto");
+// No Auto choice: the first visit follows the device once, then the owner's pick sticks.
+const systemTheme = (): ThemeChoice =>
+  typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+export const getTheme = () => read(KEYS.theme, THEMES, systemTheme());
 export const getSize = () => read(KEYS.size, SIZES, "normal");
 export const getLang = (): LangChoice =>
   read(KEYS.lang, LANGS, navigator.language.startsWith("bn") ? "bn" : "en");
 
 export function applyTheme(t: ThemeChoice, root: HTMLElement = document.documentElement) {
-  if (t === "auto") root.removeAttribute("data-theme");
-  else root.setAttribute("data-theme", t);
+  root.setAttribute("data-theme", t);
 }
 export function applySize(s: SizeChoice, root: HTMLElement = document.documentElement) {
   if (s === "normal") root.removeAttribute("data-size");

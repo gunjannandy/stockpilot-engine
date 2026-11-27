@@ -133,3 +133,24 @@ def test_a_red_main_wakes_the_active_account_once_per_commit():
     assert ev == [{"kind": "main-red", "account": "secondary", "sha": "m1"}]
     assert watch.decide([], st, NOW, CFG, "secondary", main={"sha": "m1", "ci": "red"})[0] == []
     assert watch.decide([], {}, NOW, CFG, "primary", main={"sha": "m1", "ci": "red"})[0] == []
+
+
+def test_the_board_puts_what_needs_the_owner_first_then_building_then_counts():
+    tickets = [t(1, "A", claim=building("secondary", session="s1"), pr=pr(ci="green", number=10)),
+               t(2, "B", labels=["prototype-waiting"], claim=building("secondary", session="s2")),
+               t(3, "C", labels=["needs-owner"], claim=building("secondary", session="s3"),
+                 ask="Reply \"label 15\" to approve."),
+               t(4, "D"), t(5, "E", open_blockers=[4])]
+    md = watch.board(tickets, {"limited_until": {"secondary": ago(-60)}}, NOW)
+    needs, building_, rest = md.index("## Needs you"), md.index("## Building"), md.index("## Queue")
+    assert needs < building_ < rest
+    assert "#3" in md[needs:building_] and "label 15" in md[needs:building_] and "#2" in md[needs:building_]
+    assert "#1" in md[building_:rest] and "engine#10" in md[building_:rest]
+    assert "Ready: 1" in md and "Blocked: 1" in md and "secondary (works first): at its limit until 16:30 IST" in md
+
+
+def test_an_owner_reply_on_a_ticket_that_needs_him_wakes_its_orchestrator_once():
+    x = t(3, "C", labels=["needs-owner"], claim=building("secondary", session="s3"), owner_reply=("c77", "label 15"))
+    ev, st = watch.decide([x], {}, NOW, CFG, "secondary")
+    assert {"kind": "owner-reply", "account": "secondary", "number": 3, "key": "C", "text": "label 15"} in ev
+    assert watch.decide([x], st, NOW, CFG, "secondary")[0] == []

@@ -1,8 +1,8 @@
 // Sign-in: email link, one-year host-only cookie, strict headers, owner-only guard (stories 1 to 6).
 //
-// This area is discovered first by name (`auth` sorts before every other area), so the guard it installs
-// in `ctx.guard.person` and the headers it sets reach every route registered after it. A test holds that
-// order (auth.test.ts); an area that would sort before `auth` must be renamed.
+// This area is discovered first by name (`auth` sorts before every other area), so the headers it sets
+// reach every route registered after it. The person guard does not depend on that order: it fails
+// closed until `ctx.setPersonGuard` installs this one, and areas hold a stable delegating guard.
 import { eq } from "drizzle-orm";
 import { Hono, type MiddlewareHandler } from "hono";
 import { authLimits, authLinks } from "../../drizzle/auth";
@@ -57,7 +57,7 @@ export default function routes(ctx: Ctx) {
   const app = new Hono();
   const nowSec = () => Math.floor(ctx.now().getTime() / 1000);
 
-  // Every route after this one needs a signed-in person; the placeholder in app.ts is replaced here.
+  // Every route after this one needs a signed-in person; this replaces the closed default in app.ts.
   const person: MiddlewareHandler = async (c, next) => {
     if (devMode(env)) return next();
     const who = await sessionPerson(ctx, c.req.raw);
@@ -65,7 +65,7 @@ export default function routes(ctx: Ctx) {
     c.set("person", who);
     await next();
   };
-  ctx.guard.person = person;
+  ctx.setPersonGuard(person);
 
   // Strict headers on every answer; a cookie-carrying write must come from this site.
   app.use("*", async (c, next) => {

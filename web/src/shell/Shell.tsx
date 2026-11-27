@@ -73,7 +73,14 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
   const items = railItems(panes, row);
   const bar = items.slice(0, 4);
   const item = (p: Pane) => (
-    <Link key={p.id} to={p.path} className="nav" activeProps={{ "aria-current": "page" }}>
+    <Link
+      key={p.id}
+      to={p.path}
+      className="nav"
+      title={t(p.titleKey)}
+      aria-label={t(p.titleKey)}
+      activeProps={{ "aria-current": "page" }}
+    >
       <Icon name={p.id} />
       <span>{t(p.titleKey)}</span>
     </Link>
@@ -118,19 +125,25 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
               window.location.reload();
             }}
           />
-          <Segmented
-            label={t("shell.theme")}
-            value={theme}
-            options={[
-              { value: "auto", label: t("shell.theme.auto") },
-              { value: "light", label: t("shell.theme.light") },
-              { value: "dark", label: t("shell.theme.dark") },
-            ]}
-            onPick={(v) => {
-              setTheme(v);
-              setThemeState(v);
-            }}
-          />
+          <fieldset className="seg">
+            <legend>{t("shell.theme")}</legend>
+            {(["light", "dark"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                className="seg-icon"
+                aria-pressed={theme === v}
+                aria-label={t(`shell.theme.${v}`)}
+                title={t(`shell.theme.${v}`)}
+                onClick={() => {
+                  setTheme(v);
+                  setThemeState(v);
+                }}
+              >
+                <Icon name={v === "light" ? "sun" : "moon"} size={18} />
+              </button>
+            ))}
+          </fieldset>
           <Segmented
             label={t("shell.size")}
             value={size}

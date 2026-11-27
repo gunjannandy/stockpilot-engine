@@ -40,6 +40,8 @@ export type Ctx = {
   /** The app's own door, for checks that call routes as a client would. */
   call: (path: string, init?: RequestInit) => Promise<Response>;
   guard: { ingest: MiddlewareHandler; secret: MiddlewareHandler; person: MiddlewareHandler };
+  /** Sign-in installs the real person guard here. Guards already handed to areas pick it up at once. */
+  setPersonGuard: (guard: MiddlewareHandler) => void;
 };
 
 const enc = new TextEncoder();
@@ -109,8 +111,10 @@ export function createApp(deps: {
       return c.json({ error: "no" }, 401);
     await next();
   };
-  // Sign-in (the SIGNIN ticket) replaces this one function; until then person routes are open.
-  const person: MiddlewareHandler = async (_c, next) => next();
+  // Fails closed: until sign-in installs its guard, every person route answers 401. Areas capture
+  // `person` at registration, so it delegates to whatever is installed when the request arrives.
+  let personImpl: MiddlewareHandler = async (c) => c.json({ error: "login_needed" }, 401);
+  const person: MiddlewareHandler = (c, next) => personImpl(c, next);
 
   const ctx: Ctx = {
     d1: deps.d1,
@@ -121,6 +125,9 @@ export function createApp(deps: {
     now,
     call: async (path, init) => app.request(path, init),
     guard: { ingest, secret, person },
+    setPersonGuard: (guard) => {
+      personImpl = guard;
+    },
   };
 
   // Before the first request on a new version: apply pending expand-only migrations, note the deploy.

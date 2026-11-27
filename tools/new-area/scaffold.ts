@@ -80,7 +80,8 @@ export default pane;
     [`web/src/words/${name}.bn.json`]: `${JSON.stringify({ title: P }, null, 2)}\n`,
   };
   for (const rel of Object.keys(files))
-    if (existsSync(join(root, rel))) throw new Error(`${rel} already exists; area "${name}" is taken`);
+    if (existsSync(join(root, rel)))
+      throw new Error(`${rel} already exists; area "${name}" is taken`);
   for (const [rel, text] of Object.entries(files)) {
     mkdirSync(dirname(join(root, rel)), { recursive: true });
     writeFileSync(join(root, rel), text);

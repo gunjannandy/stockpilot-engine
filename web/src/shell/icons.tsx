@@ -1,7 +1,6 @@
-// Small stroke icons on a 24 grid; they always sit beside a text label (no icon-only buttons).
+// Small stroke icons on a 24 grid; icon-only controls carry an aria-label and a title.
 const P: Record<string, string> = {
-  today:
-    "M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z",
+  today: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h2",
   worth: "M4 17l5-5 4 4 7-8M15 8h5v5",
   portfolio: "M4 8h16v11H4zM9 8V5h6v3",
   watchlist:
@@ -13,15 +12,17 @@ const P: Record<string, string> = {
   admin:
     "M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1",
   more: "M5 12h.01M12 12h.01M19 12h.01",
+  sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4",
+  moon: "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z",
   default: "M5 5h14v14H5z",
 };
-export function Icon({ name }: { name: string }) {
+export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   return (
     <svg
       className="sh-icon"
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width={size}
+      height={size}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"

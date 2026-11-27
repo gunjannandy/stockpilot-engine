@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 
@@ -34,6 +35,8 @@ export type Dataset = {
   }) => string | null;
   /** Share of a run's rows that may be held back before the run fails (default 0.2). */
   heldBackLimit?: number;
+  /** When the 5-minute tick starts this dataset's Job: from `at` (IST, HH:MM) on every day, or only on trading days. Absent: only by a press. */
+  run?: { at: string; on: "trading" | "every" };
 };
 
 export const datasets = {
@@ -47,6 +50,21 @@ export const datasets = {
     recomputable: false,
     writeBudget: 200,
     row: PingRow,
+  },
+  calendar: {
+    name: "calendar",
+    job: "calendar",
+    table: "calendar",
+    schedule: "every morning at 07:00 IST",
+    freshnessHours: 48,
+    checks: { row: ["kind is known", "date is a date"], run: ["at least one holiday listed"] },
+    recomputable: true,
+    writeBudget: 1000,
+    row: CalendarRow,
+    rowCheck: calendarRowCheck,
+    run: { at: "07:00", on: "every" },
+    runCheck: (run) =>
+      (run.rows ?? []).some((r) => r.kind === "holiday") ? null : "no holiday listed",
   },
 } as const satisfies Record<string, Dataset>;
 export type DatasetName = keyof typeof datasets;

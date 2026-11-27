@@ -6,4 +6,5 @@ if (!name) {
   console.error("usage: pnpm new-area <name> [--registry]");
   process.exit(1);
 }
-for (const f of scaffold(repoRoot, name, { registry: flags.includes("--registry") })) console.log(`created ${f}`);
+for (const f of scaffold(repoRoot, name, { registry: flags.includes("--registry") }))
+  console.log(`created ${f}`);
