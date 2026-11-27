@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import subprocess
+from datetime import datetime
 
 TICKET_LABELS = {"ui": "v3-ui", "vm": "v3-vm"}
 
@@ -91,10 +92,19 @@ def check_state(check_runs):
     return "pending"
 
 
-def build_ticket(issue, comments, pr=None):
+def newest(*stamps):
+    """The latest of the GitHub timestamps given; None when there are none."""
+    got = [s for s in stamps if s]
+    return max(got, key=lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))) if got else None
+
+
+def build_ticket(issue, comments, pr=None, pushed_at=None):
     labels = [l["name"] if isinstance(l, dict) else l for l in issue.get("labels", [])]
     gone = withdrawn(comments)
     claims = [c for c in parse_claims(comments) if (c["account"], c["session"]) not in gone]
+    held = {c["body"] for c in claims}
+    edited = [c.get("updated_at") or c.get("created_at") for c in comments if c.get("body") in held]
+    active_at = newest(*edited, pushed_at, (pr or {}).get("last_push_at")) if claims else None
     owns = parse_owned(issue.get("body"))
     if not owns:
         for c in claims:
@@ -105,7 +115,7 @@ def build_ticket(issue, comments, pr=None):
             "owns": owns, "unticked": parse_unticked(issue.get("body")), "ui": TICKET_LABELS["ui"] in labels,
             "vm": TICKET_LABELS["vm"] in labels,
             "claims": [{k: c[k] for k in ("account", "session", "at")} for c in claims],
-            "stuck_count": stuck, "pr": pr}
+            "stuck_count": stuck, "pr": pr, "active_at": active_at}
 
 
 def gh_api(path, *args):
@@ -124,7 +134,8 @@ def collect(account, state, accounts, mode, api=gh_api, engine_trace="", private
     """Build dispatch inputs.
 
     state: what only the dispatcher session can read, written by it as JSON:
-      {"now": iso, "sessions": [...], "quota": {account: [readings]}, "cloudflare": {...}, "private_runs": [...]}
+      {"now": iso, "session": own id, "sessions": [...], "quota": {account: [readings]}, "cloudflare": {...},
+       "private_runs": [...]}
     api(path, *args) reads GitHub REST. Tickets are the open issues labelled v3-wave-*; each ticket's PR is the
     engine PR from lane/<key>, and its CI state comes from that PR's check runs.
     """
@@ -135,7 +146,11 @@ def collect(account, state, accounts, mode, api=gh_api, engine_trace="", private
     for i in issues:
         comments = api(f"repos/{PRIVATE}/issues/{i['number']}/comments")
         key = parse_key(i.get("body"))
-        pr = None
+        pr, pushed_at = None, None
+        refs = api(f"repos/{ENGINE}/git/matching-refs/heads/lane/{key}") if key and parse_claims(comments) else []
+        for ref in refs:
+            if ref["ref"] == f"refs/heads/lane/{key}":
+                pushed_at = api(f"repos/{ENGINE}/commits/{ref['object']['sha']}")["commit"]["committer"]["date"]
         prs = api(f"repos/{ENGINE}/pulls", "-f", f"head=stockpilot-hq:lane/{key}", "-f", "state=all") if key else []
         if prs:
             p = prs[0]
@@ -148,9 +163,9 @@ def collect(account, state, accounts, mode, api=gh_api, engine_trace="", private
             pr = {"number": p["number"], "state": "merged" if p.get("merged_at") else p["state"], "ci": ci,
                   "failing_output": failing, "last_push_at": p.get("updated_at")}
             left_over += [{"ticket": key, **lo} for lo in parse_left_over(p.get("body"))]
-        tickets.append(build_ticket(i, comments, pr))
+        tickets.append(build_ticket(i, comments, pr, pushed_at))
     return {"now": state["now"], "account": account, "mode": mode, "accounts": accounts, "tickets": tickets,
             "sessions": state["sessions"], "quota": state["quota"], "cloudflare": state["cloudflare"],
-            "private_runs": state.get("private_runs", []), "left_over": left_over,
+            "private_runs": state.get("private_runs", []), "left_over": left_over, "session": state.get("session"),
             "known_left_over": sorted({m for i in issues for m in re.findall(r"left-over:(\w+)", i.get("body") or "")}),
             "trace": {"engine": engine_trace, "private": private_trace, "open_pr": False}}

@@ -25,6 +25,7 @@ import pace  # noqa: E402
 
 SILENT = timedelta(minutes=45)
 RELEASE_AFTER = timedelta(hours=6)
+QUIET = timedelta(minutes=90)   # a claim with GitHub activity newer than this has a builder, listed or not
 STUCK_LIMIT = 3
 PROTOTYPE_CAP = 3
 PRIVATE_SOURCE = "stockpilot-hq/stockpilot"
@@ -117,11 +118,17 @@ def plan(inp):
         live_by_ticket.setdefault(s["ticket"], []).append(s)
 
     # withdraw losing claims, release stale claims of refused accounts
+    own = inp.get("session")
+    lost = set()                    # another session of this account claimed first
     for t in tickets:
         w = _winner(t)
         if w and any(c["account"] == me for c in t["claims"]) and w["account"] != me:
             out["withdraw"].append({"ticket": t["key"], "number": t["number"], "account": me,
                                     "session": next(c["session"] for c in t["claims"] if c["account"] == me)})
+        elif w and w["session"] != own and any(c["session"] == own for c in t["claims"]):
+            lost.add(t["key"])
+            out["withdraw"].append({"ticket": t["key"], "number": t["number"], "account": me, "session": own,
+                                    "keep_label": True})
         if w:
             st = states.get(w["account"])
             last_push = pace.parse_time((t.get("pr") or {}).get("last_push_at") or w["at"])
@@ -131,7 +138,7 @@ def plan(inp):
 
     def mine_won(t):
         w = _winner(t)
-        return bool(w and w["account"] == me)
+        return bool(w and w["account"] == me and t["key"] not in lost)
 
     starts_left = mine["max_starts"]
 
@@ -202,7 +209,9 @@ def plan(inp):
             stuck_notes.append({"key": t["key"], "session": s["id"], "action": f"{reason}: " +
                                 ("resumed" if reason == "idle" else "nudged")})
 
-    # orphans: claimed by me, no live builder, nothing planned yet
+    # orphans: claimed by me, no live builder, quiet on GitHub, nothing planned yet. Session lists do not show
+    # every builder (scheduled runs are missing), so silence on GitHub is what proves a builder gone.
+    dead = {s["id"] for s in inp["sessions"] if s["status"] in ("archived", "failed")}
     planned = {s["ticket"] for s in out["start"]}
     for t in tickets:
         if not mine_won(t) or t["key"] in planned or t["key"] in released or _merged(t):
@@ -211,6 +220,10 @@ def plan(inp):
             continue
         if _has(t, "prototype-waiting"):
             skipped.append({"ticket": t["key"], "why": "prototype waiting without a session"})
+            continue
+        w = _winner(t)
+        if w["session"] not in dead and now - pace.parse_time(t.get("active_at") or w["at"]) < QUIET:
+            skipped.append({"ticket": t["key"], "why": "builder active on GitHub"})
             continue
         hot = _has(t, "hotfix")
         if may_start(hot) and (hot or not t["ui"] or ui_ok):
