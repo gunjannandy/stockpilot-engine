@@ -1,3 +1,4 @@
+import "./admin.css";
 import type { AdminOverview } from "@stockpilot/contract";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Pane as PaneDef } from "../../areas";
