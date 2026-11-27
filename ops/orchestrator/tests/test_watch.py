@@ -154,3 +154,15 @@ def test_an_owner_reply_on_a_ticket_that_needs_him_wakes_its_orchestrator_once()
     ev, st = watch.decide([x], {}, NOW, CFG, "secondary")
     assert {"kind": "owner-reply", "account": "secondary", "number": 3, "key": "C", "text": "label 15"} in ev
     assert watch.decide([x], st, NOW, CFG, "secondary")[0] == []
+
+
+def test_prototypes_waiting_for_the_owner_do_not_fill_the_slots():
+    waiting = [t(i, "P%d" % i, ui=True, labels=["v3-ui", "prototype-waiting"], claim=building("primary", session="s%d" % i))
+               for i in (1, 2, 3)]
+    ev = events(waiting + [t(4, "D", ui=True)], state={"limited_until": {"secondary": "2099-01-01T00:00:00Z"}})
+    assert [e["number"] for e in ev if e["kind"] == "start"] == [4]
+
+
+def test_a_quiet_ui_builder_is_never_checked():
+    x = t(1, "A", ui=True, claim=building("primary", minutes_ago=300, session="s9"), pushed_at=ago(240))
+    assert events([x]) == []

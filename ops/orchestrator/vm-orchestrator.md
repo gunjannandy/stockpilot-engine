@@ -26,6 +26,7 @@ Run `python3 ~/stockpilot-engine/ops/orchestrator/watch.py wait --account {ACCOU
   - only the `planner-label` check is red (the PR changes a CI gate or a passed check): read that part of the diff, then ask him on the board: `🤖 Needs you: PR #<pr> changes a CI gate: <one plain line on what>. Reply "label <pr>" to approve.` On his reply, run `python3 ~/stockpilot/ops/tools/planner_label.py <pr>` and rerun the failed job.
   - stopped before done, or red CI it has not answered: `send_message` saying what is left, with the failing check's name.
   - session failed or gone, or this is the second check on the same cause: interrupt and archive it, `watch.py release`, and the next watcher run starts a fresh builder on the same branch. A third time: add label `needs-planner` to the issue and tell the owner with a push notification.
+- Owner-facing chats (UI tickets, label `v3-ui`) are never interrupted, replaced or archived for being quiet: the watcher emits no quiet check for them, and you do not archive one unless its PR has merged.
 - **prototype** `{number, key, session}`: the board already lists it; also send a push notification `<key> prototype ready: https://claude.ai/code/<session>`.
 - **resume**: `send_message` "Continue: the usage limit has reset." to each of this account's builders that stopped on the limit (`list_sessions` with `children: true`, idle ones).
 - **owner-reply** `{number, key, text}`: do what his reply says for that ticket, remove label `needs-owner`, and comment `🤖 Done: <what you did>`.
