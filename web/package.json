@@ -1,12 +1,10 @@
 {
-  "name": "stockpilot-web",
+  "name": "@stockpilot/web",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs && vitest run"
-  },
-  "devDependencies": {
-    "fuse.js": "^7.0.0",
-    "vitest": "^3.2.0"
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
   }
 }
