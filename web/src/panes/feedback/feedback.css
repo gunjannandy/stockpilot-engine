@@ -1,0 +1,71 @@
+.fb {
+  max-width: 760px;
+}
+.fb h1 {
+  margin: 0 0 4px;
+}
+.fb .note {
+  margin: 0 0 16px;
+  color: var(--muted, var(--hold));
+}
+.fb-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  align-items: flex-start;
+}
+.fb-box textarea,
+.fb-review textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+}
+.fb button {
+  min-height: var(--row);
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--primary);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fb button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.fb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.fb-ask {
+  padding: 14px 16px;
+}
+.fb-ask p {
+  margin: 0 0 8px;
+}
+.fb-said {
+  font-size: var(--fs-section);
+}
+.fb-review {
+  margin-top: 6px;
+}
+.fb-review label {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.fb-review select {
+  min-height: var(--row);
+  font: inherit;
+}
