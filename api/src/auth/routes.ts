@@ -123,14 +123,14 @@ export default function routes(ctx: Ctx) {
     return html(loginPage({ next }));
   });
 
-  async function issueLink(who: string, to: string, next: string) {
+  async function issueLink(who: string, to: string, next: string, base: string) {
     const token = newToken();
     const hash = await sha256hex(token);
     try {
       await ctx.db
         .insert(authLinks)
         .values({ hash, person: who, next, expiresAt: nowSec() + LINK_SECONDS });
-      if (!(await sendLink(env, to, token)))
+      if (!(await sendLink(env, to, token, base)))
         throw new Error("the send endpoint did not send the email");
     } catch (err) {
       console.error("sign-in link not sent:", err instanceof Error ? err.message : "error");
@@ -162,7 +162,7 @@ export default function routes(ctx: Ctx) {
     );
     const who = wellFormed ? await personForEmail(env, email) : null;
     if (who && addrOk) {
-      const work = issueLink(who, people(env)[who] as string, next);
+      const work = issueLink(who, people(env)[who] as string, next, new URL(c.req.url).origin);
       try {
         c.executionCtx.waitUntil(work);
       } catch {

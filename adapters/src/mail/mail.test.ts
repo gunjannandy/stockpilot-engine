@@ -42,3 +42,16 @@ describe("mail adapter", () => {
     expect(mailerFromEnv({})).toBeUndefined();
   });
 });
+
+describe("sign-in link site", () => {
+  it("tells the send endpoint which site the link is for", async () => {
+    let seen = "";
+    const ok = (async (u: RequestInfo | URL) => {
+      seen = String(u);
+      return new Response(JSON.stringify({ ok: true }));
+    }) as typeof fetch;
+    const m = bridgeMailer({ url: "https://b.example.test/exec", key: "k", fetch: ok });
+    await m.sendSigninLink("a@example.test", "tok", "https://x.example.test");
+    expect(new URL(seen).searchParams.get("base")).toBe("https://x.example.test");
+  });
+});
