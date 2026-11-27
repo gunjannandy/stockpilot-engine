@@ -35,7 +35,7 @@
   "falls.nifty": "Nifty 50",
   "falls.none": "The fund did not exist then.",
   "cost": "Yearly cost",
-  "cost.say": "Of every ₹1,000 in the fund, ₹{c} goes to the company each year.",
+  "cost.say": "Of every 1,000 rupees in the fund, {c} rupees go to the company each year.",
   "size": "Fund size",
   "size.say": "{s} crore rupees in the fund.",
   "size.none": "Size: no source yet.",
