@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
   workflow_dispatch:
 concurrency:
   group: ci-${{ github.ref }}
@@ -61,3 +62,10 @@ jobs:
           name: browser-shots
           path: ${{ runner.temp }}/shots
           retention-days: 7
+  gate:
+    # The one required check on main: green only when every job above is.
+    needs: [python, web, browser]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = false
