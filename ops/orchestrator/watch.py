@@ -12,8 +12,10 @@ def _t(s):
 
 
 def _busy(tickets, account):
+    """Slots in use. A merged ticket and one waiting for the owner's design approval hold no slot."""
     return sum(1 for x in tickets if x["claim"] and x["claim"]["account"] == account
-               and not (x["pr"] and x["pr"]["state"] == "merged"))
+               and not (x["pr"] and x["pr"]["state"] == "merged")
+               and "prototype-waiting" not in x["labels"])
 
 
 def _ready(x):
@@ -103,6 +105,8 @@ def _watch_builder(x, sent, now, cfg):
     quiet = int((_t(now) - active).total_seconds() // 60)
     if pr.get("ci") == "red" and quiet >= 20 and _once(sent, f"red:{x['number']}:{pr['head_sha']}", now):
         return [{"kind": "check", "why": "red", **base, "session": sess, "minutes": quiet}]
+    if x["ui"]:   # an owner-facing chat is never chased for being quiet
+        return []
     if quiet >= cfg["quiet_minutes"] and _once(sent, f"quiet:{x['number']}", now,
                                                   timedelta(minutes=cfg["quiet_minutes"])):
         return [{"kind": "check", "why": "quiet", **base, "session": sess, "minutes": quiet}]
