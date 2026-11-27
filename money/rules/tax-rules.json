@@ -1,0 +1,53 @@
+{
+  "note": "Dated tax rules. A rule set applies from the first tax year named; the latest set at or before the year is used. null in a slab limit means no upper limit.",
+  "sets": [
+    {
+      "act": "1961",
+      "from_fy": 2024,
+      "ltcg_exempt": 125000,
+      "stcg_equity_rate": 0.2,
+      "ltcg_equity_rate": 0.125,
+      "ltcg_other_rate": 0.125,
+      "slabs": [
+        [400000, 0],
+        [800000, 0.05],
+        [1200000, 0.1],
+        [1600000, 0.15],
+        [2000000, 0.2],
+        [2400000, 0.25],
+        [null, 0.3]
+      ],
+      "standard_deduction": 75000,
+      "rebate_limit": 1200000,
+      "rebate_max": 60000,
+      "cess": 0.04,
+      "surcharge_from": 5000000,
+      "surcharge_tiers": [[20000000, 0.25], [10000000, 0.15], [5000000, 0.1]],
+      "surcharge_cap_gains": 0.15
+    },
+    {
+      "act": "2025",
+      "from_fy": 2026,
+      "ltcg_exempt": 125000,
+      "stcg_equity_rate": 0.2,
+      "ltcg_equity_rate": 0.125,
+      "ltcg_other_rate": 0.125,
+      "slabs": [
+        [400000, 0],
+        [800000, 0.05],
+        [1200000, 0.1],
+        [1600000, 0.15],
+        [2000000, 0.2],
+        [2400000, 0.25],
+        [null, 0.3]
+      ],
+      "standard_deduction": 75000,
+      "rebate_limit": 1200000,
+      "rebate_max": 60000,
+      "cess": 0.04,
+      "surcharge_from": 5000000,
+      "surcharge_tiers": [[20000000, 0.25], [10000000, 0.15], [5000000, 0.1]],
+      "surcharge_cap_gains": 0.15
+    }
+  ]
+}
