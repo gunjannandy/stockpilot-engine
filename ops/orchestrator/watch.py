@@ -26,20 +26,42 @@ def _limited(state, account, now):
     return bool(until) and _t(until) > _t(now)
 
 
-def decide(tickets, state, now, cfg, me):
-    """Events for account `me`. Primary-first: a later account takes only what earlier ones cannot."""
+def _active(cfg, state, now):
+    """Accounts that may start work now, in order: reserve accounts only once every other one is limited."""
+    open_ = [a for a in cfg["accounts"] if not _limited(state, a["name"], now)]
+    first = [a["name"] for a in open_ if not a.get("reserve")]
+    return first or [a["name"] for a in open_]
+
+
+def status(x):
+    """The one `status:*` label a ticket carries, so any agent can list its siblings by state."""
+    if "needs-planner" in x["labels"]:
+        return "status:stuck"
+    if "prototype-waiting" in x["labels"]:
+        return "status:prototype"
+    if x["pr"] and x["pr"]["state"] != "closed":
+        return "status:pr"
+    if x["claim"]:
+        return "status:building"
+    return "status:blocked" if x["open_blockers"] else "status:ready"
+
+
+def decide(tickets, state, now, cfg, me, main=None):
+    """Events for account `me`. Earlier accounts first; a reserve account takes work only when the others are limited."""
     events, new = [], {**state, "sent": dict(state.get("sent", {})),
                        "limited_until": dict(state.get("limited_until", {}))}
     until = new["limited_until"].get(me)
     if until and _t(until) <= _t(now):
         del new["limited_until"][me]
         events.append({"kind": "resume", "account": me})
-    names = [a["name"] for a in cfg["accounts"]]
-    free = {a["name"]: 0 if _limited(state, a["name"], now) else max(0, a["slots"] - _busy(tickets, a["name"]))
+    active = _active(cfg, state, now)
+    free = {a["name"]: max(0, a["slots"] - _busy(tickets, a["name"])) if a["name"] in active else 0
             for a in cfg["accounts"]}
+    if main and main.get("ci") == "red" and active and active[0] == me \
+            and _once(new["sent"], f"main-red:{main['sha']}", now):
+        events.append({"kind": "main-red", "account": me, "sha": main["sha"]})
     for x in sorted((x for x in tickets if _ready(x)), key=lambda x: x["number"]):
-        allowed = names[:1] if x["ui"] else names
-        taker = next((n for n in allowed if free[n] > 0), None)
+        taker = next((n for n in active if free[n] > 0), None)
         if taker:
             free[taker] -= 1
             if taker == me:
@@ -116,6 +138,39 @@ def to_ticket(issue, comments, open_numbers):
             "ui": "v3-ui" in labels, "claim": claim, "pr": None, "pushed_at": None}
 
 
+RESET = re.compile(r"resets (\d{1,2})(?::(\d\d))?\s*([ap]m)(?: \(([\w/]+)\))?", re.I)
+
+
+def limit_from_transcripts(files, now):
+    """The reset time of the newest usage-limit message in these transcripts, if it is still ahead of `now`."""
+    from zoneinfo import ZoneInfo
+    latest = None
+    for f in files:
+        for line in open(f):
+            if '"rate_limit"' not in line:
+                continue
+            try:
+                d = json.loads(line)
+            except ValueError:
+                continue
+            if d.get("error") != "rate_limit":
+                continue
+            text = " ".join(b.get("text", "") for b in d.get("message", {}).get("content", []) if isinstance(b, dict))
+            m = RESET.search(text)
+            if m and (latest is None or d["timestamp"] > latest[0]):
+                latest = (d["timestamp"], m)
+    if not latest:
+        return None
+    at, m = _t(latest[0]), latest[1]
+    tz = ZoneInfo(m.group(4) or "Asia/Kolkata")
+    hour = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "pm" else 0)
+    local = at.astimezone(tz)
+    reset = local.replace(hour=hour, minute=int(m.group(2) or 0), second=0, microsecond=0)
+    if reset <= local:
+        reset += timedelta(days=1)
+    return reset.isoformat() if reset > _t(now) else None
+
+
 def context_tokens(path):
     last = 0
     for line in open(path):
@@ -168,8 +223,9 @@ def collect(api=_api, now=None):
 
 # ---- command line ------------------------------------------------------------------------------------------------
 STATE = Path.home() / ".local/state/stockpilot-watch/state.json"
-ACCOUNTS = [{"name": "primary", "slots": 3, "config_dir": "~/.claude"},
-            {"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"}]
+ACCOUNTS = [{"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"},
+            {"name": "primary", "slots": 3, "config_dir": "~/.claude", "reserve": True}]   # owner, 2026-11-27
+STATUS_LABELS = ["status:ready", "status:blocked", "status:building", "status:pr", "status:prototype", "status:stuck"]
 CFG = {"accounts": ACCOUNTS, "quiet_minutes": 60}
 HANDOFF_AT = 120_000
 
@@ -203,11 +259,48 @@ def _my_transcript(account):
     return None
 
 
+def _recent_transcripts(conf, hours=6):
+    cut = time.time() - hours * 3600
+    return [f for f in Path(conf).expanduser().glob("projects/*stockpilot*/*.jsonl") if f.stat().st_mtime > cut]
+
+
+def sync_labels(tickets):
+    """Keep exactly one status:* label per ticket. Idempotent; touches only tickets whose status changed."""
+    for x in tickets:
+        want = status(x)
+        have = [l for l in x["labels"] if l.startswith("status:")]
+        if have == [want]:
+            continue
+        args = ["issue", "edit", str(x["number"]), "-R", PRIVATE, "--add-label", want]
+        for old in have:
+            if old != want:
+                args += ["--remove-label", old]
+        try:
+            _gh(*args)
+        except subprocess.CalledProcessError:
+            for name in STATUS_LABELS:
+                _gh("label", "create", name, "-R", PRIVATE, "--force", "--color", "c5def5")
+            _gh(*args)
+
+
+def main_state(api=_api):
+    runs = api(f"repos/{ENGINE}/commits/main/check-runs")
+    sha = api(f"repos/{ENGINE}/commits/main")["sha"]
+    return {"sha": sha, "ci": gather.check_state(runs.get("check_runs", []) if isinstance(runs, dict) else runs)}
+
+
 def step(account, now=None):
     now = now or _now()
     st = _load()
+    lim = st.setdefault("limited_until", {})
+    for a in ACCOUNTS:
+        until = limit_from_transcripts(_recent_transcripts(a["config_dir"]), now)
+        if until and (a["name"] not in lim or _t(lim[a["name"]]) < _t(until)):
+            lim[a["name"]] = until
     sent = st.setdefault("sent", {}).setdefault(account, {})
-    ev, new = watch_once(collect(now=now), {"limited_until": st.get("limited_until", {}), "sent": sent}, now, account)
+    tickets = collect(now=now)
+    sync_labels(tickets)
+    ev, new = decide(tickets, {"limited_until": lim, "sent": sent}, now, CFG, account, main=main_state())
     st["limited_until"], st["sent"][account] = new["limited_until"], new["sent"]
     f = _my_transcript(account)
     if f and context_tokens(f) > HANDOFF_AT and f"handoff:{f.name}" not in st["sent"][account]:
@@ -215,10 +308,6 @@ def step(account, now=None):
         ev.append({"kind": "handoff", "account": account, "context": context_tokens(f)})
     _save(st)
     return ev
-
-
-def watch_once(tickets, state, now, account):
-    return decide(tickets, state, now, CFG, account)
 
 
 def _gh(*args):
