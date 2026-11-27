@@ -279,6 +279,7 @@ def main(argv=None):
         lane = f" ({a.lane})" if a.lane else ""
         for n in a.numbers:
             _gh("issue", "comment", str(n), "-R", PRIVATE, "-b", f"Claimed by {a.account}: {a.session}{lane}")
+            _gh("label", "create", f"pool:{a.account}", "-R", PRIVATE, "--force", "--color", "ededed")
             _gh("issue", "edit", str(n), "-R", PRIVATE, "--add-label", f"pool:{a.account}")
         return 0
     if a.cmd == "release":

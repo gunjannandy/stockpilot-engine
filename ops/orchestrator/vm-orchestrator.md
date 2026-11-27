@@ -19,6 +19,7 @@ Run `python3 ~/stockpilot-engine/ops/orchestrator/watch.py wait --account {ACCOU
 - **check** `{why, session, minutes}`: read the builder's last events (`list_events`, kinds `assistant` and `result`, limit 30) and fix the cause:
   - a usage limit: `watch.py limit --account {ACCOUNT} --until <reset time, ISO>`; nothing else until **resume**.
   - only the `planner-label` check is red (the PR changes a CI gate or a passed check): read the PR's diff of those files; if it does what the ticket asks and weakens no gate, run `python3 ~/stockpilot/ops/tools/planner_label.py <pr>` and rerun the failed job. Otherwise tell the builder what to change.
+  - only the `planner-label` check is red (the PR changes a CI gate or a passed check): read the PR's diff of those files; if it does what the ticket asks and weakens no gate, run `python3 ~/stockpilot/ops/tools/planner_label.py <pr>` and rerun the failed job. Otherwise tell the builder what to change.
   - stopped before done, or red CI it has not answered: `send_message` saying what is left, with the failing check's name.
   - session failed or gone, or this is the second check on the same cause: interrupt and archive it, `watch.py release`, and the next watcher run starts a fresh builder on the same branch. A third time: add label `needs-planner` to the issue and tell the owner with a push notification.
 - **prototype** `{number, key, session}`: push notification to the owner: `<key> prototype ready: https://claude.ai/code/<session>`.
