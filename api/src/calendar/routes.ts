@@ -38,8 +38,7 @@ export function calendarStatus(cal: Calendar, today: string): CalendarStatus {
   };
 }
 
-// Registered before the ingest area's weekday-only /api/market/status (areas load in name order),
-// so this one, which knows the holidays, answers.
+// The one /api/market/status: it knows the holidays.
 export default function routes(ctx: Ctx) {
   const app = new Hono();
 
