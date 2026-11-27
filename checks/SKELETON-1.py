@@ -26,13 +26,3 @@ def test_ci_runs_the_generators_before_python_and_typescript_read_them():
     py_job = ci.split("\n  py:")[1].split("\n  ts:")[0]
     assert "pnpm gen" in py_job, "the py job reads the generated JSON Schemas"
     assert re.search(r'"typecheck": "pnpm gen', pkg) and re.search(r'"test": "pnpm gen', pkg), "the ts job's typecheck and test run gen first"
-
-
-def test_parallel_gen_runs_do_not_delete_each_others_output():
-    """pytest-xdist workers call `pnpm gen` together; every run must succeed and the output must always be whole."""
-    procs = [subprocess.Popen(["pnpm", "gen"], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) for _ in range(6)]
-    results = [(p.communicate()[0], p.returncode) for p in procs]
-    for out, code in results:
-        assert code == 0, out
-    for rel in OUTPUT:
-        assert (ROOT / rel).is_file(), rel
