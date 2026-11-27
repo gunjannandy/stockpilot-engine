@@ -24,10 +24,21 @@ it("C-115-1 a Job takes a date range and a rerun of the range is allowed and lea
   const t = await jobsApp();
   const rows = [holiday(25), holiday(26)];
   const runOnce = async (run_id: string, rerun: boolean) => {
-    const b = await t.begin({ kind: "calendar", run_id, from: "2026-11-20", to: "2026-11-27", rerun });
+    const b = await t.begin({
+      kind: "calendar",
+      run_id,
+      from: "2026-11-20",
+      to: "2026-11-27",
+      rerun,
+    });
     expect(b.status).toBe(200);
-    expect(((await b.json()) as { range: unknown }).range).toEqual({ from: "2026-11-20", to: "2026-11-27" });
-    expect((await t.signed("POST", "/api/publish/rows", { ...prov(run_id), rows })).status).toBe(200);
+    expect(((await b.json()) as { range: unknown }).range).toEqual({
+      from: "2026-11-20",
+      to: "2026-11-27",
+    });
+    expect((await t.signed("POST", "/api/publish/rows", { ...prov(run_id), rows })).status).toBe(
+      200,
+    );
     await t.signed("POST", "/api/publish/finish", { dataset: "calendar", run_id });
     await t.end(run_id, "done");
     const res = await t.app.request("/api/data/calendar");

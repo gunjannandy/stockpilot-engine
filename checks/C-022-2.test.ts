@@ -37,9 +37,14 @@ describe("C-022-2 migrate before the first request", () => {
     const registry = await loadRegistry();
     const bad = {
       ...registry,
-      migrations: [...registry.migrations, { name: "29990101000000_bad.sql", sql: "drop table ping;" }],
+      migrations: [
+        ...registry.migrations,
+        { name: "29990101000000_bad.sql", sql: "drop table ping;" },
+      ],
     };
-    const res = await createApp({ d1: db, env: {}, registry: bad, version: "v3" }).request("/api/ping");
+    const res = await createApp({ d1: db, env: {}, registry: bad, version: "v3" }).request(
+      "/api/ping",
+    );
     expect(res.status).toBe(503);
   });
 });
