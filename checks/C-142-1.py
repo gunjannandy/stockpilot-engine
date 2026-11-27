@@ -40,3 +40,24 @@ def test_a_label_the_bot_added_then_anyone_removed_or_re_added_by_a_human_fails(
 
 def test_untouched_protected_paths_need_nothing():
     assert pl.verdict(["py/x.py"], [], []) == []
+
+
+def at(e, when):
+    return {**e, "created_at": when}
+
+
+def test_a_bot_label_older_than_the_head_commit_does_not_cover_it():
+    old = [at(ev("labeled", BOT), "2026-11-27T10:00:00Z")]
+    assert pl.verdict(["tools/gates/a.py"], [], old, head_time="2026-11-27T10:05:00Z")
+    assert pl.verdict(["tools/gates/a.py"], [], old, head_time="2026-11-27T10:00:00Z")
+
+
+def test_a_bot_label_newer_than_the_head_commit_passes():
+    new = [at(ev("labeled", BOT), "2026-11-27T10:06:00Z")]
+    assert pl.verdict(["tools/gates/a.py"], [], new, head_time="2026-11-27T10:05:00Z") == []
+    assert pl.verdict(["tools/gates/a.py"], [], new, head_time="2026-11-27T10:05:00+00:00") == []
+
+
+def test_bot_relabel_after_a_later_push_passes_again():
+    evs = [at(ev("labeled", BOT), "2026-11-27T10:00:00Z"), at(ev("unlabeled", BOT), "2026-11-27T10:10:00Z"), at(ev("labeled", BOT), "2026-11-27T10:20:00Z")]
+    assert pl.verdict(["tools/gates/a.py"], [], evs, head_time="2026-11-27T10:15:00Z") == []
