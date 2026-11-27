@@ -15,8 +15,8 @@ it("allocation: gaps and actions against the target", () => {
   expect(a.total).toBe(910);
   expect(a.unpriced).toEqual(["X"]);
   const by = Object.fromEntries(a.rows.map((r) => [r.class, r]));
-  expect(by.stocks?.action).toBe("Trim ₹145");
-  expect(by.debt_funds?.action).toBe("Trim ₹27");
-  expect(by.gold?.action).toBe("Add ₹172");
+  expect([by.stocks?.action, by.stocks?.amount]).toEqual(["trim", 145]);
+  expect([by.debt_funds?.action, by.debt_funds?.amount]).toEqual(["trim", 27]);
+  expect([by.gold?.action, by.gold?.amount]).toEqual(["add", 172]);
   expect(compare([], null).rows).toEqual([]);
 });

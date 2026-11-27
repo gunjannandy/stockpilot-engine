@@ -37,7 +37,8 @@ export type AllocRow = {
   share: number;
   target: number | null;
   gapInr: number | null;
-  action: string;
+  action: "" | "hold" | "add" | "trim"; // "" when no target is set
+  amount: number; // whole rupees to add or trim; 0 when holding
 };
 export type Allocation = {
   total: number;
@@ -45,11 +46,6 @@ export type Allocation = {
   rows: AllocRow[];
   unpriced: string[];
 };
-
-/** Python's `f"{n:,.0f}"`. */
-function inr0(n: number): string {
-  return pyFixed(n, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
 
 export function compare(
   positions: readonly AllocPosition[],
@@ -80,15 +76,15 @@ export function compare(
       target: null,
       gapInr: null,
       action: "",
+      amount: 0,
     };
     if (target) {
       row.target = target[cls] ?? 0;
       row.gapInr = row.target * total - value;
       const gap = row.gapInr;
-      row.action =
-        Math.abs(gap) <= CLOSE_ENOUGH * total
-          ? "On target"
-          : `${gap > 0 ? "Add" : "Trim"} ₹${inr0(Math.abs(gap))}`;
+      // The pane words this in English and Bengali; the package returns the call and the whole-rupee size.
+      row.action = Math.abs(gap) <= CLOSE_ENOUGH * total ? "hold" : gap > 0 ? "add" : "trim";
+      row.amount = row.action === "hold" ? 0 : Number(pyFixed(Math.abs(gap), 0));
     }
     return row;
   });
