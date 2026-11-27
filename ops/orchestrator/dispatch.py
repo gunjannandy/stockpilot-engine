@@ -295,7 +295,9 @@ def plan(inp):
         out["sync_trace"] = {"branch": "lane/trace-sync", "reason": "engine copy differs"}
 
     # close finished tickets: merged, nothing left to tick, no VM step
-    out["close"] = [{"ticket": t["key"], "number": t["number"]} for t in tickets
+    out["close"] = [{"ticket": t["key"], "number": t["number"],
+                     "action": f"close issue #{t['number']} in stockpilot-hq/stockpilot with the comment 'Merged. Closing.'"}
+                    for t in tickets
                     if _merged(t) and not t["unticked"] and not t["vm"]]
 
     # status comment
