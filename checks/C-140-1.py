@@ -8,7 +8,7 @@ from gates import privacy  # noqa: E402
 # Planted values are built at run time so this file passes its own scan.
 PAN = "QWERT" + "9876Z"
 ISIN = "INE" + "009A01021"
-RUPEES = "Rs. 12," + "50,000"
+RUPEES = "R" + "s. 12,50,000"
 EMAIL = "someone" + "@example.org"
 NAME = "Zorro " + "Quimby"
 DENY = [NAME]
