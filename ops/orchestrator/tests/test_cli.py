@@ -54,6 +54,8 @@ def test_collect_reads_issues_comments_prs_and_check_runs_through_the_api():
                      "body": "Left over:\n- do `q/x.py`\n"}]
         if "check-runs" in path:
             return {"check_runs": [{"name": "gate", "conclusion": "failure", "output": {"summary": "boom"}}]}
+        if "matching-refs" in path:
+            return []
         raise AssertionError(path)
 
     inp = gather.collect("secondary", {"now": "2026-12-01T10:00:00Z", "sessions": [], "quota": {}, "cloudflare": {}},
