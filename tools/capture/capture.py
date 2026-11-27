@@ -90,7 +90,7 @@ def T(symbol, isin, side, day, qty, price, source="contract_note", kind="stock",
     return Trade(source, key or f"{symbol}{day}{side}{qty}", kind, symbol, isin, side, day, qty, price, currency, status, key)
 
 
-REL, INFY = "INE002A01018", "INE009A01021"
+REL, INFY = "INE002A01018Z", "INE009A01021Z"
 
 
 def lots_cases():
@@ -108,58 +108,58 @@ def lots_cases():
         [A("RELIANCE", REL, date(2023, 9, 1), "split", 2, 1, "Split"),
          A("RELIANCE", REL, date(2024, 2, 1), "bonus", 1, 1, "Bonus 1:1")]))
     out.append(lots_case("a sell with no buy is reported, not invented", [
-        T("TCS", "INE467B01029", "sell", date(2024, 1, 5), 4, 3500.0, source="tradebook", key="x1")]))
+        T("TCS", "INE467B01029Z", "sell", date(2024, 1, 5), 4, 3500.0, source="tradebook", key="x1")]))
     out.append(lots_case("expected vests never become lots", [
         T("NOW", "US81762P1021", "vest", date(2026, 8, 15), 10, 800.0, source="fidelity", kind="rsu", currency="USD", key="v1"),
         T("NOW", "US81762P1021", "vest", date(2026, 11, 15), 10, None, source="rsu_inference", kind="rsu", currency="USD",
           status="expected", key="v2")]))
     out.append(lots_case("a split that changed the ISIN still matches old buys to new sells", [
-        T("CANBK", "INE476A01014", "buy", date(2024, 1, 2), 100, 500.0, key="c1"),
-        T("CANBK", "INE476A01022", "sell", date(2024, 9, 5), 445, 105.0, key="c2")],
-        [A("CANBK", "INE476A01014", date(2024, 5, 15), "split", 5, 1, "Split")]))
+        T("CANBK", "INE476A01014Z", "buy", date(2024, 1, 2), 100, 500.0, key="c1"),
+        T("CANBK", "INE476A01022Z", "sell", date(2024, 9, 5), 445, 105.0, key="c2")],
+        [A("CANBK", "INE476A01014Z", date(2024, 5, 15), "split", 5, 1, "Split")]))
     out.append(lots_case("a series suffix on the symbol does not hide a bonus", [
-        T("NBCC-A", "INE095N01031", "buy", date(2024, 1, 2), 100, 150.0, key="n1")],
-        [A("NBCC", "INE095N01015", date(2024, 10, 7), "bonus", 1, 2, "Bonus")]))
+        T("NBCC-A", "INE095N01031Z", "buy", date(2024, 1, 2), 100, 150.0, key="n1")],
+        [A("NBCC", "INE095N01015Z", date(2024, 10, 7), "bonus", 1, 2, "Bonus")]))
     out.append(lots_case("lots bought before an ISIN change carry the current ISIN", [
-        T("CESC", "INE486A01013", "buy", date(2020, 1, 2), 20, 600.0, key="e1")], stocks={"CESC": "INE486A01021"}))
+        T("CESC", "INE486A01013Z", "buy", date(2020, 1, 2), 20, 600.0, key="e1")], stocks={"CESC": "INE486A01021Z"}))
     out.append(lots_case("a renamed company and a spaced series suffix are one holding", [
-        T("TWL", "INE615H01020", "buy", date(2023, 6, 16), 41, 424.0, key="t1"),
-        T("TITAGARH", "INE615H01020", "sell", date(2023, 9, 15), 41, 764.0, key="t2"),
-        T("JSL", "INE220G01021", "buy", date(2022, 5, 6), 50, 164.0, key="j1"),
-        T("JSL - A", "INE220G01021", "buy", date(2022, 5, 27), 100, 117.0, key="j2")]))
+        T("TWL", "INE615H01020Z", "buy", date(2023, 6, 16), 41, 424.0, key="t1"),
+        T("TITAGARH", "INE615H01020Z", "sell", date(2023, 9, 15), 41, 764.0, key="t2"),
+        T("JSL", "INE220G01021Z", "buy", date(2022, 5, 6), 50, 164.0, key="j1"),
+        T("JSL - A", "INE220G01021Z", "buy", date(2022, 5, 27), 100, 117.0, key="j2")]))
     out.append(lots_case("the same trade from two sources counts once", [
-        T("TCS", "INE467B01029", "buy", date(2024, 1, 5), 4, 3500.0, source="tradebook"),
-        T("TCS", "INE467B01029", "buy", date(2024, 1, 5), 4, 3500.0, source="contract_note")]))
+        T("TCS", "INE467B01029Z", "buy", date(2024, 1, 5), 4, 3500.0, source="tradebook"),
+        T("TCS", "INE467B01029Z", "buy", date(2024, 1, 5), 4, 3500.0, source="contract_note")]))
     out.append(lots_case("a demerger hands cost and units to the new company", [
-        T("VEDL", "INE205A01025", "buy", date(2024, 1, 2), 100, 400.0, key="d1"),
-        T("VEDL", "INE205A01025", "buy", date(2025, 6, 2), 50, 300.0, key="d2"),
-        T("VEDL", "INE205A01025", "sell", date(2026, 5, 4), 30, 350.0, key="d3"),
-        T("VEDLNEW", "INE0NEW01011", "sell", date(2026, 6, 4), 20, 90.0, key="d4")],
-        [A("VEDL", "INE205A01025", date(2026, 4, 30), "demerger", 1, 1, "Demerger", "owner", "INE0NEW01011", "VEDLNEW", 0.3)]))
+        T("VEDL", "INE205A01025Z", "buy", date(2024, 1, 2), 100, 400.0, key="d1"),
+        T("VEDL", "INE205A01025Z", "buy", date(2025, 6, 2), 50, 300.0, key="d2"),
+        T("VEDL", "INE205A01025Z", "sell", date(2026, 5, 4), 30, 350.0, key="d3"),
+        T("VEDLNEW", "INE0NEW01011Z", "sell", date(2026, 6, 4), 20, 90.0, key="d4")],
+        [A("VEDL", "INE205A01025Z", date(2026, 4, 30), "demerger", 1, 1, "Demerger", "owner", "INE0NEW01011Z", "VEDLNEW", 0.3)]))
     out.append(lots_case("a demerger without its ratio changes nothing", [
-        T("VEDL", "INE205A01025", "buy", date(2024, 1, 2), 100, 400.0, key="d1")],
-        [A("VEDL", "INE205A01025", date(2026, 4, 30), "demerger", 1, 1, "Demerger")]))
+        T("VEDL", "INE205A01025Z", "buy", date(2024, 1, 2), 100, 400.0, key="d1")],
+        [A("VEDL", "INE205A01025Z", date(2026, 4, 30), "demerger", 1, 1, "Demerger")]))
     out.append(lots_case("rights: taken up by the owner count, NSE's bare notice does not", [
-        T("BASML", "INE186H01022", "buy", date(2024, 1, 2), 100, 60.0, key="b1"),
-        T("OTHER", "INE000O01011", "buy", date(2024, 1, 2), 80, 20.0, key="o1")],
-        [A("BASML", "INE186H01022", date(2024, 8, 1), "rights", 1, 4, "Rights", "owner", None, None, None, 55.0),
-         A("OTHER", "INE000O01011", date(2024, 8, 1), "rights", 1, 4, "Rights", "nse", None, None, None, 55.0)]))
+        T("BASML", "INE186H01022Z", "buy", date(2024, 1, 2), 100, 60.0, key="b1"),
+        T("OTHER", "INE000O01011Z", "buy", date(2024, 1, 2), 80, 20.0, key="o1")],
+        [A("BASML", "INE186H01022Z", date(2024, 8, 1), "rights", 1, 4, "Rights", "owner", None, None, None, 55.0),
+         A("OTHER", "INE000O01011Z", date(2024, 8, 1), "rights", 1, 4, "Rights", "nse", None, None, None, 55.0)]))
     out.append(lots_case("a mutual fund is keyed by its ISIN", [
-        T("PPFAS FLEXI", "INF879O01027", "buy", date(2025, 4, 2), 234.962, 85.1159, source="tradebook", kind="mf",
-          key="mf:2025-04-02:INF879O01027:buy:234.962"),
-        T("PPFAS FLEXI DIRECT", "INF879O01027", "buy", date(2025, 7, 1), 215.789, 92.6786, source="tradebook", kind="mf",
-          key="mf:2025-07-01:INF879O01027:buy:215.789"),
-        T("PPFAS FLEXI", "INF879O01027", "sell", date(2025, 9, 1), 100.5, 99.0, source="coin", kind="mf", key="mf:sell1")]))
+        T("PPFAS FLEXI", "INF879O01027Z", "buy", date(2025, 4, 2), 234.962, 85.1159, source="tradebook", kind="mf",
+          key="mf:2025-04-02:INF879O01027Z:buy:234.962"),
+        T("PPFAS FLEXI DIRECT", "INF879O01027Z", "buy", date(2025, 7, 1), 215.789, 92.6786, source="tradebook", kind="mf",
+          key="mf:2025-07-01:INF879O01027Z:buy:215.789"),
+        T("PPFAS FLEXI", "INF879O01027Z", "sell", date(2025, 9, 1), 100.5, 99.0, source="coin", kind="mf", key="mf:sell1")]))
     out.append(lots_case("a key made from the trade itself, with fractional and large amounts", [
-        T("TCS", "INE467B01029", "buy", date(2024, 1, 5), 4.5, 3500.0),
-        T("TCS", "INE467B01029", "buy", date(2024, 1, 5), 1234567.0, 12.5),
-        T("TCS", "INE467B01029", "buy", date(2024, 1, 5), 0.00001234, 0.1)]))
-    kite = [("stock", "TCS", "INE467B01029", 12, 3100.0), ("stock", "NEWIPO", "INE000N01011", 50, 140.0),
-            ("mf", "INF879O01027", "INF879O01027", 7162.094, 70.0), ("stock", "INFY", INFY, 7, 1500.0)]
+        T("TCS", "INE467B01029Z", "buy", date(2024, 1, 5), 4.5, 3500.0),
+        T("TCS", "INE467B01029Z", "buy", date(2024, 1, 5), 1234567.0, 12.5),
+        T("TCS", "INE467B01029Z", "buy", date(2024, 1, 5), 0.00001234, 0.1)]))
+    kite = [("stock", "TCS", "INE467B01029Z", 12, 3100.0), ("stock", "NEWIPO", "INE000N01011Z", 50, 140.0),
+            ("mf", "INF879O01027Z", "INF879O01027Z", 7162.094, 70.0), ("stock", "INFY", INFY, 7, 1500.0)]
     out.append(lots_case("units Kite shows that no document explains become one estimated lot", [
-        T("TCS", "INE467B01029", "buy", date(2025, 1, 10), 10, 3000.0, key="k1"),
+        T("TCS", "INE467B01029Z", "buy", date(2025, 1, 10), 10, 3000.0, key="k1"),
         T("INFY", INFY, "buy", date(2025, 2, 10), 7, 1500.0, key="k2"),
-        T("PARAG", "INF879O01027", "buy", date(2024, 1, 5), 4890.044, 60.0, kind="mf", key="k3"),
+        T("PARAG", "INF879O01027Z", "buy", date(2024, 1, 5), 4890.044, 60.0, kind="mf", key="k3"),
         T("NOW", "US81762P1021", "vest", date(2026, 2, 9), 6, 100.0, kind="rsu", currency="USD", key="k4")], kite=kite))
     return out + random_lots_cases()
 
@@ -171,7 +171,7 @@ def random_lots_cases(n=120, seed=20261127):
     cases = []
     for c in range(n):
         trades, actions, kite = [], [], []
-        names = [(f"S{c}A", f"INE{c:03d}A01011"), (f"S{c}B", f"INE{c:03d}B01012"), (f"S{c}C-A", f"INE{c:03d}C01013")]
+        names = [(f"S{c}A", f"INE{c:03d}A01011Z"), (f"S{c}B", f"INE{c:03d}B01012Z"), (f"S{c}C-A", f"INE{c:03d}C01013Z")]
         stocks = {}
         for sym, isin in names[: rng.randint(1, 3)]:
             base = sym.split("-")[0]
@@ -189,10 +189,10 @@ def random_lots_cases(n=120, seed=20261127):
                     kind = rng.choice(["split", "bonus", "demerger", "rights", "rights"])
                     num, den = rng.choice([(2, 1), (5, 1), (10, 1), (1, 1), (1, 2), (3, 2), (1, 4)])
                     if kind == "demerger":
-                        actions.append(A(base, isin, ex, "demerger", num, den, "d", "owner", f"INE{c:03d}Z01019", f"S{c}NEW",
+                        actions.append(A(base, isin, ex, "demerger", num, den, "d", "owner", f"INE{c:03d}Z01019Z", f"S{c}NEW",
                                          rng.choice([0.1, 0.25, 0.4, 0.7])))
                         if rng.random() < 0.6:
-                            trades.append(T(f"S{c}NEW", f"INE{c:03d}Z01019", "sell", ex + timedelta(days=rng.randint(1, 200)),
+                            trades.append(T(f"S{c}NEW", f"INE{c:03d}Z01019Z", "sell", ex + timedelta(days=rng.randint(1, 200)),
                                             rng.choice([1, 2, 5, 40]), rng.choice([10.0, 55.5, 120.0]), key=f"new{len(trades)}"))
                     elif kind == "rights":
                         actions.append(A(base, isin, ex, "rights", num, den, "r", rng.choice(["owner", "owner", "nse"]),
@@ -200,7 +200,7 @@ def random_lots_cases(n=120, seed=20261127):
                     else:
                         actions.append(A(base, isin, ex, kind, num, den, kind))
             if rng.random() < 0.15:
-                stocks[base] = isin[:-1] + "9"
+                stocks[base] = isin[:-2] + "9Z"
         if rng.random() < 0.3:
             for sym, isin in names[:2]:
                 kite.append(("stock", sym.split("-")[0], isin, rng.choice([1, 5, 20, 120.5]), rng.choice([100.0, 250.5, 1400.0])))
@@ -334,14 +334,14 @@ def positions_case(name, build, as_of):
 
 
 DAY = date(2026, 11, 20)
-PPFAS, OTHER_FUND = "INF879O01027", "INF732E01037"
-BASE_STOCKS = [("TCS", "Tata Consultancy Services", "INE467B01029"), ("NEWIPO", "New Listing Ltd", "INE000N01011"),
-               ("NIFTYBEES", "Nippon India ETF Nifty BeES", "INF204KB17I5"), ("ABREL", "Aditya Birla Real Estate", "INE055A01016")]
+PPFAS, OTHER_FUND = "INF879O01027Z", "INF732E01037Z"
+BASE_STOCKS = [("TCS", "Tata Consultancy Services", "INE467B01029Z"), ("NEWIPO", "New Listing Ltd", "INE000N01011Z"),
+               ("NIFTYBEES", "Nippon India ETF Nifty BeES", "INF204KB17I5Z"), ("ABREL", "Aditya Birla Real Estate", "INE055A01016Z")]
 BASE_FUNDS = [(1, PPFAS, "Parag Parikh Flexi Cap Fund", "Equity Scheme - Flexi Cap Fund"),
               (2, OTHER_FUND, "Some Other Fund", "Debt Scheme - Liquid Fund"),
-              (3, "INF204KB17I5", "Nippon ETF", "Other"),
-              (4, "INF000G01011", "Gold Savings Fund", "Other Scheme - Gold ETF"),
-              (5, "INF000H01011", "Aggressive Hybrid Fund", "Hybrid Scheme - Aggressive Hybrid Fund")]
+              (3, "INF204KB17I5Z", "Nippon ETF", "Other"),
+              (4, "INF000G01011Z", "Gold Savings Fund", "Other Scheme - Gold ETF"),
+              (5, "INF000H01011Z", "Aggressive Hybrid Fund", "Hybrid Scheme - Aggressive Hybrid Fund")]
 BASE_PRICES = [(DAY, "TCS", "NSE", 4000.0), (DAY, "TCS", "BSE", 3999.0), (DAY, "NEWIPO", "NSE", 150.0),
                (DAY, "NOW", "NYSE", 1000.0), (DAY, "NIFTYBEES", "NSE", 260.0), (DAY, "ABREL", "BSE", 2000.0)]
 
@@ -353,7 +353,7 @@ def world(db, prices=BASE_PRICES):
 
 def positions_cases():
     out = []
-    TCS = "INE467B01029"
+    TCS = "INE467B01029Z"
 
     def a(db):
         world(db)
@@ -363,7 +363,7 @@ def positions_cases():
 
     def b(db):
         world(db)
-        add_kite(db, "stock", "NEWIPO", "INE000N01011", 50, 140.0)
+        add_kite(db, "stock", "NEWIPO", "INE000N01011Z", 50, 140.0)
     out.append(positions_case("a Kite holding with no lots still shows", b, DAY))
 
     def c(db):
@@ -374,7 +374,7 @@ def positions_cases():
 
     def d(db):
         world(db)
-        db.execute("insert into holding_statements values ('2026-10-31', 'INE000N01011', 50)")
+        db.execute("insert into holding_statements values ('2026-10-31', 'INE000N01011Z', 50)")
     out.append(positions_case("the depository statement fills a gap", d, DAY))
 
     def e(db):
@@ -384,17 +384,17 @@ def positions_cases():
 
     def f(db):
         world(db)
-        add_lot(db, "stock", "ABREL", "INE055A01016", date(2023, 5, 2), 8, 900.0)
-        add_lot(db, "stock", "CENTURYTEX", "INE055A01016", date(2023, 5, 2), 8, 900.0)
-        add_kite(db, "stock", "ABREL-BE", "INE055A01016", 16, 900.0)
+        add_lot(db, "stock", "ABREL", "INE055A01016Z", date(2023, 5, 2), 8, 900.0)
+        add_lot(db, "stock", "CENTURYTEX", "INE055A01016Z", date(2023, 5, 2), 8, 900.0)
+        add_kite(db, "stock", "ABREL-BE", "INE055A01016Z", 16, 900.0)
     out.append(positions_case("a renamed company shows under its current NSE symbol", f, DAY))
 
     def g(db):
         world(db)
-        add_lot(db, "stock", "NIFTYBEES", "INF204KB17I5", date(2024, 1, 5), 100, 230.0)
+        add_lot(db, "stock", "NIFTYBEES", "INF204KB17I5Z", date(2024, 1, 5), 100, 230.0)
         add_lot(db, "mf", "PARAG PARIKH FLEXI CAP FUND - DIRECT PLAN", PPFAS, date(2024, 1, 5), 50, 60.0)
-        add_lot(db, "mf", "GOLD", "INF000G01011", date(2024, 1, 5), 10, 50.0)
-        add_lot(db, "mf", "HYB", "INF000H01011", date(2024, 1, 5), 10, 30.0)
+        add_lot(db, "mf", "GOLD", "INF000G01011Z", date(2024, 1, 5), 10, 50.0)
+        add_lot(db, "mf", "HYB", "INF000H01011Z", date(2024, 1, 5), 10, 30.0)
     out.append(positions_case("an ETF keeps its symbol, a fund its name, tax buckets by category", g, DAY))
 
     def h(db):
@@ -402,14 +402,14 @@ def positions_cases():
         add_lot(db, "stock", "TCS", TCS, date(2024, 1, 10), 10, 3000.0)
         add_lot(db, "stock", "TCS", TCS, date(2026, 6, 1), 20, 3600.0)
         add_kite(db, "stock", "TCS", TCS, 20, 3600.0)
-        add_kite(db, "stock", "OTHER", "INE000X01011", 5, 10.0)
+        add_kite(db, "stock", "OTHER", "INE000X01011Z", 5, 10.0)
     out.append(positions_case("documents show more than Kite: trimmed oldest first", h, DAY))
 
     def i(db):
         world(db)
         add_kite(db, "stock", "TCS", TCS, 1, 3000.0)
         db.execute("insert into holding_statements values ('2026-10-31', ?, 0.195)", [OTHER_FUND])
-        db.execute("insert into holding_statements values ('2026-10-31', 'INF204KB17I5', 50), ('2026-10-31', 'INE000Z01019', 7)")
+        db.execute("insert into holding_statements values ('2026-10-31', 'INF204KB17I5Z', 50), ('2026-10-31', 'INE000Z01019Z', 7)")
     out.append(positions_case("a fund only the depository knows shows; a share or ETF stays hidden", i, DAY))
 
     def j(db):
@@ -422,10 +422,10 @@ def positions_cases():
         world(db)
         add_lot(db, "stock", "TCS", TCS, date(2025, 1, 10), 10, 3000.0)
         add_lot(db, "mf", "PARAG", PPFAS, date(2024, 1, 5), 4890.044, 60.0)
-        add_lot(db, "stock", "NEWIPO", "INE000N01011", date(2026, 2, 1), 12.5, 100.0, estimated=True)
+        add_lot(db, "stock", "NEWIPO", "INE000N01011Z", date(2026, 2, 1), 12.5, 100.0, estimated=True)
         add_kite(db, "stock", "TCS", TCS, 12, 3100.0)
         add_kite(db, "mf", PPFAS, PPFAS, 7162.094, 70.0)
-        add_kite(db, "stock", "NEWIPO", "INE000N01011", 12.5, 100.0)
+        add_kite(db, "stock", "NEWIPO", "INE000N01011Z", 12.5, 100.0)
         db.execute("insert into holding_statements values ('2026-10-31', ?, 0.195)", [OTHER_FUND])
     out.append(positions_case("Parag Parikh gap, estimated lot and a fund the depository alone knows", k, DAY))
     return out + random_positions_cases()
@@ -436,8 +436,8 @@ def random_positions_cases(n=90, seed=99):
     cases = []
     for c in range(n):
         def build(db, rng=rng):
-            stocks = [(f"Z{i}", f"Zed {i}", f"INE{i:03d}Z01011") for i in range(5)]
-            funds = [(10 + i, f"INF{i:03d}Z01011", f"Fund {i}", rng.choice(
+            stocks = [(f"Z{i}", f"Zed {i}", f"INE{i:03d}Z01011Z") for i in range(5)]
+            funds = [(10 + i, f"INF{i:03d}Z01011Z", f"Fund {i}", rng.choice(
                 ["Equity Scheme - Large Cap Fund", "Debt Scheme - Liquid Fund", "Hybrid Scheme - Balanced Hybrid Fund", "Other"]))
                 for i in range(3)]
             prices = [(DAY - timedelta(days=rng.randint(0, 3)), s[0], rng.choice(["NSE", "BSE"]), round(rng.uniform(1, 900), 2))
@@ -517,7 +517,7 @@ def record_case(name, build, as_of):
 
 
 def sale_lot(db, symbol, buy_on, buy_qty, buy_price, sell_on, sell_qty, sell_price, placed_by=None, expenses=0.0):
-    isin = f"INE{abs(hash(symbol)) % 1000:03d}X01011" if False else f"INE{symbol[:3]:>3}00000"[:12]
+    isin = f"INE{abs(hash(symbol)) % 1000:03d}X01011" if False else f"INE{symbol[:3]:>3}00000"[:12] + "Z"
     key = f"{symbol}{buy_on}buy"
     db.execute("insert into lots (kind, symbol, isin, acquired_on, quantity, cost_per_unit, currency, closed_quantity, source, "
                "source_ref) values ('stock', ?, ?, ?, ?, ?, 'INR', ?, 'trades:test', ?)",
