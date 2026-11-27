@@ -7,3 +7,5 @@ contract/generated/
 contract/src/index.ts
 web/src/generated/
 web/dist/
+api/src/generated/
+api/.generated/
