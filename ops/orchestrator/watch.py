@@ -61,7 +61,7 @@ def decide(tickets, state, now, cfg, me, main=None):
             and _once(new["sent"], f"main-red:{main['sha']}", now):
         events.append({"kind": "main-red", "account": me, "sha": main["sha"]})
     for x in sorted((x for x in tickets if _ready(x)), key=lambda x: x["number"]):
-        taker = next((n for n in active if free[n] > 0), None)
+        taker = next((n for n in active if free[n] > 0 and (n == "primary" or not x["ui"])), None)   # UI runs on primary
         if taker:
             free[taker] -= 1
             if taker == me:
@@ -276,10 +276,10 @@ def collect(api=_api, now=None):
 # ---- command line ------------------------------------------------------------------------------------------------
 STATE = Path.home() / ".local/state/stockpilot-watch/state.json"
 ACCOUNTS = [{"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"},
-            {"name": "primary", "slots": 3, "config_dir": "~/.claude", "reserve": True}]   # owner, 2026-11-27
+            {"name": "primary", "slots": 3, "config_dir": "~/.claude"}]   # both work at once, 2026-11-28
 STATUS_LABELS = ["status:ready", "status:blocked", "status:building", "status:pr", "status:prototype", "status:stuck"]
 CFG = {"accounts": ACCOUNTS, "quiet_minutes": 60}
-HANDOFF_AT = 300_000   # a fresh orchestrator already starts near 90k
+HANDOFF_AT = 160_000   # every wake re-reads the context; a fresh one starts near 90k
 
 
 def _load():
