@@ -6,7 +6,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { SqliteD1 } from "../../adapters/src/core";
 import { loadRegistry, repoRoot } from "../migrate/discover";
-import { createApp } from "./app";
+import { createApp, type Env } from "./app";
 
 const port = Number(process.env.PORT ?? 8787);
 const db = new SqliteD1(process.env.SQLITE_PATH ?? ":memory:");
@@ -15,7 +15,9 @@ const api = createApp({
   env: {
     INGEST_HMAC_KEY: process.env.INGEST_HMAC_KEY,
     HEALTH_SECRET: process.env.HEALTH_SECRET,
-  },
+    // local runs have no sign-in unless SP_PEOPLE is configured (api/src/auth)
+    ...(process.env.SP_PEOPLE ? {} : { SP_ENV: "dev" }),
+  } as Env,
   registry: await loadRegistry(),
   version: process.env.APP_VERSION ?? "dev",
 });

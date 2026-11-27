@@ -10,7 +10,13 @@ export async function makeApp(
   opts: { version?: string; now?: () => Date; env?: Env; db?: SqliteD1 } = {},
 ) {
   const db = opts.db ?? new SqliteD1();
-  const env: Env = { INGEST_HMAC_KEY: KEY, HEALTH_SECRET: HEALTH, ...opts.env };
+  // SP_ENV=dev: sign-in lets everyone in as the owner (api/src/auth); the sign-in checks build their own app.
+  const env: Env = {
+    INGEST_HMAC_KEY: KEY,
+    HEALTH_SECRET: HEALTH,
+    SP_ENV: "dev",
+    ...opts.env,
+  } as Env;
   const registry = await loadRegistry();
   const app = createApp({ d1: db, env, registry, version: opts.version ?? "v1", now: opts.now });
   const signed = async (method: string, path: string, body?: unknown) => {
