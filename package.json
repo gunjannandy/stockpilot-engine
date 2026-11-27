@@ -8,7 +8,7 @@
   },
   "scripts": {
     "gen": "tsx tools/contract-gen/gen.ts",
-    "lint": "biome check contract money api web adapters tools/contract-gen",
+    "lint": "biome check contract money api web adapters tools",
     "typecheck": "pnpm gen && pnpm -r typecheck",
     "test": "pnpm gen && pnpm -r test",
     "build": "pnpm --filter @stockpilot/api build",
