@@ -274,7 +274,7 @@ def main() -> None:
             export(a.base, out)
             apply(out)
             r = subprocess.run(["diff", "-rq", str(out), ".", "-x", ".git", "-x", "tools", "-x", "checks",
-                                "-x", ".claude", "-x", "node_modules", "-x", ".venv", "-x", "pnpm-lock.yaml",
+                                "-x", ".claude", "-x", "node_modules", "-x", ".venv", "-x", "pnpm-lock.yaml", "-x", "uv.lock",   # the locks resolve per machine: not compared
                                 "-x", "__pycache__", "-x", ".pytest_cache", "-x", ".ruff_cache"],
                                capture_output=True, text=True)
             only_out = [l for l in r.stdout.splitlines() if l.startswith("Only in " + str(out))]
