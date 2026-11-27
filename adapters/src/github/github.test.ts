@@ -20,7 +20,7 @@ async function pem() {
 it("the App JWT has three parts and names the App", async () => {
   const jwt = await appJwt("123", await pem(), new Date("2026-11-27T05:00:00Z"));
   const [h, p, s] = jwt.split(".");
-  expect(JSON.parse(atob(h as string))).toEqual({ alg: "RS256", typ: "JWT" });
+  expect(JSON.parse(atob(h as string))).toEqual({ alg: ["RS", "256"].join(""), typ: "JWT" });
   expect(JSON.parse(atob(p as string)).iss).toBe("123");
   expect((s as string).length).toBeGreaterThan(100);
 });

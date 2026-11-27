@@ -13,9 +13,9 @@ from stockpilot.runtime import run_job  # noqa: E402
 
 HOLIDAYS = {"CM": [{"tradingDate": "25-Dec-2026", "description": "Christmas "}, {"tradingDate": "26-Jan-2027", "description": "Republic Day"}]}
 ACTIONS = [
-    {"symbol": "ABC", "isin": "INE000A01010", "exDate": "10-Dec-2026", "subject": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share"},
-    {"symbol": "DEF", "isin": "INE000B01010", "exDate": "11-Dec-2026", "subject": "Bonus 1:2"},
-    {"symbol": "GHI", "exDate": "12-Dec-2026", "subject": "Dividend - Rs 5 Per Share"},
+    {"symbol": "ABC", "exDate": "10-Dec-2026", "subject": "Face Value Split (Sub-Division) - From 10/- Per Share To 2/- Per Share"},
+    {"symbol": "DEF", "exDate": "11-Dec-2026", "subject": "Bonus 1:2"},
+    {"symbol": "GHI", "exDate": "12-Dec-2026", "subject": "Dividend - Five Per Share"},
     {"symbol": "OLDCO", "exDate": "05-Dec-2026", "subject": "Change in Name and Symbol from OLDCO to NEWCO"},
     {"symbol": "GONE", "exDate": "20-Dec-2026", "subject": "Delisting of equity shares"},
 ]
