@@ -63,7 +63,7 @@ export function ListAndPane<T extends Row>(props: {
       requestAnimationFrame(() => {
         const row = listRef.current?.querySelector<HTMLElement>(`[data-id="${next.id}"]`);
         row?.focus({ preventScroll: true });
-        row?.scrollIntoView({ block: "nearest" });
+        row?.scrollIntoView?.({ block: "nearest" });
       });
     };
     window.addEventListener("keydown", onKey);
