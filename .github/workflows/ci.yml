@@ -24,6 +24,14 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: py/uv.lock
+      # The contract's JSON Schemas are build output (git-ignored); py tests and checks read them.
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm gen
       - run: uv sync --frozen --project py
       - name: pytest (py/tests and checks/, plus ops/orchestrator/tests once that folder exists)
         run: |

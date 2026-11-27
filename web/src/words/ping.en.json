@@ -1,0 +1,9 @@
+{
+  "title": "Ping",
+  "press": "Ping",
+  "pressing": "Pinging…",
+  "last": "Last ping",
+  "never": "No ping yet",
+  "count": "Pings so far",
+  "failed": "The ping did not go through. Try again."
+}

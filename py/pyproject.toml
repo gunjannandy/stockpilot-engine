@@ -10,6 +10,7 @@ dependencies = [
   "yfinance>=1.8.0",
   "pypdf>=7.1.1",
   "cryptography>=50.0.2",
+  "jsonschema>=4.26.0",
 ]
 
 [dependency-groups]
