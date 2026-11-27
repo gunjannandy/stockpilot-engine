@@ -19,7 +19,7 @@ const base = {
   recomputable: true,
   writeBudget: 10,
   row: z.object({ id: z.string() }),
-} as const;
+};
 export const morning: Dataset = {
   ...base,
   name: "morning",
@@ -36,6 +36,8 @@ export const daily: Dataset = {
 export async function scheduleApp(
   opts: {
     now?: () => Date;
+    /** The datasets the tick schedules (default: the morning Job, plus the calendar with `withDaily`). */
+    datasets?: Dataset[];
     withDaily?: boolean;
     failDispatch?: () => boolean;
     env?: Partial<Env>;
@@ -62,7 +64,7 @@ export async function scheduleApp(
   await app.request("/api/ping");
   const core = (now: Date): Core => ({ d1: db, env, now: () => now, version: "v1" });
   const datasets = Object.fromEntries(
-    opts.datasets ?? [morning, ...(opts.withDaily ? [daily] : [])].map((d) => [d.name, d]),
+    (opts.datasets ?? [morning, ...(opts.withDaily ? [daily] : [])]).map((d) => [d.name, d]),
   );
   const signed = async (method: string, path: string, body?: unknown) => {
     const raw = body === undefined ? "" : JSON.stringify(body);
