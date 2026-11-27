@@ -1,0 +1,14 @@
+# The archive Job: old rows leave D1 for Parquet before a cap. Started by hand until cutover.
+name: archive
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run --project py python -c "from stockpilot.jobs.archive import KIND; print('archive job ready:', KIND)"
