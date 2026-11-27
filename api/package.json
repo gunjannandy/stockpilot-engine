@@ -4,7 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run --config vitest.config.ts --passWithNoTests",
+    "typecheck": "tsx migrate/generate.ts && tsc --noEmit",
+    "start": "tsx src/node.ts",
+    "build": "tsx migrate/build.ts"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^5.20261127.1",
+    "@hono/node-server": "^2.1.11",
+    "@stockpilot/contract": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.23",
+    "zod": "^4.6.7"
   }
 }

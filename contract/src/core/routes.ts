@@ -8,13 +8,23 @@ import {
   JobStartResponse,
   MarketStatus,
 } from "./door";
+import { FlagMap, FlagWrite, FlagWriteResponse } from "./flags";
+import { HealthResponse } from "./health";
 import { Heartbeat, HeartbeatAck } from "./heartbeat";
 import { PingLatest, PingRow } from "./ping";
+import {
+  ChecksRunResponse,
+  StatusResponse,
+  WhatsNewList,
+  WhatsNewPost,
+  WhatsNewStored,
+} from "./status";
 
 export type Route = {
   method: "GET" | "POST";
   path: string;
-  auth: "person" | "ingest";
+  /** person: a signed-in reader; ingest: Jobs and workflows (HMAC); secret: the health header; public: no secret, no data. */
+  auth: "person" | "ingest" | "secret" | "public";
   request: z.ZodType;
   response: z.ZodType;
 };
@@ -72,6 +82,55 @@ export const routes = {
     auth: "ingest",
     request: Heartbeat,
     response: HeartbeatAck,
+  }),
+  health: route({
+    method: "GET",
+    path: "/api/health",
+    auth: "secret",
+    request: none,
+    response: HealthResponse,
+  }),
+  status: route({
+    method: "GET",
+    path: "/api/status",
+    auth: "public",
+    request: none,
+    response: StatusResponse,
+  }),
+  flags_read: route({
+    method: "GET",
+    path: "/api/flags",
+    auth: "person",
+    request: none,
+    response: FlagMap,
+  }),
+  flag_write: route({
+    method: "POST",
+    path: "/api/flags",
+    auth: "secret",
+    request: FlagWrite,
+    response: FlagWriteResponse,
+  }),
+  checks_run: route({
+    method: "POST",
+    path: "/api/checks/run",
+    auth: "ingest",
+    request: none,
+    response: ChecksRunResponse,
+  }),
+  whatsnew_post: route({
+    method: "POST",
+    path: "/api/whatsnew",
+    auth: "ingest",
+    request: WhatsNewPost,
+    response: WhatsNewStored,
+  }),
+  whatsnew_read: route({
+    method: "GET",
+    path: "/api/whatsnew",
+    auth: "person",
+    request: none,
+    response: WhatsNewList,
   }),
 } as const;
 export type RouteId = keyof typeof routes;

@@ -1,0 +1,18 @@
+# Production: one Worker serves the web build as static assets and the API on one origin.
+# Workers Builds deploys the `production` branch (docs/adr/0009-v3-cloudflare-wiring.md).
+name = "stockpilot-app"
+main = "api/src/worker.ts"
+compatibility_date = "2026-11-01"
+preview_urls = true
+
+[assets]
+directory = "web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stockpilot-v3"
+database_id = "99ae8d3c-cd34-4134-817a-8f42acf4eee7"
+migrations_dir = "api/.generated/migrations"

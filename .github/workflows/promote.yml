@@ -1,0 +1,65 @@
+# Green `main` moves the `production` branch; Workers Builds then deploys app and API as one version.
+# Pause releases (an owner flag) skips everything. After the deploy, the check runner runs every
+# production check and stores each result, shown on /api/health.
+name: promote
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: promote
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: ops
+    env:
+      API_URL: https://stockpilot-app.stockpilotgn.workers.dev
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pause releases
+        id: pause
+        run: echo "paused=$(pnpm --silent --filter @stockpilot/api exec tsx migrate/promote.ts paused)" >> "$GITHUB_OUTPUT"
+      - name: Skipped, releases are paused
+        if: steps.pause.outputs.paused == 'true'
+        run: echo "Pause releases is on; production does not move."
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        if: steps.pause.outputs.paused != 'true'
+      - name: Re-run green main
+        if: steps.pause.outputs.paused != 'true'
+        run: |
+          pnpm gen
+          uv sync --frozen --project py
+          pnpm lint && pnpm typecheck && pnpm test
+          uv run --frozen --project py pytest -c py/pyproject.toml -q -p no:cacheprovider -n auto py/tests $(ls checks/*.py)
+      - name: Move production
+        id: move
+        if: steps.pause.outputs.paused != 'true'
+        run: |
+          prev=$(git ls-remote origin refs/heads/production | cut -f1)
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+          git push origin "${GITHUB_SHA}:refs/heads/production"
+      - name: Post What's new lines
+        if: steps.pause.outputs.paused != 'true'
+        run: pnpm --silent --filter @stockpilot/api exec tsx migrate/promote.ts whatsnew "${{ steps.move.outputs.prev }}" "${GITHUB_SHA}"
+      - name: Wait for Workers Builds to deploy this commit
+        if: steps.pause.outputs.paused != 'true'
+        run: pnpm --silent --filter @stockpilot/api exec tsx migrate/promote.ts wait "${GITHUB_SHA}" 20
+      - name: Run every production check and store its result
+        if: steps.pause.outputs.paused != 'true'
+        run: pnpm --silent --filter @stockpilot/api exec tsx migrate/promote.ts checks

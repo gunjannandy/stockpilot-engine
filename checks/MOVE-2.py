@@ -7,8 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CI = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
 
 
-def test_only_ci_is_left_in_github_workflows():
-    assert [p.name for p in (ROOT / ".github/workflows").glob("*.yml")] == ["ci.yml"]
+def test_only_ci_and_promote_are_left_in_github_workflows():
+    assert sorted(p.name for p in (ROOT / ".github/workflows").glob("*.yml")) == ["ci.yml", "promote.yml"]
 
 
 def test_ci_keeps_the_merge_group_trigger():
