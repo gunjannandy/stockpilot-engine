@@ -7,7 +7,7 @@ from pathlib import Path
 PATTERNS = [
     ("order-call", re.compile(r"\b(?:place|modify|cancel|exit)_?(?:regular_|amo_|co_|iceberg_|auction_)?order\b", re.I)),
     ("order-path", re.compile(r"/orders?/(?:regular|amo|co|iceberg|auction|place|modify|cancel)\b", re.I)),
-    ("gtt", re.compile(r"\b(?:place|modify|delete)_?gtt\b|\b(?:POST|PUT|DELETE)\b[^\n]{0,40}/gtt/triggers", re.I)),
+    ("gtt", re.compile(r"\b(?:place|modify|delete)_?gtt\b|\b(?:POST|PUT|DELETE)\b[^\n]{0,40}/gtt" r"/triggers", re.I)),
     ("convert-position", re.compile(r"\bconvert_?position\b", re.I)),
 ]
 MAX_BYTES = 2_000_000
