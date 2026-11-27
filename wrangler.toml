@@ -4,6 +4,7 @@ name = "stockpilot-app"
 main = "api/src/worker.ts"
 compatibility_date = "2026-11-01"
 preview_urls = true
+keep_vars = true  # a deploy must not wipe SITE_URL and CF_ACCOUNT_ID set in the dashboard
 
 [assets]
 directory = "web/dist"
@@ -17,8 +18,13 @@ database_name = "stockpilot-v3"
 database_id = "99ae8d3c-cd34-4134-817a-8f42acf4eee7"
 migrations_dir = "api/.generated/migrations"
 
+[vars]
+CF_WORKER_NAME = "stockpilot-app"
+
 # Duties: cron every 5 minutes queues one message per due duty; the consumer runs one per invocation.
-# Worker secrets (set in the dashboard, never here): GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_APP_KEY.
+# Worker secrets (set in the dashboard, never here): GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_APP_KEY,
+# CF_DEPLOY_TOKEN. Dashboard-set plain variables (kept out of git): SITE_URL, CF_ACCOUNT_ID.
+# See docs/worker-config.md.
 [triggers]
 crons = ["*/5 * * * *"]
 
