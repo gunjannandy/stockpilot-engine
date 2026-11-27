@@ -2,13 +2,14 @@
 // expire) and the days left. `due` are the ones inside the warning window not yet emailed.
 import { Hono } from "hono";
 import { type Ctx, istDay, istText, rawBody } from "../app";
+import { secretsEmailHtml } from "./email";
 import { SECRET_NAMES, WARN_DAYS } from "./list";
 
 const DAY = 86400000;
 const daysLeft = (today: string, on: string | null) =>
   on === null ? null : Math.round((Date.parse(on) - Date.parse(today)) / DAY);
 
-export async function tracker(ctx: Ctx) {
+export async function tracker(ctx: Pick<Ctx, "d1" | "now">) {
   const today = istDay(ctx.now());
   const rows: { name: string; expires_on: string | null; notified_at: string | null }[] = (
     await ctx.d1.prepare("select name, expires_on, notified_at from secret_expiry").all()
@@ -30,6 +31,10 @@ export async function tracker(ctx: Ctx) {
 export default function routes(ctx: Ctx) {
   const app = new Hono();
   app.get("/api/secrets", ctx.guard.secret, async (c) => c.json(await tracker(ctx)));
+  // The email body the Apps Script fetches and sends (op=send): the secrets inside the window.
+  app.get("/api/email/secrets", ctx.guard.secret, async (c) =>
+    c.html(secretsEmailHtml((await tracker(ctx)).secrets)),
+  );
   // Set or clear one secret's expiry (the date it was issued plus its lifetime), or mark it emailed.
   app.post("/api/secrets", ctx.guard.ingest, async (c) => {
     const b = JSON.parse(rawBody(c) || "null") as {
