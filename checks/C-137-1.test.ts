@@ -32,4 +32,10 @@ describe("C-137-1 previews", () => {
     expect(dbId(prev)).not.toBe(dbId(prod));
     expect(prev).toContain("stockpilot-v3-preview");
   });
+  it("runs the Worker first on every path, and marks previews as previews", () => {
+    for (const f of ["wrangler.toml", "wrangler.preview.toml"])
+      expect(read(f), f).toMatch(/^run_worker_first = \["\/\*"\]/m);
+    expect(read("wrangler.preview.toml")).toMatch(/^SP_ENV = "preview"/m);
+    expect(read("wrangler.toml")).not.toMatch(/SP_ENV/);
+  });
 });
