@@ -208,9 +208,437 @@ def random_lots_cases(n=120, seed=20261127):
     return cases
 
 
+
+# ---------------------------------------------------------------------------------------------- rounding
+
+def rounding_cases(seed=7):
+    rng = random.Random(seed)
+    xs = [0.5, 1.5, 2.5, -0.5, -1.5, 0.125, 0.375, 1 / 128, 0.0078125, 0.0000005, 2.675, 1.005, 100.0, 1e-7, 123456.789,
+          0.1 + 0.2, 33.333333333, 66.66666666666667, 0.045, 2.345, 1234567.0000005, 0.285, 1.115, 1e15 + 0.5]
+    xs += [rng.uniform(-1000, 1000) for _ in range(150)] + [round(rng.uniform(0, 50), 3) / 8 for _ in range(60)]
+    xs += [rng.randint(-2000, 2000) / 2 ** rng.randint(1, 9) for _ in range(120)]
+    out = {"round": [], "floordiv": [], "int": [], "sum": [], "fixed": []}
+    for x in xs:
+        for n in (0, 1, 2, 3, 6):
+            out["round"].append([x, n, round(x, n)])
+        out["int"].append([x, int(x)])
+        for y in (1.0, 2.0, 0.3, 7.0, -3.0):
+            out["floordiv"].append([x, y, x // y])
+        for n in (0, 2):
+            out["fixed"].append([x, n, f"{x:.{n}f}"])
+    for _ in range(80):
+        vals = [rng.choice([0.1, 0.2, 0.3, 1e16, 1.0, -1e16, 1 / 3, rng.uniform(-5, 5), 1e-9]) for _ in range(rng.randint(0, 12))]
+        out["sum"].append([vals, sum(vals)])
+    out["sum"].append([[0.1] * 10, sum([0.1] * 10)])
+    return out
+
+
+# ---------------------------------------------------------------------------------------------- positions, units, dust
+
+class Recorder:
+    """Wraps valuation.unit_prices_inr so a case saves the price it gave each item."""
+
+    def __init__(self):
+        from stockpilot import valuation
+        self.valuation, self.orig, self.seen = valuation, valuation.unit_prices_inr, {}
+
+    def __enter__(self):
+        def wrapped(db, items, as_of, fund_codes=None, rate=None):
+            prices = self.orig(db, items, as_of, fund_codes, rate)
+            for i, p in zip(items, prices):
+                self.seen[f"{i['kind']}|{i['symbol']}|{i['isin']}"] = p
+            return prices
+        self.valuation.unit_prices_inr = wrapped
+        return self
+
+    def __exit__(self, *a):
+        self.valuation.unit_prices_inr = self.orig
+
+
+def seed_world(db, stocks=(), funds=(), prices=(), fx_rows=(), navs=()):
+    for s in stocks:
+        db.execute("insert into stocks values (?, ?, 'Misc', ?)", list(s))
+    for f in funds:
+        db.execute("insert into funds values (?, ?, null, ?, 'Direct', 'Growth', ?, '')", list(f))
+    if prices:
+        insert_prices(db, [(d, sym, ex, "EQ", 0, 0, 0, close, 0, 0, 0, 0) for d, sym, ex, close in prices])
+    for d, r in fx_rows:
+        db.execute("insert into fx values (?, 'USDINR', ?)", [d, r])
+    for d, code, nav in navs:
+        db.execute("insert into navs values (?, ?, ?)", [d, code, nav])
+
+
+def add_lot(db, kind, symbol, isin, on, qty, cost, currency="INR", closed=0, estimated=False):
+    db.execute("insert into lots (kind, symbol, isin, acquired_on, quantity, cost_per_unit, currency, closed_quantity, "
+               "source, estimated) values (?, ?, ?, ?, ?, ?, ?, ?, 'trades:test', ?)",
+               [kind, symbol, isin, on, qty, cost, currency, closed, estimated])
+
+
+def add_kite(db, kind, symbol, isin, qty, avg):
+    db.execute("insert into holdings values (?, ?, ?, ?, ?, ?, 'kite')", [KITE_AT, kind, symbol, isin, qty, avg])
+
+
+def world_json(db):
+    """Everything `held` and `gaps` read, as the TypeScript takes it."""
+    lot_rows = db.execute("select kind, symbol, isin, acquired_on, quantity, closed_quantity, cost_per_unit, currency, "
+                          "estimated from lots order by acquired_on, id").fetchall()
+    snap = positions.last_kite_sync(db)
+    kite = {"at": str(snap.date()), "rows": [
+        {"kind": k, "symbol": s, "isin": i, "quantity": q, "avgPrice": a} for k, s, i, q, a in db.execute(
+            "select kind, symbol, isin, quantity, avg_price from holdings where snapshot_at = ?", [snap]).fetchall()]} if snap else None
+    as_of = db.execute("select max(as_of) from holding_statements").fetchone()[0]
+    statement = dict(db.execute("select isin, quantity from holding_statements where as_of = ? and quantity > 0",
+                                [as_of]).fetchall()) if as_of else {}
+    def lot_json(rows):
+        return [{"kind": k, "symbol": s, "isin": i, "acquiredOn": str(on), "quantity": q, "closedQuantity": cl,
+                 "costPerUnit": c, "currency": cur, "estimated": bool(est)} for k, s, i, on, q, cl, c, cur, est in rows]
+    by_id = db.execute("select kind, symbol, isin, acquired_on, quantity, closed_quantity, cost_per_unit, currency, "
+                       "estimated from lots order by id").fetchall()
+    return {
+        "lots": lot_json(lot_rows),
+        "lotsById": lot_json(by_id),   # the table's own order: the unit check sums in it
+        "stocks": [{"symbol": s, "name": n, "isin": i} for s, n, i in db.execute("select symbol, name, isin from stocks").fetchall()],
+        "funds": [{"schemeCode": c, "name": n, "plan": p, "option": o, "category": cat, "isinGrowth": g, "isinReinvest": r}
+                  for c, g, r, n, p, o, cat in db.execute(
+                      "select scheme_code, isin_growth, isin_reinvest, name, plan, option, category from funds").fetchall()],
+        "kite": kite, "statement": statement,
+        "fx": [[str(d), r] for d, r in db.execute("select date, rate from fx where pair = 'USDINR' order by date").fetchall()],
+    }
+
+
+def position_json(p):
+    return {"kind": p.kind, "symbol": p.symbol, "isin": p.isin, "name": p.name, "quantity": p.quantity,
+            "avgCost": p.avg_cost, "price": p.price, "source": p.source, "check": p.check, "value": p.value,
+            "lots": [{"acquiredOn": str(l.acquired_on), "quantity": l.quantity, "cost": l.cost,
+                      "turnsLongTermOn": _day(l.turns_long_term_on)} for l in p.lots]}
+
+
+def positions_case(name, build, as_of):
+    db = new_db()
+    build(db)
+    world = world_json(db)
+    from stockpilot.book import kinds, positions as pos
+    from stockpilot.analysis import tax
+    funds = pos._funds_by_isin(db)
+    rules = [{"kind": l["kind"], "isin": l["isin"], "currency": l["currency"], "acquiredOn": l["acquiredOn"],
+              "day": _day(tax.turns_long_term_on(pos._bucket(funds, l["kind"], l["isin"], l["currency"] or "INR",
+                                                             date.fromisoformat(l["acquiredOn"])),
+                                                 date.fromisoformat(l["acquiredOn"])))} for l in world["lots"]]
+    with Recorder() as rec:
+        got = pos.held(db, as_of)
+    gaps = units.gaps(db)
+    return {"name": name, "asOf": str(as_of), "input": {**world, "turnsLongTermOn": rules, "prices": rec.seen},
+            "output": {"positions": [position_json(p) for p in got],
+                       "gaps": [{"isin": g.isin, "symbol": g.symbol, "kite": g.kite, "lots": g.lots, "message": g.message} for g in gaps],
+                       "findings": units.findings(db)}}
+
+
+DAY = date(2026, 11, 20)
+PPFAS, OTHER_FUND = "INF879O01027", "INF732E01037"
+BASE_STOCKS = [("TCS", "Tata Consultancy Services", "INE467B01029"), ("NEWIPO", "New Listing Ltd", "INE000N01011"),
+               ("NIFTYBEES", "Nippon India ETF Nifty BeES", "INF204KB17I5"), ("ABREL", "Aditya Birla Real Estate", "INE055A01016")]
+BASE_FUNDS = [(1, PPFAS, "Parag Parikh Flexi Cap Fund", "Equity Scheme - Flexi Cap Fund"),
+              (2, OTHER_FUND, "Some Other Fund", "Debt Scheme - Liquid Fund"),
+              (3, "INF204KB17I5", "Nippon ETF", "Other"),
+              (4, "INF000G01011", "Gold Savings Fund", "Other Scheme - Gold ETF"),
+              (5, "INF000H01011", "Aggressive Hybrid Fund", "Hybrid Scheme - Aggressive Hybrid Fund")]
+BASE_PRICES = [(DAY, "TCS", "NSE", 4000.0), (DAY, "TCS", "BSE", 3999.0), (DAY, "NEWIPO", "NSE", 150.0),
+               (DAY, "NOW", "NYSE", 1000.0), (DAY, "NIFTYBEES", "NSE", 260.0), (DAY, "ABREL", "BSE", 2000.0)]
+
+
+def world(db, prices=BASE_PRICES):
+    seed_world(db, BASE_STOCKS, BASE_FUNDS, prices, [(DAY, 85.0), (date(2025, 3, 1), 86.5)],
+               [(DAY, 1, 75.0), (DAY, 2, 1050.0), (DAY, 4, 60.0), (DAY, 5, 31.0)])
+
+
+def positions_cases():
+    out = []
+    TCS = "INE467B01029"
+
+    def a(db):
+        world(db)
+        add_lot(db, "stock", "TCS", TCS, date(2025, 1, 10), 10, 3000.0)
+        add_lot(db, "stock", "TCS", TCS, date(2026, 6, 1), 20, 3600.0, closed=10)
+    out.append(positions_case("no Kite login: the lots are the holdings", a, DAY))
+
+    def b(db):
+        world(db)
+        add_kite(db, "stock", "NEWIPO", "INE000N01011", 50, 140.0)
+    out.append(positions_case("a Kite holding with no lots still shows", b, DAY))
+
+    def c(db):
+        world(db)
+        add_lot(db, "stock", "TCS", TCS, date(2025, 1, 10), 10, 3000.0)
+        add_kite(db, "stock", "TCS", TCS, 12, 3100.0)
+    out.append(positions_case("Kite decides the units and the gap is named", c, DAY))
+
+    def d(db):
+        world(db)
+        db.execute("insert into holding_statements values ('2026-10-31', 'INE000N01011', 50)")
+    out.append(positions_case("the depository statement fills a gap", d, DAY))
+
+    def e(db):
+        world(db)
+        add_lot(db, "rsu", "NOW", "US81762P1021", date(2025, 3, 1), 4, 800.0, currency="USD")
+    out.append(positions_case("foreign shares priced and costed in rupees", e, DAY))
+
+    def f(db):
+        world(db)
+        add_lot(db, "stock", "ABREL", "INE055A01016", date(2023, 5, 2), 8, 900.0)
+        add_lot(db, "stock", "CENTURYTEX", "INE055A01016", date(2023, 5, 2), 8, 900.0)
+        add_kite(db, "stock", "ABREL-BE", "INE055A01016", 16, 900.0)
+    out.append(positions_case("a renamed company shows under its current NSE symbol", f, DAY))
+
+    def g(db):
+        world(db)
+        add_lot(db, "stock", "NIFTYBEES", "INF204KB17I5", date(2024, 1, 5), 100, 230.0)
+        add_lot(db, "mf", "PARAG PARIKH FLEXI CAP FUND - DIRECT PLAN", PPFAS, date(2024, 1, 5), 50, 60.0)
+        add_lot(db, "mf", "GOLD", "INF000G01011", date(2024, 1, 5), 10, 50.0)
+        add_lot(db, "mf", "HYB", "INF000H01011", date(2024, 1, 5), 10, 30.0)
+    out.append(positions_case("an ETF keeps its symbol, a fund its name, tax buckets by category", g, DAY))
+
+    def h(db):
+        world(db)
+        add_lot(db, "stock", "TCS", TCS, date(2024, 1, 10), 10, 3000.0)
+        add_lot(db, "stock", "TCS", TCS, date(2026, 6, 1), 20, 3600.0)
+        add_kite(db, "stock", "TCS", TCS, 20, 3600.0)
+        add_kite(db, "stock", "OTHER", "INE000X01011", 5, 10.0)
+    out.append(positions_case("documents show more than Kite: trimmed oldest first", h, DAY))
+
+    def i(db):
+        world(db)
+        add_kite(db, "stock", "TCS", TCS, 1, 3000.0)
+        db.execute("insert into holding_statements values ('2026-10-31', ?, 0.195)", [OTHER_FUND])
+        db.execute("insert into holding_statements values ('2026-10-31', 'INF204KB17I5', 50), ('2026-10-31', 'INE000Z01019', 7)")
+    out.append(positions_case("a fund only the depository knows shows; a share or ETF stays hidden", i, DAY))
+
+    def j(db):
+        world(db)
+        add_lot(db, "stock", "TCS", TCS, date(2025, 1, 10), 1, 3000.0)
+    out += [positions_case("prices: NSE wins a tie", j, DAY), positions_case("prices: the latest close on or before the day", j, date(2026, 11, 25)),
+            positions_case("prices: none stored before the first close", j, date(2026, 11, 1))]
+
+    def k(db):
+        world(db)
+        add_lot(db, "stock", "TCS", TCS, date(2025, 1, 10), 10, 3000.0)
+        add_lot(db, "mf", "PARAG", PPFAS, date(2024, 1, 5), 4890.044, 60.0)
+        add_lot(db, "stock", "NEWIPO", "INE000N01011", date(2026, 2, 1), 12.5, 100.0, estimated=True)
+        add_kite(db, "stock", "TCS", TCS, 12, 3100.0)
+        add_kite(db, "mf", PPFAS, PPFAS, 7162.094, 70.0)
+        add_kite(db, "stock", "NEWIPO", "INE000N01011", 12.5, 100.0)
+        db.execute("insert into holding_statements values ('2026-10-31', ?, 0.195)", [OTHER_FUND])
+    out.append(positions_case("Parag Parikh gap, estimated lot and a fund the depository alone knows", k, DAY))
+    return out + random_positions_cases()
+
+
+def random_positions_cases(n=90, seed=99):
+    rng = random.Random(seed)
+    cases = []
+    for c in range(n):
+        def build(db, rng=rng):
+            stocks = [(f"Z{i}", f"Zed {i}", f"INE{i:03d}Z01011") for i in range(5)]
+            funds = [(10 + i, f"INF{i:03d}Z01011", f"Fund {i}", rng.choice(
+                ["Equity Scheme - Large Cap Fund", "Debt Scheme - Liquid Fund", "Hybrid Scheme - Balanced Hybrid Fund", "Other"]))
+                for i in range(3)]
+            prices = [(DAY - timedelta(days=rng.randint(0, 3)), s[0], rng.choice(["NSE", "BSE"]), round(rng.uniform(1, 900), 2))
+                      for s in stocks if rng.random() < 0.85] + [(DAY, "NOW", "NYSE", 1000.0)]
+            seed_world(db, stocks, funds, prices, [(DAY, round(rng.uniform(80, 90), 3)), (date(2025, 3, 1), 84.0)],
+                       [(DAY, f[0], round(rng.uniform(10, 500), 3)) for f in funds if rng.random() < 0.8])
+            idents = [("stock", s[0], s[2]) for s in stocks] + [("mf", f[1], f[1]) for f in funds]
+            for kind, sym, isin in idents:
+                if rng.random() < 0.7:
+                    for _ in range(rng.randint(1, 4)):
+                        qty = rng.choice([1, 3, 10, 25.5, 100, 7.125, 0.195])
+                        add_lot(db, kind, sym, isin, date(2023, 1, 1) + timedelta(days=rng.randint(0, 1100)), qty,
+                                round(rng.uniform(1, 800), 2), closed=rng.choice([0, 0, 0, qty / 2, qty]),
+                                estimated=rng.random() < 0.1)
+            if rng.random() < 0.4:
+                add_lot(db, "rsu", "NOW", "US81762P1021", date(2025, 1, 1) + timedelta(days=rng.randint(0, 600)),
+                        rng.choice([2, 4.5]), 800.0, currency="USD")
+            if rng.random() < 0.6:
+                for kind, sym, isin in idents:
+                    if rng.random() < 0.6:
+                        add_kite(db, kind, sym if kind == "stock" else isin, isin,
+                                 rng.choice([0.195, 1, 5, 10, 24.5, 100, 7.125, 40]), round(rng.uniform(1, 800), 2))
+            if rng.random() < 0.5:
+                for kind, sym, isin in idents:
+                    if rng.random() < 0.4:
+                        db.execute("insert into holding_statements values ('2026-10-31', ?, ?)",
+                                   [isin, rng.choice([0.195, 5, 10, 100])])
+        cases.append(positions_case(f"random {c}", build, DAY))
+    return cases
+
+
+def dust_cases():
+    out = []
+    P = positions.Position
+    rng = random.Random(5)
+    for c in range(60):
+        rows = []
+        for i in range(rng.randint(1, 6)):
+            qty = rng.choice([0.195, 1, 5, 10, 50])
+            price = rng.choice([None, 1000.0, 999.99, 5000.0, 4000.0, 200.0, 0.0])
+            avg = rng.choice([None, 300.0, 1500.0])
+            src = rng.choice(["statement", "kite", "lots"])
+            p = P("equity", f"S{i}", None, f"S{i}", qty, avg, None, src)
+            p.price = price
+            rows.append(p)
+        kept = positions.without_dust(rows)
+        out.append({"input": [{"symbol": p.symbol, "quantity": p.quantity, "avgCost": p.avg_cost, "price": p.price,
+                               "source": p.source} for p in rows], "output": [p.symbol for p in kept]})
+    return out
+
+
+# ---------------------------------------------------------------------------------------------- own record, acted
+
+def record_case(name, build, as_of):
+    from stockpilot.book import pairs as pairing
+    db = new_db()
+    build(db)
+    _, _, pairs = pairing.load(db)
+    symbols = sorted({p["symbol"] for p in pairs})
+    prices = pairing.prices_for(db, symbols, date(2000, 1, 1))
+    nifty = pairing.nifty(db)
+    body = record.build(db, as_of)
+    return {"name": name, "input": {
+        "asOf": str(as_of),
+        "pairs": [{"route": p["route"], "symbol": p["symbol"], "acquiredOn": str(p["acquired_on"]), "soldOn": str(p["sold_on"]),
+                   "quantity": p["quantity"], "cost": p["cost"], "proceeds": p["proceeds"], "gain": p["gain"]} for p in pairs],
+        "prices": {s: [[str(d), v] for d, v in zip(ser.days, ser.values)] for s, ser in prices.items()},
+        "nifty": [[str(d), v] for d, v in zip(nifty.days, nifty.values)]},
+        "output": {"asOf": body["as_of"], "closed": body["closed"], "winners": body["winners"], "losers": body["losers"],
+                   "winRate": body["win_rate"], "avgDaysWinners": body["avg_days_winners"],
+                   "avgDaysLosers": body["avg_days_losers"],
+                   "soldEarly": {"checked": body["sold_early"]["checked"], "roseAfter": body["sold_early"]["rose_after"],
+                                 "share": body["sold_early"]["share"]},
+                   "vsNifty": {"checked": body["vs_nifty"]["checked"], "beat": body["vs_nifty"]["beat"],
+                               "share": body["vs_nifty"]["share"], "averageGapPoints": body["vs_nifty"]["average_gap_points"]},
+                   "byMonth": body["by_month"], "lines": body["lines"]}}
+
+
+def sale_lot(db, symbol, buy_on, buy_qty, buy_price, sell_on, sell_qty, sell_price, placed_by=None, expenses=0.0):
+    isin = f"INE{abs(hash(symbol)) % 1000:03d}X01011" if False else f"INE{symbol[:3]:>3}00000"[:12]
+    key = f"{symbol}{buy_on}buy"
+    db.execute("insert into lots (kind, symbol, isin, acquired_on, quantity, cost_per_unit, currency, closed_quantity, source, "
+               "source_ref) values ('stock', ?, ?, ?, ?, ?, 'INR', ?, 'trades:test', ?)",
+               [symbol, isin, buy_on, buy_qty, buy_price, min(buy_qty, sell_qty), key])
+    db.execute("insert into sales (kind, symbol, isin, sold_on, quantity, price_per_unit, currency, expenses, source, source_ref) "
+               "values ('stock', ?, ?, ?, ?, ?, 'INR', ?, 'trades:test', ?)", [symbol, isin, sell_on, sell_qty, sell_price, expenses,
+                                                                              f"{symbol}{sell_on}sell"])
+    if placed_by:
+        db.execute("insert into trade_tags values (?, ?, ?, 'test')", [key, placed_by, "Value" if placed_by == "smallcase" else None])
+
+
+def record_cases():
+    out = []
+    AS_OF = date(2025, 12, 31)
+
+    def close(symbol, day, value):
+        return (day, symbol, "NSE", "EQ", value, value, value, value, value, 1000, 1e6, 10)
+
+    def hand(db):
+        buy = date(2025, 1, 10)
+        sale_lot(db, "XXX", buy, 10, 100, date(2025, 3, 10), 10, 130)
+        sale_lot(db, "YYY", buy, 10, 100, date(2025, 2, 10), 10, 120)
+        sale_lot(db, "ZZZ", buy, 10, 100, date(2025, 7, 10), 10, 80)
+        sale_lot(db, "SSS", buy, 5, 50, date(2025, 4, 10), 5, 70, placed_by="smallcase")
+        insert_prices(db, [close("XXX", date(2025, 6, 9), 150), close("YYY", date(2025, 5, 12), 110)])
+        for day, level in [(buy, 20000), (date(2025, 2, 10), 20400), (date(2025, 3, 10), 21000), (date(2025, 7, 10), 19000)]:
+            db.execute("insert into index_levels values (?, 'Nifty 50', ?, 20, 3, 1)", [day, level])
+    out.append(record_case("hand example: three closed trades, the smallcase one is not his", hand, AS_OF))
+    out.append(record_case("nothing closed yet", lambda db: None, AS_OF))
+
+    def winners_only(db):
+        sale_lot(db, "AAA", date(2025, 1, 10), 10, 100, date(2025, 2, 10), 10, 130)
+        sale_lot(db, "BBB", date(2025, 1, 10), 10, 100, date(2025, 3, 10), 10, 120)
+        sale_lot(db, "CCC", date(2025, 1, 10), 10, 100, date(2025, 3, 11), 10, 111)
+        db.execute("insert into index_levels values ('2025-01-10', 'Nifty 50', 20000, 20, 3, 1)")
+    out.append(record_case("winners only: no loser line", winners_only, AS_OF))
+    rng = random.Random(31)
+    for c in range(70):
+        def build(db, rng=rng):
+            index_day = date(2024, 12, 1)
+            levels = []
+            level = 20000.0
+            for k in range(0, 520, rng.choice([1, 3, 7])):
+                level *= 1 + rng.uniform(-0.01, 0.012)
+                levels.append((index_day + timedelta(days=k), round(level, 2)))
+            for d, v in levels:
+                db.execute("insert into index_levels values (?, 'Nifty 50', ?, 20, 3, 1)", [d, v])
+            price_rows = []
+            for i in range(rng.randint(2, 9)):
+                sym = f"Q{c}{i}"
+                buy_on = date(2025, 1, 1) + timedelta(days=rng.randint(0, 150))
+                sell_on = buy_on + timedelta(days=rng.randint(1, 260))
+                bq = rng.choice([5, 10, 25.5, 100])
+                sq = rng.choice([bq, bq, bq / 2])
+                bp = round(rng.uniform(20, 900), 2)
+                sp = round(bp * rng.uniform(0.6, 1.5), 2)
+                sale_lot(db, sym, buy_on, bq, bp, sell_on, sq, sp, placed_by=rng.choice([None, None, "smallcase"]),
+                         expenses=rng.choice([0.0, 12.5]))
+                if rng.random() < 0.8:
+                    price_rows.append(close(sym, sell_on + timedelta(days=rng.randint(85, 100)), round(sp * rng.uniform(0.7, 1.4), 2)))
+            if price_rows:
+                insert_prices(db, price_rows)
+        out.append(record_case(f"random {c}", build, rng.choice([date(2025, 12, 31), date(2025, 9, 30), date(2026, 6, 30)])))
+    return out
+
+
+def acted_cases(seed=11):
+    from stockpilot.book import acted
+    out = []
+    rng = random.Random(seed)
+    for c in range(60):
+        db = new_db()
+        holidays = sorted({date(2026, 1, 1) + timedelta(days=rng.randint(0, 120)) for _ in range(rng.randint(0, 8))})
+        for h in holidays:
+            db.execute("insert into holidays values (?, 'h')", [h])
+        symbols = ["AAA", "BBB", "CCC"]
+        calls = []
+        for i in range(rng.randint(1, 8)):
+            made = date(2026, 1, 5) + timedelta(days=rng.randint(0, 100))
+            kind = rng.choice(["buy", "add", "sell", "trim", "hold", "watch", None])
+            sym = rng.choice(symbols)
+            if rng.random() < 0.7:
+                db.execute("insert into calls (made_on, symbol, kind, action, section) values (?, ?, ?, ?, ?)", [made, sym, "x", kind, None])
+            else:
+                db.execute("insert into calls (made_on, symbol, kind, action, section) values (?, ?, ?, ?, ?)", [made, sym, "x", "buy", kind])
+            if rng.random() < 0.1:
+                db.execute("update calls set acted_on = ? where id = (select max(id) from calls)", [made + timedelta(days=1)])
+        confirmed = []
+        for i in range(rng.randint(0, 10)):
+            day = date(2026, 1, 5) + timedelta(days=rng.randint(0, 130))
+            side = rng.choice(["buy", "BUY", "sell", "Sell", "credit"])
+            sym = rng.choice(symbols)
+            db.execute("insert into trades (trade_key, source, source_ref, kind, symbol, isin, side, trade_date, quantity, price, status) "
+                       "values (?, 's', 'r', 'stock', ?, 'I', ?, ?, 1, 1, ?)", [f"k{i}", sym, side, day, rng.choice(["confirmed", "confirmed", "expected"])])
+        syncs = []
+        for i in range(rng.randint(0, 3)):
+            rows = []
+            for _ in range(rng.randint(0, 5)):
+                day = date(2026, 1, 5) + timedelta(days=rng.randint(0, 130))
+                stamp = rng.choice([f"{day} 10:15:00", f"{day}T10:15:00", f"{day}", None, "garbage"])
+                rows.append({"tradingsymbol": rng.choice(["aaa", "BBB", "ccc", None]), "transaction_type": rng.choice(["BUY", "SELL", "buy", "x"]),
+                             rng.choice(["fill_timestamp", "order_timestamp", "exchange_timestamp"]): stamp})
+            syncs.append(rows)
+            db.execute("insert into kite_syncs (fetched_at, trades) values (?, ?)", [datetime(2026, 5, 1, i), json.dumps(rows)])
+        open_calls = [{"id": i, "symbol": s, "madeOn": str(m), "kind": k} for i, s, m, k in db.execute(
+            "select id, symbol, made_on, coalesce(section, action) from calls where acted_on is null and made_on is not null order by id").fetchall()]
+        conf = [{"symbol": s, "side": side, "tradeDate": str(d)} for s, side, d in db.execute(
+            "select symbol, lower(side), trade_date from trades where status = 'confirmed' and lower(side) in ('buy', 'sell')").fetchall()]
+        n = acted.mark(db)
+        after = db.execute("select id, acted_on from calls where acted_on is not null order by id").fetchall()
+        out.append({"input": {"openCalls": open_calls, "confirmedTrades": conf, "kiteSyncs": syncs,
+                              "holidays": [str(h) for h in holidays]},
+                    "output": {"marked": n, "actedOn": [[i, str(d)] for i, d in after
+                                                         if i in {c["id"] for c in open_calls}]}})
+    return out
+
+
 def main():
     check = "--check" in sys.argv
-    files = {"lots.json": lots_cases()}
+    files = {"lots.json": lots_cases(), "positions.json": positions_cases(), "dust.json": dust_cases(),
+             "record.json": record_cases(), "acted.json": acted_cases(), "rounding.json": [rounding_cases()]}
     OUT.mkdir(parents=True, exist_ok=True)
     bad = []
     for name, body in files.items():

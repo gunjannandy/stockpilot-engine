@@ -3,6 +3,25 @@
 
 const TIE_DIGITS = 60;
 
+/** The decimal text of `|x|` rounded to `nd` places the way Python does: from the exact value of the double,
+ *  ties to even. Used by `round` and by `f"{x:.2f}"`. */
+function roundedDigits(ax: number, nd: number): string {
+  const exact = ax.toFixed(Math.min(100, nd + TIE_DIGITS)); // exact decimal expansion of the double
+  const dot = exact.indexOf(".");
+  const tail = exact.slice(dot + 1 + nd);
+  let digits = exact.slice(0, dot + 1 + nd).replace(".", "");
+  const first = tail[0] ?? "0";
+  const isTie = /^50*$/.test(tail);
+  const roundUp =
+    first > "5" ||
+    (first === "5" && !isTie) ||
+    (isTie && Number(digits[digits.length - 1]) % 2 === 1);
+  if (roundUp) digits = bump(digits);
+  return nd === 0
+    ? digits
+    : `${digits.slice(0, digits.length - nd) || "0"}.${digits.slice(digits.length - nd)}`;
+}
+
 /** Python's `round(x, ndigits)`: correctly rounded from the exact value of the double, ties to even. */
 export function pyRound(x: number, ndigits = 0): number {
   if (!Number.isFinite(x)) return x;
@@ -10,25 +29,15 @@ export function pyRound(x: number, ndigits = 0): number {
     const p = 10 ** -ndigits;
     return pyRound(x / p, 0) * p;
   }
-  const exact = Math.abs(x).toFixed(Math.min(100, ndigits + TIE_DIGITS)); // exact decimal expansion
-  const dot = exact.indexOf(".");
-  const kept = exact.slice(0, dot + 1 + ndigits);
-  const tail = exact.slice(dot + 1 + ndigits);
-  const isTie = /^50*$/.test(tail);
-  const up = tail[0] !== undefined && (tail[0] > "5" || (tail[0] === "5" && !isTie) || false);
-  let digits = kept.replace(".", "");
-  if (isTie) {
-    const last = Number(digits[digits.length - 1]);
-    if (last % 2 === 1) digits = bump(digits);
-  } else if (up) {
-    digits = bump(digits);
-  }
-  const text =
-    ndigits === 0
-      ? digits
-      : `${digits.slice(0, digits.length - ndigits)}.${digits.slice(digits.length - ndigits)}`;
-  const out = Number(text);
-  return x < 0 ? -out : out;
+  const out = Number(roundedDigits(Math.abs(x), ndigits));
+  return x < 0 || Object.is(x, -0) ? -out : out;
+}
+
+/** Python's `f"{x:.{nd}f}"`. */
+export function pyFixed(x: number, nd: number): string {
+  if (!Number.isFinite(x)) return String(x);
+  const text = roundedDigits(Math.abs(x), nd);
+  return x < 0 || Object.is(x, -0) ? `-${text}` : text;
 }
 
 function bump(digits: string): string {
@@ -46,10 +55,20 @@ function bump(digits: string): string {
   return `1${a.join("")}`;
 }
 
-/** Python's `a // b` for numbers: the floor of the quotient. */
+/** Python's `a // b` for floats: CPython's `float_divmod`, so a quotient that is only just under a whole
+ *  number floors the way Python does (`-1.5 // 0.3` is -6, not -5). */
 export function floorDiv(a: number, b: number): number {
   if (b === 0) throw new Error("division by zero");
-  return Math.floor(a / b);
+  const mod = a % b; // C fmod
+  let div = (a - mod) / b;
+  if (mod) {
+    if (b < 0 !== mod < 0) div -= 1.0;
+  }
+  if (div) {
+    const floored = Math.floor(div);
+    return div - floored > 0.5 ? floored + 1.0 : floored;
+  }
+  return Object.is(a / b, -0) || a / b < 0 ? -0 : 0;
 }
 
 /** Python's `int(x)`: toward zero. */

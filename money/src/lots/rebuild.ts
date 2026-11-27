@@ -4,7 +4,7 @@
 // port of the Python `trades/lots.py`: same order of events, same rounding, same float arithmetic.
 import { compareDays, type Day } from "../core/dates";
 import { canon, isForeign } from "../core/kinds";
-import { pyProd, pyRound } from "../core/round";
+import { pyProd, pyRound, pySum } from "../core/round";
 import type {
   Action,
   Holding,
@@ -165,11 +165,8 @@ function demergerReady(a: Action): boolean {
   );
 }
 
-const heldOf = (open: Open[], exDate: Day): number => {
-  let s = 0;
-  for (const l of open) if (compareDays(l.on, exDate) < 0) s += l.qty - l.closed;
-  return s;
-};
+const heldOf = (open: Open[], exDate: Day): number =>
+  pySum(open.filter((l) => compareDays(l.on, exDate) < 0).map((l) => l.qty - l.closed));
 
 function applyAction(open: Open[], a: Action, exDate: Day, spawned: Map<string, Open[]>): void {
   const num = a.numerator;
