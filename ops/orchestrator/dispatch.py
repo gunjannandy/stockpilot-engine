@@ -88,7 +88,7 @@ def _resume_message(t, why):
 def _start(t, reason, account):
     return {"ticket": t["key"], "number": t["number"], "account": account, "reason": reason,
             "branch": f"lane/{t['key']}", "model": "sonnet", "permission_mode": "auto",
-            "source": PRIVATE_SOURCE, "environment": "build", "prompt": f"Build issue #{t['number']}",
+            "source": PRIVATE_SOURCE, "environment": "Default", "prompt": f"Build issue #{t['number']}",
             "subscribe_own_pr": True}
 
 
