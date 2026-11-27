@@ -1,0 +1,6 @@
+packages:
+  - contract
+  - money
+  - api
+  - web
+  - adapters
