@@ -16,7 +16,7 @@ import {
 } from "../theme/theme";
 import { useWords } from "../words";
 import { Icon } from "./icons";
-import { fetchLayout, type LayoutRow, railItems } from "./layout";
+import { fetchLayout, type LayoutRow, railItems, splitRail } from "./layout";
 
 const Screens = createContext<Pane[]>([]);
 
@@ -72,6 +72,7 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
 
   const items = railItems(panes, row);
   const bar = items.slice(0, 4);
+  const { daily, lower } = splitRail(items);
   const item = (p: Pane) => (
     <Link
       key={p.id}
@@ -95,7 +96,10 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
           <i aria-hidden="true">s</i>
           <span>{t("shell.brand")}</span>
         </div>
-        {items.map(item)}
+        {daily.map(item)}
+        <div className="rail-gap" />
+        <div className="rail-div" />
+        {lower.map(item)}
       </nav>
       <nav className="bar" aria-label={t("shell.nav.label")}>
         {bar.map(item)}

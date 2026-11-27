@@ -6,6 +6,13 @@ export type LayoutRow = { rail: string[]; hidden?: string[] };
 /** Screens that exist as routes but never sit in the rail. */
 const NEVER_IN_RAIL = new Set(["signin", "more"]);
 
+/** v10's lower group: desk, feedback and admin screens sit at the bottom of the rail. */
+const LOWER = new Set(["record", "feedback", "admin", "settings", "health"]);
+export const splitRail = (items: Pane[]) => ({
+  daily: items.filter((p) => !LOWER.has(p.id)),
+  lower: items.filter((p) => LOWER.has(p.id)),
+});
+
 export function railItems(panes: Pane[], row: LayoutRow | null): Pane[] {
   const drawable = panes.filter((p) => !NEVER_IN_RAIL.has(p.id));
   if (!row) return drawable;

@@ -87,7 +87,6 @@ ul {
   min-height: 100dvh;
 }
 .rail {
-  align-items: center;
   grid-area: rail;
   position: sticky;
   top: 0;
@@ -220,19 +219,13 @@ ul {
   width: 36px;
   padding: 0;
 }
-/* the rail shows icons only; names live in aria-label and title (the phone bar keeps small labels) */
-.rail .nav {
-  justify-content: center;
-  padding: 0;
-  width: 48px;
+.rail-gap {
+  flex: 1 1 auto;
 }
-.rail .brand span,
-.rail .nav span {
-  position: absolute;
-  width: 1px;
+.rail-div {
   height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+  margin: var(--sp-2) var(--sp-3);
+  background: var(--line-2);
 }
 .page {
   grid-area: page;
@@ -418,6 +411,20 @@ ul {
   .rail {
     align-items: center;
     padding-inline: var(--sp-2);
+  }
+  .brand span {
+    display: none;
+  }
+  .rail .nav {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: 76px;
+    min-height: 56px;
+    padding: var(--sp-1);
+    border-radius: var(--r-card);
+    font-size: var(--fs-note);
+    text-align: center;
   }
   .sync {
     display: none;
