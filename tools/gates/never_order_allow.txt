@@ -1,0 +1,5 @@
+# Lines that mention an order call only to prove it is banned. path<TAB>stripped line. Changing this file needs the planner label.
+legacy/web/test/queue.test.js	expect((await send(e, "place_order", {})).status).toBe(400);
+legacy/web/test/v2.test.js	expect((await bad({ kind: "place_order", payload: {} })).status).toBe(400);
+py/tests/sources/test_navhistory.py	assert "place_order" not in src and "kite" not in src.lower()
+py/tests/test_fundcall.py	for banned in ("place_order", "kite.", "requests.post", "urlopen", "subprocess"):
