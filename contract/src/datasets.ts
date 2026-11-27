@@ -17,7 +17,7 @@ export type Dataset = {
   freshnessHours: number;
   /** Data checks: a row check holds a row back; a run check fails the run. */
   checks: { row: string[]; run: string[] };
-  /** `private` datasets (holdings, trades, tax, feedback) never leave the owner's store: previews fill them with made-up rows only. Default public. */
+  /** `private` datasets (holdings, trades, tax, feedback) never leave the owner's store: previews fill them with made-up rows only. Every registry entry states it (checks/C-203-1 fails otherwise). */
   visibility?: "public" | "private";
   recomputable: boolean;
   /** Most D1 rows this dataset may write in a day (a row costs 1 + its indexes). */
@@ -47,6 +47,7 @@ export const datasets = {
     schedule: "on press, and when the Ping Job runs",
     freshnessHours: 24 * 365,
     checks: { row: ["id is not empty", "at is IST"], run: [] },
+    visibility: "public",
     recomputable: false,
     writeBudget: 200,
     row: PingRow,
@@ -58,6 +59,7 @@ export const datasets = {
     schedule: "every morning at 07:00 IST",
     freshnessHours: 48,
     checks: { row: ["kind is known", "date is a date"], run: ["at least one holiday listed"] },
+    visibility: "public",
     recomputable: true,
     writeBudget: 1000,
     row: CalendarRow,
