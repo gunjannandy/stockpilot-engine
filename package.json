@@ -3,16 +3,21 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.12.1",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "lint": "biome check contract money api web adapters",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "gen": "tsx tools/contract-gen/gen.ts",
+    "lint": "biome check contract money api web adapters tools/contract-gen",
+    "typecheck": "pnpm gen && pnpm -r typecheck",
+    "test": "pnpm gen && pnpm -r test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
     "@types/node": "^24.0.0",
+    "tsx": "^4.23.15",
     "typescript": "5.8.3",
-    "vitest": "3.2.4"
+    "vitest": "3.2.4",
+    "zod": "^4.6.7"
   }
 }
