@@ -4,6 +4,7 @@ import { platformFromEnv } from "../../../adapters/src/cloudflare";
 import { githubFromEnv } from "../../../adapters/src/github";
 import { checkDeps } from "../deps/deps";
 import type { Core } from "../jobs/runtime";
+import { callReseed } from "../previewseed/call";
 import { storePromises } from "../promises/promises";
 import type { Duty } from "../schedule/duties";
 import { smoke, watch } from "./watcher";
@@ -31,6 +32,14 @@ export const watcherDuty: Duty = {
       await storePromises(c, { siteUrl: envOf(c).SITE_URL });
       parts.push("promises stored");
       if (ist.getUTCHours() % 6 === 0) parts.push(`deps ${(await checkDeps(c)).length} checked`);
+    }
+    // Nightly at 03:00 IST (first quarter of the hour): reseed the preview database. A failure is noted, not fatal.
+    if (first && ist.getUTCHours() === 3) {
+      parts.push(
+        await callReseed(envOf(c)).catch(
+          (e) => `reseed failed: ${e instanceof Error ? e.message : e}`,
+        ),
+      );
     }
     return parts.join("; ");
   },
