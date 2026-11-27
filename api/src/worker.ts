@@ -10,6 +10,10 @@ type Bindings = Env & {
   GITHUB_APP_ID?: string;
   GITHUB_INSTALLATION_ID?: string;
   GITHUB_APP_KEY?: string;
+  SITE_URL?: string;
+  CF_DEPLOY_TOKEN?: string;
+  CF_ACCOUNT_ID?: string;
+  CF_WORKER_NAME?: string;
 };
 let app: ReturnType<typeof createApp> | undefined;
 
