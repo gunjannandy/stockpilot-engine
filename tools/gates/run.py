@@ -87,7 +87,8 @@ def gate_planner_label(ev):
         if len(chunk) < 100:
             break
         page += 1
-    return planner_label.verdict(changed, main_files, events)
+    head_time = api(f"/repos/{repo}/git/commits/{pr['head']['sha']}")["committer"]["date"]
+    return planner_label.verdict(changed, main_files, events, head_time)
 
 
 GATES = {
