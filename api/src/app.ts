@@ -109,8 +109,9 @@ export function createApp(deps: {
     await next();
   };
   const secret: MiddlewareHandler = async (c, next) => {
-    if (!(await sameSecret(deps.env.HEALTH_SECRET, c.req.header("x-health-secret"))))
-      return c.json({ error: "no" }, 401);
+    // The live Apps Script bridge sends `x-health-key`; everything else sends `x-health-secret`. Both count.
+    const given = c.req.header("x-health-secret") ?? c.req.header("x-health-key");
+    if (!(await sameSecret(deps.env.HEALTH_SECRET, given))) return c.json({ error: "no" }, 401);
     await next();
   };
   // Fails closed: until sign-in installs its guard, every person route answers 401. Areas capture

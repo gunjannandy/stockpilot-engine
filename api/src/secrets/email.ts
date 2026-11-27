@@ -21,5 +21,5 @@ export function secretsEmailHtml(rows: Row[], warnDays = 30): string {
         `<li><b>${esc(r.name)}</b>: ${days(r.days_left as number)} (${esc(r.expires_on ?? "")})</li>`,
     )
     .join("");
-  return `<!doctype html><html><body><p>${soon.length ? "These keys need renewing before they run out:" : "No key runs out in the next " + warnDays + " days."}</p><ul>${items}</ul><p>Tell the owner; nothing else is needed from you.</p></body></html>`;
+  return `<!doctype html><html><body><p>${soon.length ? "These keys need renewing before they run out:" : `No key runs out in the next ${warnDays} days.`}</p><ul>${items}</ul><p>Tell the owner; nothing else is needed from you.</p></body></html>`;
 }

@@ -71,3 +71,14 @@ it("a failed send leaves the secret due so the next run tries again", async () =
   const ok = bridge();
   expect(await runSecretsDuty(core, ok.fetch)).toContain("emailed 1");
 });
+
+it("the email page also opens for the header the live bridge sends (x-health-key)", async () => {
+  const t = await makeApp({ now: () => new Date("2026-11-28T10:00:00+05:30") });
+  const { HEALTH } = await import("../testkit");
+  const ok = await t.app.request("/api/email/secrets", { headers: { "x-health-key": HEALTH } });
+  expect(ok.status).toBe(200);
+  const bad = await t.app.request("/api/email/secrets", {
+    headers: { "x-health-key": "x".repeat(24) },
+  });
+  expect(bad.status).toBe(401);
+});
