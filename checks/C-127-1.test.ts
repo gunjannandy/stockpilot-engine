@@ -1,11 +1,13 @@
 // C-127-1: the tracker lists every secret in the secrets list with its expiry, and flags the due ones.
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, it } from "vitest";
+import { repoRoot } from "../api/migrate/discover";
 import { SECRET_NAMES } from "../api/src/secrets/list";
 import { makeApp } from "../api/src/testkit";
 
 it("C-127-1 the list matches the config and the tracker flags secrets inside 30 days", async () => {
-  const yaml = readFileSync("config/stockpilot.yaml", "utf8");
+  const yaml = readFileSync(join(repoRoot, "config/stockpilot.yaml"), "utf8");
   const block = yaml.split("\nsecrets:\n")[1]?.split("\n\n")[0] ?? "";
   const names = [...block.matchAll(/^ {2}([A-Z0-9_]+):/gm)].map((m) => m[1]);
   expect([...SECRET_NAMES].sort()).toEqual(names.sort());
