@@ -1,0 +1,115 @@
+/* The one token file: every colour, type size, space and radius in the web app comes from here.
+   Light and dark both ship; dark follows the system until the switch says otherwise.
+   The text-size switch sets data-size on <html>; all type is in rem so it scales. */
+:root {
+  --bg: #f2f4f8;
+  --surface: #ffffff;
+  --c1: #f7f9fc;
+  --c2: #ebeff5;
+  --c3: #dee4ee;
+  --text: #0b1220;
+  --text-2: #3b4556;
+  --line: #c7cfdc;
+  --line-2: #e3e8ef;
+  --primary: #0b57d0;
+  --on-primary: #ffffff;
+  --tonal: #d3e3fd;
+  --on-tonal: #041e49;
+  --selected: color-mix(in oklab, var(--primary) 11%, var(--surface));
+  --gain: #0a7a3d;
+  --loss: #c42525;
+  --warn: #8f5600;
+  --hold: #3b4556;
+  --watch: #0b57d0;
+  --on-verdict: #ffffff;
+  --shadow: rgb(10 20 40 / 14%);
+
+  --font: "Google Sans Flex", "Noto Sans Bengali", system-ui, sans-serif;
+  --fs-note: 0.75rem;
+  --fs-cell: 0.8125rem;
+  --fs-body: 0.875rem;
+  --fs-section: 0.9375rem;
+  --fs-title: 1.375rem;
+  --fs-hero: 2rem;
+  --lh-body: 1.43;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --r-card: 12px;
+  --r-control: 8px;
+  --r-chip: 999px;
+  --row: 44px;
+  --rail: 240px;
+  --topbar: 64px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #090c11;
+  --surface: #10141b;
+  --c1: #13181f;
+  --c2: #192029;
+  --c3: #232b37;
+  --text: #eef2f8;
+  --text-2: #a9b4c6;
+  --line: #323c4c;
+  --line-2: #1f2733;
+  --primary: #8ab4ff;
+  --on-primary: #00214f;
+  --tonal: #0842a0;
+  --on-tonal: #d3e3fd;
+  --selected: color-mix(in oklab, var(--primary) 14%, var(--surface));
+  --gain: #3dd68c;
+  --loss: #ff6b6b;
+  --warn: #ffb547;
+  --hold: #c7d0de;
+  --watch: #8ab4ff;
+  --on-verdict: #0b1220;
+  --shadow: rgb(0 0 0 / 50%);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #090c11;
+    --surface: #10141b;
+    --c1: #13181f;
+    --c2: #192029;
+    --c3: #232b37;
+    --text: #eef2f8;
+    --text-2: #a9b4c6;
+    --line: #323c4c;
+    --line-2: #1f2733;
+    --primary: #8ab4ff;
+    --on-primary: #00214f;
+    --tonal: #0842a0;
+    --on-tonal: #d3e3fd;
+    --selected: color-mix(in oklab, var(--primary) 14%, var(--surface));
+    --gain: #3dd68c;
+    --loss: #ff6b6b;
+    --warn: #ffb547;
+    --hold: #c7d0de;
+    --watch: #8ab4ff;
+    --on-verdict: #0b1220;
+    --shadow: rgb(0 0 0 / 50%);
+    color-scheme: dark;
+  }
+}
+html {
+  font-size: 100%;
+}
+html[data-size="large"] {
+  font-size: 112.5%;
+}
+html[data-size="xlarge"] {
+  font-size: 125%;
+}
+@media (max-width: 720px) {
+  :root {
+    --fs-note: 0.8125rem;
+    --fs-cell: 0.875rem;
+  }
+}
