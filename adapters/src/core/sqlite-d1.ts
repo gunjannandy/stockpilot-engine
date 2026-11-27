@@ -20,7 +20,11 @@ export class SqliteStatement {
   }
   runSync() {
     const r = this.db.prepare(this.sql).run(...this.params);
-    return { results: [], success: true as const, meta: this.meta(Number(r.changes), Number(r.lastInsertRowid)) };
+    return {
+      results: [],
+      success: true as const,
+      meta: this.meta(Number(r.changes), Number(r.lastInsertRowid)),
+    };
   }
   async run() {
     return this.runSync();
@@ -30,7 +34,9 @@ export class SqliteStatement {
     return { results, success: true as const, meta: this.meta() };
   }
   async first<T = Record<string, unknown>>(column?: string): Promise<T | null> {
-    const row = this.db.prepare(this.sql).get(...this.params) as Record<string, unknown> | undefined;
+    const row = this.db.prepare(this.sql).get(...this.params) as
+      | Record<string, unknown>
+      | undefined;
     if (!row) return null;
     return (column ? row[column] : row) as T;
   }

@@ -19,7 +19,11 @@ export const ChecksRunResponse = z.object({
 });
 
 /** One promoted UI PR's note, English and Bengali, shown once to the readers. */
-export const WhatsNewLine = z.object({ pr: z.number().int(), en: z.string().min(1), bn: z.string().min(1) });
+export const WhatsNewLine = z.object({
+  pr: z.number().int(),
+  en: z.string().min(1),
+  bn: z.string().min(1),
+});
 export const WhatsNewPost = z.object({ lines: z.array(WhatsNewLine).max(50) });
 export const WhatsNewStored = z.object({ stored: z.number().int().min(0) });
 export const WhatsNewList = z.object({

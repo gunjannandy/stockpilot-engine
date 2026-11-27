@@ -35,7 +35,9 @@ export async function appliedNames(db: Db): Promise<Set<string>> {
   await db.exec(
     "create table if not exists d1_migrations (id integer primary key autoincrement, name text unique, applied_at timestamp not null default current_timestamp)",
   );
-  const rows = (await db.prepare("select name from d1_migrations").all()).results as { name: string }[];
+  const rows = (await db.prepare("select name from d1_migrations").all()).results as {
+    name: string;
+  }[];
   return new Set(rows.map((r) => r.name));
 }
 
@@ -53,18 +55,23 @@ export async function applyPending(
   // Check everything before running anything: a refused step leaves the database as it was.
   for (const m of pending) {
     if (isContractStep(m.name)) {
-      const age = (opts.now ?? new Date()).getTime() - (opts.backupAt?.getTime() ?? Number.NEGATIVE_INFINITY);
+      const age =
+        (opts.now ?? new Date()).getTime() - (opts.backupAt?.getTime() ?? Number.NEGATIVE_INFINITY);
       if (!(age >= 0 && age <= BACKUP_MAX_AGE_MS))
         throw new Error(`contract step ${m.name} needs a backup taken in the last 6 hours`);
     } else if (!isExpandOnly(m.sql)) {
-      throw new Error(`${m.name} is an expand step and may not drop, rename or delete; use a .contract.sql step`);
+      throw new Error(
+        `${m.name} is an expand step and may not drop, rename or delete; use a .contract.sql step`,
+      );
     }
   }
   const ran: string[] = [];
   for (const m of pending) {
     // D1 refuses BEGIN/COMMIT; a batch is its atomic unit. The bookkeeping row rides in the same batch.
     const statements = splitStatements(m.sql).map((q) => db.prepare(q));
-    statements.push(db.prepare("insert into d1_migrations (name) values (?)").bind(m.name) as never);
+    statements.push(
+      db.prepare("insert into d1_migrations (name) values (?)").bind(m.name) as never,
+    );
     await db.batch(statements as never[]);
     ran.push(m.name);
   }

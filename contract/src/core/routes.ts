@@ -9,8 +9,8 @@ import {
   MarketStatus,
 } from "./door";
 import { FlagMap, FlagWrite, FlagWriteResponse } from "./flags";
-import { Heartbeat, HeartbeatAck } from "./heartbeat";
 import { HealthResponse } from "./health";
+import { Heartbeat, HeartbeatAck } from "./heartbeat";
 import { PingLatest, PingRow } from "./ping";
 import {
   ChecksRunResponse,

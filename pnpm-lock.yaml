@@ -30,7 +30,11 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  adapters: {}
+  adapters:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.4
+        version: 24.19.4
 
   api:
     dependencies:
@@ -40,12 +44,18 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.11
         version: 2.1.11(hono@4.13.23)
+      '@stockpilot/contract':
+        specifier: workspace:*
+        version: link:../contract
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@cloudflare/workers-types@5.20261127.1)
       hono:
         specifier: ^4.13.23
         version: 4.13.23
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   contract:
     dependencies:

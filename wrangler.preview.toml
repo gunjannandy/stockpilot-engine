@@ -1,0 +1,17 @@
+# Preview: each `preview/<key>` branch gets its own address on this Worker, over the preview database.
+name = "stockpilot-preview"
+main = "api/src/worker.ts"
+compatibility_date = "2026-11-01"
+preview_urls = true
+
+[assets]
+directory = "web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stockpilot-v3-preview"
+database_id = "b35298af-8666-425c-b0e0-3054f487a017"
+migrations_dir = "api/.generated/migrations"

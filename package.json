@@ -10,7 +10,10 @@
     "gen": "tsx tools/contract-gen/gen.ts",
     "lint": "biome check contract money api web adapters tools/contract-gen",
     "typecheck": "pnpm gen && pnpm -r typecheck",
-    "test": "pnpm gen && pnpm -r test"
+    "test": "pnpm gen && pnpm -r test",
+    "build": "pnpm --filter @stockpilot/api build",
+    "new-area": "tsx tools/new-area/index.ts",
+    "wrangler": "wrangler"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
