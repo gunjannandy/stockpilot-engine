@@ -1,8 +1,8 @@
 // The model gate (decisions §2 Models): a daily budget per Job kind and an answer cache keyed by
 // brief, model and day. A repeat brief costs nothing; past the cap a model Job is refused and the
 // pane says "Next update tomorrow".
-import type { Ctx } from "../app";
 import { istDay, istText } from "../app";
+import type { Core } from "./runtime";
 
 /** Model calls a kind may start in one IST day. Kinds not listed here may not call a model. */
 export const MODEL_DAILY_CAP: Record<string, number> = {
@@ -27,7 +27,7 @@ export type Claim =
   | { cached: false; allowed: false };
 
 export async function claimModel(
-  ctx: Ctx,
+  ctx: Core,
   caps: Record<string, number>,
   a: { kind: string; model: string; brief: string },
 ): Promise<Claim> {
@@ -56,7 +56,7 @@ export async function claimModel(
 }
 
 export async function storeAnswer(
-  ctx: Ctx,
+  ctx: Core,
   a: { kind: string; model: string; brief: string; answer: string },
 ) {
   const day = istDay(ctx.now());
@@ -70,7 +70,7 @@ export async function storeAnswer(
   await ctx.d1.prepare("delete from model_cache where day < ?").bind(day).run();
 }
 
-export async function modelStatus(ctx: Ctx, caps: Record<string, number>, kind: string) {
+export async function modelStatus(ctx: Core, caps: Record<string, number>, kind: string) {
   const day = istDay(ctx.now());
   const row = (await ctx.d1
     .prepare("select used from model_usage where day = ? and kind = ?")

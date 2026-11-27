@@ -1,7 +1,11 @@
 // The Job runtime (decisions §6): a unique key per (kind, subject, day), one lock per kind, retry with
 // backoff, an expected time from past runs, a pause per kind. Python only calls begin and end.
 import { JOB_MAX_ATTEMPTS } from "@stockpilot/contract";
-import { type Ctx, istDay, istText } from "../app";
+import type { Ctx } from "../app";
+import { istDay, istText } from "../app";
+
+/** What the runtime needs of a request or a cron duty: the database, the clock, the env and the version. */
+export type Core = Pick<Ctx, "d1" | "now" | "env" | "version">;
 
 export const LOCK_TTL_MINUTES = 120;
 const MIN = 60_000;
@@ -48,15 +52,15 @@ export type JobRow = {
   retry_at: string | null;
 };
 
-export const getJob = async (ctx: Ctx, key: string) =>
+export const getJob = async (ctx: Core, key: string) =>
   (await ctx.d1.prepare("select * from job_runs where key = ?").bind(key).first()) as JobRow | null;
 
-export const isPaused = async (ctx: Ctx, kind: string) =>
+export const isPaused = async (ctx: Core, kind: string) =>
   (await ctx.d1.prepare("select 1 as p from job_pauses where kind = ?").bind(kind).first()) !==
   null;
 
 /** Median seconds of the kind's last five finished runs, or null with none. */
-export async function expectedSeconds(ctx: Ctx, kind: string): Promise<number | null> {
+export async function expectedSeconds(ctx: Core, kind: string): Promise<number | null> {
   const r = (await ctx.d1
     .prepare(
       "select duration_ms from job_runs where kind = ? and status = 'done' and duration_ms is not null order by finished_at desc limit 5",
@@ -85,7 +89,7 @@ export type BeginResult =
   | { ok: false; status: 409 | 423; error: string };
 
 /** Take the key and the kind's lock for a Job that is starting. */
-export async function beginJob(ctx: Ctx, b: Begin): Promise<BeginResult> {
+export async function beginJob(ctx: Core, b: Begin): Promise<BeginResult> {
   const now = ctx.now();
   const nowText = istText(now);
   const key = jobKey(b.kind, b.subject, b.day);
@@ -156,7 +160,7 @@ export type End = {
 };
 
 /** Finish a running Job: free the lock; a failure schedules the next try with backoff, up to the limit. */
-export async function endJob(ctx: Ctx, e: End): Promise<{ ok: boolean; retryAt?: string | null }> {
+export async function endJob(ctx: Core, e: End): Promise<{ ok: boolean; retryAt?: string | null }> {
   const now = ctx.now();
   const row = (await ctx.d1
     .prepare("select * from job_runs where run_id = ? and status = 'running'")

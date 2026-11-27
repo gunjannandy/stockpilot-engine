@@ -12,7 +12,7 @@ import { type Ctx, istDay } from "../app";
 import { type Calendar, daysCovered, isTradingDay } from "./calendar";
 
 /** The current calendar: the rows of the `calendar` dataset's current run, or an empty calendar. */
-export async function loadCalendar(ctx: Ctx): Promise<Calendar> {
+export async function loadCalendar(ctx: Pick<Ctx, "d1">): Promise<Calendar> {
   const p = (await ctx.d1
     .prepare("select run_id from pointers where dataset = 'calendar'")
     .first()) as { run_id: string } | null;
