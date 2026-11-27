@@ -107,7 +107,7 @@ def plan(inp):
     tickets = inp["tickets"]
     by_number = {t["number"]: t for t in tickets}
     out = {k: [] for k in ("claims", "withdraw", "release", "start", "resume", "nudge", "replace", "needs_planner",
-                           "archive", "private_runs", "new_tickets", "warnings")}
+                           "archive", "close", "private_runs", "new_tickets", "warnings")}
     out.update({"account": me, "sync_trace": None, "pace": mine})
     skipped = []
 
@@ -293,6 +293,10 @@ def plan(inp):
     tr = inp.get("trace")
     if tr and _norm(tr["engine"]) != _norm(tr["private"]) and not tr.get("open_pr"):
         out["sync_trace"] = {"branch": "lane/trace-sync", "reason": "engine copy differs"}
+
+    # close finished tickets: merged, nothing left to tick, no VM step
+    out["close"] = [{"ticket": t["key"], "number": t["number"]} for t in tickets
+                    if _merged(t) and not t["unticked"] and not t["vm"]]
 
     # status comment
     running = []
