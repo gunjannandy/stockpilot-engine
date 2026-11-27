@@ -16,3 +16,16 @@ binding = "DB"
 database_name = "stockpilot-v3"
 database_id = "99ae8d3c-cd34-4134-817a-8f42acf4eee7"
 migrations_dir = "api/.generated/migrations"
+
+# Duties: cron every 5 minutes queues one message per due duty; the consumer runs one per invocation.
+# Worker secrets (set in the dashboard, never here): GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_APP_KEY.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[queues.producers]]
+binding = "DUTIES"
+queue = "stockpilot-duties"
+
+[[queues.consumers]]
+queue = "stockpilot-duties"
+max_batch_size = 1
