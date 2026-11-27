@@ -114,3 +114,43 @@ def gh_api(path, *args):
     if text.startswith("[") and "][" in text:   # --paginate prints one array per page
         text = "[" + text.replace("][", ",")[1:-1] + "]"
     return json.loads(text) if text else []
+
+
+ENGINE = "stockpilot-hq/stockpilot-engine"
+PRIVATE = "stockpilot-hq/stockpilot"
+
+
+def collect(account, state, accounts, mode, api=gh_api, engine_trace="", private_trace=""):
+    """Build dispatch inputs.
+
+    state: what only the dispatcher session can read, written by it as JSON:
+      {"now": iso, "sessions": [...], "quota": {account: [readings]}, "cloudflare": {...}, "private_runs": [...]}
+    api(path, *args) reads GitHub REST. Tickets are the open issues labelled v3-wave-*; each ticket's PR is the
+    engine PR from lane/<key>, and its CI state comes from that PR's check runs.
+    """
+    issues = [i for i in api(f"repos/{PRIVATE}/issues", "-f", "state=open", "-f", "per_page=100")
+              if "pull_request" not in i and any(
+                  (l["name"] if isinstance(l, dict) else l).startswith("v3-wave-") for l in i["labels"])]
+    tickets, left_over = [], []
+    for i in issues:
+        comments = api(f"repos/{PRIVATE}/issues/{i['number']}/comments")
+        key = parse_key(i.get("body"))
+        pr = None
+        prs = api(f"repos/{ENGINE}/pulls", "-f", f"head=stockpilot-hq:lane/{key}", "-f", "state=all") if key else []
+        if prs:
+            p = prs[0]
+            sha = p["head"]["sha"]
+            runs = api(f"repos/{ENGINE}/commits/{sha}/check-runs")
+            runs = runs.get("check_runs", []) if isinstance(runs, dict) else runs
+            ci = check_state(runs)
+            failing = "\n".join(f"{r['name']}: {(r.get('output') or {}).get('summary') or r.get('conclusion')}"
+                                for r in runs if r.get("conclusion") == "failure")
+            pr = {"number": p["number"], "state": "merged" if p.get("merged_at") else p["state"], "ci": ci,
+                  "failing_output": failing, "last_push_at": p.get("updated_at")}
+            left_over += [{"ticket": key, **lo} for lo in parse_left_over(p.get("body"))]
+        tickets.append(build_ticket(i, comments, pr))
+    return {"now": state["now"], "account": account, "mode": mode, "accounts": accounts, "tickets": tickets,
+            "sessions": state["sessions"], "quota": state["quota"], "cloudflare": state["cloudflare"],
+            "private_runs": state.get("private_runs", []), "left_over": left_over,
+            "known_left_over": sorted({m for i in issues for m in re.findall(r"left-over:(\w+)", i.get("body") or "")}),
+            "trace": {"engine": engine_trace, "private": private_trace, "open_pr": False}}

@@ -35,3 +35,30 @@ def test_check_state_reads_check_runs_never_prose():
     assert gather.check_state([{"conclusion": "success"}, {"conclusion": "failure"}]) == "red"
     assert gather.check_state([{"conclusion": None}]) == "pending"
     assert gather.check_state([]) == "none"
+
+
+def test_collect_reads_issues_comments_prs_and_check_runs_through_the_api():
+    import gather
+    body = "Key `ZED`.\n\n## Owned paths\n\n- `z/**`\n"
+    issues = [{"number": 7, "title": "t", "body": body, "labels": [{"name": "v3-wave-0"}]},
+              {"number": 8, "title": "pr", "body": "", "labels": [{"name": "v3-wave-0"}], "pull_request": {}},
+              {"number": 9, "title": "other", "body": "", "labels": [{"name": "bug"}]}]
+
+    def api(path, *a):
+        if path.endswith("/issues"):
+            return issues
+        if path.endswith("/comments"):
+            return [{"body": "Claimed by secondary: s1", "created_at": "2026-12-01T09:00:00Z"}]
+        if path.endswith("/pulls"):
+            return [{"number": 3, "state": "open", "merged_at": None, "head": {"sha": "abc"}, "updated_at": "2026-12-01T09:30:00Z",
+                     "body": "Left over:\n- do `q/x.py`\n"}]
+        if "check-runs" in path:
+            return {"check_runs": [{"name": "gate", "conclusion": "failure", "output": {"summary": "boom"}}]}
+        raise AssertionError(path)
+
+    inp = gather.collect("secondary", {"now": "2026-12-01T10:00:00Z", "sessions": [], "quota": {}, "cloudflare": {}},
+                         [], "burst", api=api)
+    t = inp["tickets"][0]
+    assert [x["number"] for x in inp["tickets"]] == [7]
+    assert t["pr"]["ci"] == "red" and "boom" in t["pr"]["failing_output"] and t["claims"][0]["account"] == "secondary"
+    assert inp["left_over"][0]["files"] == ["q/x.py"]

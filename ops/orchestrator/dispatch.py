@@ -1,6 +1,8 @@
 """Dispatcher plan (decisions §9): deterministic, no model judgement, no network in `plan()`.
 
-    dispatch.py --account <name> --inputs <file.json>     print the plan as JSON
+    dispatch.py --account <name> --state <file> --accounts-file <accounts.yaml> --private-trace <trace.csv>
+                                                          gather from GitHub, then print the plan as JSON
+    dispatch.py --account <name> --inputs <file.json>     print the plan from already gathered inputs
     dispatch.py --sync-trace --engine-trace f --private-trace f   open the trace sync PR
 
 `plan(inputs)` is a pure function of the inputs (see tests/orch_helpers.world for the shape). The dispatcher
@@ -335,18 +337,29 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--account")
     ap.add_argument("--inputs", help="JSON file with the gathered inputs; - for stdin")
+    ap.add_argument("--state", help="JSON file the dispatcher wrote (sessions, quota, cloudflare, private_runs, now); "
+                                    "gathers the GitHub side itself")
+    ap.add_argument("--accounts-file", help="the private ops/accounts.yaml")
+    ap.add_argument("--private-trace", dest="private_trace")
     ap.add_argument("--sync-trace", action="store_true")
     ap.add_argument("--engine-trace", default=ENGINE_TRACE)
-    ap.add_argument("--private-trace")
     a = ap.parse_args(argv)
     if a.sync_trace:
         import ghrunner
         res = sync_trace(Path(a.engine_trace).read_text(), Path(a.private_trace).read_text(), ghrunner.runner)
         print(json.dumps(res))
         return 0
-    if not (a.account and a.inputs):
-        ap.error("--account and --inputs are required")
-    inp = json.load(sys.stdin if a.inputs == "-" else open(a.inputs))
+    if a.state:
+        import yaml
+        cfg = yaml.safe_load(Path(a.accounts_file).read_text())
+        engine = Path(ENGINE_TRACE)
+        inp = gather.collect(a.account, json.load(open(a.state)), cfg["accounts"], cfg["mode"],
+                             engine_trace=engine.read_text() if engine.exists() else "",
+                             private_trace=Path(a.private_trace).read_text() if a.private_trace else "")
+    elif a.account and a.inputs:
+        inp = json.load(sys.stdin if a.inputs == "-" else open(a.inputs))
+    else:
+        ap.error("--account with --inputs or --state is required")
     inp["account"] = a.account
     print(json.dumps(plan(inp), indent=2))
     return 0
