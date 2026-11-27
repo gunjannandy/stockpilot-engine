@@ -4,35 +4,35 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Link,
-  Outlet,
   RouterProvider,
   redirect,
 } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { discoverPanes, discoverWords, type Lang } from "./areas";
+import { discoverPanes, discoverWords } from "./areas";
+import { morePane, Shell, samplePanes } from "./shell";
+import "./shell/shell.css";
+import "./theme/tokens.css";
+import { applyStored, getLang } from "./theme/theme";
 import { WordsProvider } from "./words";
 
-const panes = discoverPanes(import.meta.glob("./panes/*/index.tsx", { eager: true }));
+applyStored();
+// The prototype's sample screens show until each area's own pane folder replaces them.
+const panes = [
+  ...samplePanes,
+  morePane,
+  ...discoverPanes(import.meta.glob("./panes/*/index.tsx", { eager: true })),
+];
 const wordFiles = import.meta.glob("./words/*.json", { eager: true }) as Record<
   string,
   { default: Record<string, string> }
 >;
-const lang: Lang = navigator.language.startsWith("bn") ? "bn" : "en";
-const words = discoverWords(wordFiles, lang);
+const words = discoverWords(wordFiles, getLang());
 
 const root = createRootRoute({
   component: () => (
     <WordsProvider value={words}>
-      <nav>
-        {panes.map((p) => (
-          <Link key={p.id} to={p.path}>
-            {words[p.titleKey] ?? p.titleKey}
-          </Link>
-        ))}
-      </nav>
-      <Outlet />
+      <Shell panes={panes} />
     </WordsProvider>
   ),
 });
