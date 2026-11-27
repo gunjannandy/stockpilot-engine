@@ -1,0 +1,43 @@
+// Made-up names for the fake-data generator. None is a real company, fund or person.
+export const COMPANIES = [
+  "Aranya Textiles",
+  "Bhoomi Cement",
+  "Chandra Pharma",
+  "Dhruv Logistics",
+  "Ekta Foods",
+  "Falguni Chemicals",
+  "Gagan Power",
+  "Himani Motors",
+  "Indrani Steel",
+  "Jalaj Paper",
+  "Kiran Plastics",
+  "Lavanya Retail",
+  "Mitra Software",
+  "Nirmal Sugar",
+  "Ojas Hotels",
+  "Parvati Housing",
+  "Quest Cables",
+  "Rudra Fertilisers",
+  "Saanvi Health",
+  "Tarang Telecom",
+];
+export const FUNDS = [
+  "Fake Bluechip Fund",
+  "Fake Midcap Fund",
+  "Fake Index Fund",
+  "Fake Liquid Fund",
+  "Fake Dividend Fund",
+  "Fake Flexi Fund",
+];
+export const SYMBOLS = [
+  "ARTX",
+  "BHCM",
+  "CHPH",
+  "DHLG",
+  "EKFD",
+  "FACH",
+  "GGPW",
+  "HIMO",
+  "INST",
+  "JLPP",
+];

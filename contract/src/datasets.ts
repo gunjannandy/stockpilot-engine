@@ -16,6 +16,8 @@ export type Dataset = {
   freshnessHours: number;
   /** Data checks: a row check holds a row back; a run check fails the run. */
   checks: { row: string[]; run: string[] };
+  /** `private` datasets (holdings, trades, tax, feedback) never leave the owner's store: previews fill them with made-up rows only. Default public. */
+  visibility?: "public" | "private";
   recomputable: boolean;
   /** Most D1 rows this dataset may write in a day (a row costs 1 + its indexes). */
   writeBudget: number;
