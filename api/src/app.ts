@@ -1,5 +1,7 @@
 // The one Worker's app: shared types, the guards, and `createApp`. No area edits this file:
 // routes, schema files, migrations and production checks are found by folder (api/migrate/discover.ts).
+
+import { CONTRACT_HEADER, CONTRACT_VERSION } from "@stockpilot/contract";
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import * as core from "../drizzle/core";
@@ -139,6 +141,11 @@ export function createApp(deps: {
       .bind(version, istText(now()))
       .run();
   };
+  // Every answer says which contract it speaks, so a page left open on an older one can show "updating".
+  app.use("*", async (c, next) => {
+    await next();
+    c.res.headers.set(CONTRACT_HEADER, CONTRACT_VERSION);
+  });
   app.use("*", async (c, next) => {
     ready ??= boot();
     try {
