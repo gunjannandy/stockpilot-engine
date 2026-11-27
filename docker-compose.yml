@@ -1,0 +1,60 @@
+# The whole engine on Node, Python and SQLite (story 145): nothing here needs Cloudflare.
+#   docker compose up --build        then open http://localhost:8787
+# Keys below are for local use only; production keys live in Cloudflare secrets.
+x-key: &key "local-development-key-0123456789abcdef"
+
+services:
+  # The web build, written once into a shared volume.
+  web:
+    image: node:24-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+      - webdist:/app/web/dist
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm gen && pnpm --filter @stockpilot/web build"
+
+  # The Worker's app on Node and SQLite, serving the web build and the API on one origin.
+  api:
+    image: node:24-slim
+    working_dir: /app
+    depends_on:
+      web:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - webdist:/app/web/dist
+      - data:/data
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8787"
+      SQLITE_PATH: /data/stockpilot.db
+      INGEST_HMAC_KEY: *key
+      HEALTH_SECRET: "local-health-secret-0123456789"
+      APP_VERSION: local
+    ports:
+      - "8787:8787"
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @stockpilot/api start"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      retries: 60
+
+  # The Python Ping Job: writes one row through the door, then beats.
+  ping-job:
+    image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+    working_dir: /app
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    environment:
+      STOCKPILOT_API_URL: http://api:8787
+      STOCKPILOT_INGEST_KEY: *key
+      STOCKPILOT_VERSION: local
+    command: uv run --frozen --project py python -m stockpilot.jobs.ping
+    restart: "no"
+
+volumes:
+  webdist:
+  data:
