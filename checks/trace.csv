@@ -1,0 +1,236 @@
+story,check_id,ticket,kind,what
+1,C-001-1,SIGNIN,contract,a link sign-in sets a one-year host-only cookie
+1,C-001-2,SIGNIN,production health,production redirects a signed-out visit to sign-in
+2,C-002-1,SIGNIN,contract,a third address gets no link and no session
+3,C-003-1,SIGNIN,contract,a preview cookie is refused by production and the reverse
+4,C-004-1,SIGNIN,contract,the sixth link request in a minute is refused
+5,C-005-1,SIGNIN,contract,owner-only writes are refused for the father
+6,C-006-1,SIGNIN,production health,"answers carry CSP and HSTS; the cookie is HttpOnly, Secure and SameSite"
+7,C-007-1,SHELL,preview e2e,each rail item opens its screen
+7,C-007-2,SHELL,prototype review,"the owner said ""looks good"" to the live skeleton and themes at 1440, 1100 and 400 px in both themes; its screenshots are the baseline"
+8,C-008-1,WORDS,preview e2e,/ focuses search; a fuzzy name finds the stock
+9,C-009-1,WORDS,unit,the build fails on any fixed word without Bengali
+9,C-009-2,WORDS,preview e2e,the language switch changes every fixed word
+10,C-010-1,SHELL,preview e2e,the theme switch survives a reload
+11,C-011-1,SHELL,preview e2e,the text-size switch scales text and survives a reload
+12,C-012-1,SHELL,preview e2e,arrows move the selection; Esc returns
+13,C-013-1,SHELL,preview e2e,the pane stays put while the list scrolls
+14,C-014-1,SHELL,preview e2e,"no sideways scroll at 1440, 1100 and 400 px"
+15,C-015-1,PANES,preview e2e,the manifest installs; an offline load shows cached data
+16,C-016-1,SYNC,preview e2e,the shell shows the synced time after a Sync
+17,C-017-1,WORDS,preview e2e,a What's new note shows once per person and then never again
+18,C-018-1,PANES,preview e2e,a second visit draws before the network answers
+19,C-019-1,PANES,preview e2e,a pane whose route fails shows its failed state; the other panes render
+20,C-020-1,PANES,contract,each pane answer carries its dataset's updated time
+21,C-021-1,PUBLISH,contract,a run that fails its checks leaves the last good run served with its date
+22,C-022-1,PANES,preview e2e,a mismatched contract version shows the updating state
+22,C-022-2,SKELAPI,contract,the app applies pending expand migrations before serving its first request on a new version
+23,C-023-1,MARKS,contract,a row changed between the previous and current run carries a mark; opening it clears it for both people
+23,C-023-2,MARKS,preview e2e,"marks, the What changed strip and Mark all seen work"
+23,C-023-3,MARKS,contract,"a changed verdict or chance marks the stock; news without a change shows the newspaper icon, not a mark"
+24,C-024-1,MARKS,preview e2e,every list row carries at least one reason chip
+25,C-025-1,TODAY,preview e2e,the call line renders from the latest calls; no calls to act on reads Nothing to do today
+25,C-025-2,TODAY,prototype review,"the owner said ""looks good"" to the live Today prototype"
+25,C-025-3,TODAY,production health,every holding has a call dated after the last trading day (green or red only)
+25,C-025-4,TODAY,unit,the call line is one money function; Today and the email render the same line from fixtures
+26,C-026-1,MONEYRISK,unit,money left equals the budget minus this month's buys
+26,C-026-2,TODAY,preview e2e,money left shows the fixture's value
+27,C-027-1,TODAY,preview e2e,"market health shows the fixture's breadth, trend and value band"
+28,C-028-1,TODAY,preview e2e,the portfolio summary matches the Portfolio totals
+29,C-029-1,TODAY,preview e2e,groups follow the call verdicts
+30,C-030-1,TODAY,preview e2e,the print layout fits one A4 page
+31,C-031-1,CALLS,contract,a call's verdict is one of the seven
+32,C-032-1,CALLS,preview e2e,the chance and the sell and buy lines render from the fixture
+33,C-033-1,CALLS,preview e2e,every call-card section renders
+33,C-033-2,CALLS,prototype review,"the owner said ""looks good"" to the live call-card prototype"
+34,C-034-1,CALLS,unit,similar-call grouping and counts from fixtures
+35,C-035-1,CALLS,contract,a new call adds a row; no row is updated
+36,C-036-1,CALLS,preview e2e,compare shows both stocks' facts and calls
+37,C-037-1,MODELS,contract,Analyse runs to a call on made-up data with a progress bar using the expected time
+37,C-037-2,MODELS,production health,the Analyse promise is measured daily
+38,C-038-1,MODELS,contract,the model brief carries no holding or tax field
+39,C-039-1,MODELS,contract,a model answer without Bengali is rejected
+40,C-040-1,STOCK,preview e2e,"chart ranges (1 year first), averages, bands and buys render; Ctrl or Cmd and scroll, + and −, Reset and drag move the chart; plain scroll never zooms"
+40,C-040-2,STOCK,prototype review,"the owner said ""looks good"" to the live stock-page prototype"
+40,C-040-3,STOCK,production health,the last close of 5 sample stocks equals the exchange's bhavcopy (green or red only)
+40,C-040-4,STOCK,unit,the backfill gives every listed stock in the fixture universe its full history; a series with an unexplained jump is held back with its reason and the run passes below the threshold
+41,C-041-1,STOCK,preview e2e,one menu per chart and none on rows; links point to the right instrument
+42,C-042-1,FACTS,preview e2e,the facts pane shows the fixture's exact values with sector comparisons
+43,C-043-1,FACTS,preview e2e,similar companies are listed
+44,C-044-1,PORTFOLIO,preview e2e,the holding pane on the stock page matches Portfolio
+45,C-045-1,STOCK,contract,an unknown symbol starts one load Job and reports progress
+46,C-046-1,STOCK,contract,the quotes route answers from the edge cache within its age limit
+47,C-047-1,STOCK,unit,the universe keeps delisted and renamed fixtures
+48,C-048-1,FACTS,unit,XBRL parse and the yfinance fallback from fixtures
+49,C-049-1,LISTS,preview e2e,the list sections render from the screen dataset
+49,C-049-2,LISTS,prototype review,"the owner said ""looks good"" to the live Worth following prototype"
+49,C-049-3,LISTS,contract,the lists Job reruns in market hours and each list carries its updated time
+50,C-050-1,LISTS,preview e2e,the table filters by chip and verdict over the full universe; the switch survives a reload
+51,C-051-1,LISTS,preview e2e,"star, inline add and Undo work"
+51,C-051-2,LISTS,prototype review,"the owner said ""looks good"" to the live Watchlist prototype"
+52,C-052-1,LISTS,contract,a star writes one row and no Job row
+53,C-053-1,LISTS,contract,Not now rows expire after a week or a month and Undo removes them
+54,C-054-1,PORTFOLIO,preview e2e,"the scope switch changes totals, tax and exposure"
+54,C-054-2,PORTFOLIO,prototype review,"the owner said ""looks good"" to the live Portfolio prototype"
+54,C-054-3,PORTFOLIO,production health,Portfolio units equal the last Kite snapshot (green or red only)
+55,C-055-1,PORTFOLIO,preview e2e,the holdings table shows the fixture's exact values
+56,C-056-1,PORTFOLIO,unit,mix gaps from fixtures
+57,C-057-1,PORTFOLIO,contract,budget and mix writes are owner-only rows
+58,C-058-1,PORTFOLIO,preview e2e,the worth-a-look pane shows the fixture's exact values
+59,C-059-1,MONEYLOTS,unit,lots from trades and corporate actions equal the captured Python outputs
+59,C-059-2,PORTFOLIO,preview e2e,a new Kite snapshot changes the holdings without any Job
+59,C-059-3,MONEYLOTS,unit,dust holdings never become positions
+60,C-060-1,MONEYTAX,unit,tax equals the captured Python outputs
+60,C-060-2,MONEYTABS,preview e2e,"gains booked, tax-free room and harvest ideas show the fixture's values"
+60,C-060-3,MONEYTAX,private run,TypeScript tax and the ITR pack equal the Python on the vault's real rows (counts and checksums only) before the Python is deleted
+61,C-061-1,MONEYTAX,unit,the ITR pack equals the captured Python outputs
+61,C-061-2,MONEYTABS,preview e2e,the download button returns the pack
+62,C-062-1,MONEYRISK,unit,RSU value and tax equal the captured Python outputs
+62,C-062-2,MONEYTABS,preview e2e,"the RSU pane shows value, tax and expected vests"
+62,C-062-3,MONEYRISK,private run,"TypeScript RSU, allocation and money left equal the Python on the vault's real rows before the Python is deleted"
+62,C-062-4,MONEYRISK,unit,a gap between documented RSU lots and the current share count becomes one lot marked estimated
+63,C-063-1,MONEYRISK,unit,XIRR against hand-worked fixtures
+64,C-064-1,MONEYRISK,unit,concentration by stock and sector from fixtures
+65,C-065-1,MONEYRISK,unit,the Nifty −10% shock from fixtures
+65,C-065-2,MONEYTABS,prototype review,"the owner said ""looks good"" to the live money tabs prototype"
+66,C-066-1,MONEYTABS,preview e2e,the calendar shows the fixture's dates and expected cash
+67,C-067-1,MONEYTAX,unit,tax rules are picked by date from the one data file
+68,C-068-1,SYNC,contract,holdings and trades without account or source are rejected
+69,C-069-1,MONEYLOTS,unit,every Python money test case runs against the TypeScript and matches; the Python money modules are deleted
+69,C-069-2,MONEYLOTS,private run,"TypeScript lots, units, positions and own record equal the Python on the vault's real rows (counts and checksums only) before the Python is deleted"
+69,C-069-3,MONEYLOTS,unit,"lint fails any Date use in money; rounding helpers match Python's round, // and int on fixtures"
+70,C-070-1,SYNC,contract,the Kite callback stores raw holdings and trades and reports the count of changes
+70,C-070-2,SYNC,preview e2e,Sync steps run to done with a mock Kite
+70,C-070-3,SYNC,production health,a real Sync in production stores holdings and reports changes (after cutover)
+71,C-071-1,CIGATES,unit,the never-order check fails any broker order endpoint in code
+72,C-072-1,SYNC,contract,Refresh starts the documents workflow; it reads new files only and writes rows by job key
+73,C-073-1,SYNC,unit,made-up documents in the real layouts parse to the known rows
+73,C-073-2,SYNC,private run,the readers on the real documents match the vault backup's counts and checksums
+74,C-074-1,FUNDS,preview e2e,the fund page shows the fixture's NAV chart and our buys
+74,C-074-2,FUNDS,prototype review,"the owner said ""looks good"" to the live Funds prototype"
+74,C-074-3,LISTS,preview e2e,the star pane on the fund page adds the fund to the Watchlist and removes it
+75,C-075-1,FUNDS,unit,"fund returns, rolling returns, falls, cost and size from fixtures"
+76,C-076-1,FUNDOVERLAP,unit,overlap with our holdings from fixtures
+77,C-077-1,MODELNOTES,contract,fund Analyse runs to a fund call
+78,C-078-1,NEWSIMPACT,contract,news collect writes items; cards read ranked items
+79,C-079-1,NEWSIMPACT,contract,impact rows are append-only and complete
+80,C-080-1,NEWSIMPACT,contract,a consumer reading the raw sector tag fails the contract test
+81,C-081-1,NEWSIMPACT,contract,each named consumer reads the impact table
+82,C-082-1,NEWSIMPACT,unit,source weights order the fixtures
+83,C-083-1,NEWSIMPACT,contract,the og route returns an image or a placeholder
+84,C-084-1,NEWSSCREENS,preview e2e,"sector mood, coming up and big-fund money show the fixture's values"
+84,C-084-2,NEWSSCREENS,prototype review,"the owner said ""looks good"" to the live Market & news prototype"
+85,C-085-1,NEWSSCREENS,preview e2e,In the news and the stock's news show relation and direction from the impact table
+86,C-086-1,MONEYRISK,unit,exposure arithmetic from fixtures
+86,C-086-2,NEWSSCREENS,preview e2e,exposure per holding shows the fixture's values
+87,C-087-1,RECORD,unit,track-record scoring from fixtures
+87,C-087-2,RECORD,prototype review,"the owner said ""looks good"" to the live Record prototype"
+88,C-088-1,RECORD,unit,benchmarks against the Nifty and an equal-weight watchlist from fixtures
+89,C-089-1,MODELNOTES,contract,a missed call at 3 months gets one post-mortem row
+90,C-090-1,MONEYLOTS,unit,own-trading stats equal the captured Python outputs
+90,C-090-2,RECORD,preview e2e,our own trading shows the fixture's values
+91,C-091-1,RECORD,unit,Smallcase against our trades from fixtures
+92,C-092-1,FEEDBACK,preview e2e,the box sends and shows Received
+92,C-092-2,FEEDBACK,prototype review,"the owner said ""looks good"" to the live Feedback prototype"
+93,C-093-1,FEEDBACK,preview e2e,each ask shows its status and Job
+94,C-094-1,FEEDBACK,contract,only the owner can set review states
+95,C-095-1,FEEDBACK,contract,Reviewed creates one issue quoting both texts
+96,C-096-1,FEEDBACK,contract,the ticket's state moves the ask's status
+97,C-097-1,FEEDBACK,contract,an ask unreviewed for 24 hours opens one issue
+98,C-098-1,MIGRATE,contract,"on fixtures in v2's shapes, migrated feedback count equals v2's"
+99,C-099-1,ADMIN,preview e2e,Admin sections render; Try again requeues a Job
+99,C-099-2,ADMIN,prototype review,"the owner said ""looks good"" to the live Admin prototype"
+100,C-100-1,ORCH,unit,a UI ticket labelled prototype-waiting is never resumed by dispatch and counts toward the cap of 3; no UI ticket starts above 80% of the month's build minutes
+101,C-101-1,ADMINCTL,contract,paused releases move nothing to production
+102,C-102-1,SKELAPI,contract,a flagged pane is hidden until switched on
+103,C-103-1,ADMINCTL,contract,a paused Job kind starts no Job
+104,C-104-1,ADMINCTL,preview e2e,a pane moved or hidden in Admin moves or hides on the next load with no deploy
+105,C-105-1,ADMINCTL,contract,Recompute last N days starts one Job with that range
+106,C-106-1,PANES,contract,a browser error posts one row to /api/errors
+106,C-106-2,ADMIN,preview e2e,Problems lists stored browser errors
+107,C-107-1,ADMIN,contract,a click writes one usage count
+108,C-108-1,EMAIL,unit,the owner's email HTML has every section from fixtures and no Sync link
+108,C-108-2,EMAIL,production health,the email is sent each trading day
+109,C-109-1,EMAIL,production health,the father's version is sent
+110,C-110-1,EMAIL,unit,unreachable health renders that line
+111,C-111-1,PUBLISH,unit,"every dataset in the registry has a producer, schedule, freshness promise and checks"
+112,C-112-1,PUBLISH,contract,rows of an unfinished run are never served; the pointer moves in one write
+112,C-112-2,PUBLISH,contract,"a dataset over 1,000 rows publishes one file per run with only its pointer in D1; past a dataset's write budget the door refuses it while people's writes still land"
+112,C-112-3,PUBLISH,contract,a failing row check holds back that row with its reason and the run publishes; past the threshold the run fails
+113,C-113-1,PUBLISH,contract,"the ingest door rejects rows without source, fetch time and as of"
+114,C-114-1,JOBS,contract,a second identical Job is refused; one lock is held per kind; a failed step retries with backoff
+115,C-115-1,JOBS,contract,rerunning a Job for the same range leaves the same rows
+116,C-116-1,JOBS,contract,the 5-minute tick dispatches each due Job once and none on a market holiday
+116,C-116-2,JOBS,contract,a button Job is dispatched at once; a dispatched Job not started within 3 minutes is dispatched again
+116,C-116-3,JOBS,contract,each cron duty runs as its own queue message and invocation with its own heartbeat; one throwing leaves the others run
+117,C-117-1,JOBS,unit,calendar and corporate-action adjustments from fixtures
+117,C-117-2,JOBS,contract,the calendar Job posts holidays and corporate actions; health is amber with under 30 days ahead
+118,C-118-1,JOBS,unit,the freshness rule across holidays and IST display
+119,C-119-1,PUBLISH,contract,a pane answer is served from the edge cache until its dataset's pointer moves
+119,C-119-2,BACKUP,production health,the monitor reports D1 size and daily reads and writes
+119,C-119-3,PUBLISH,contract,a browser holding the current run gets a 304 with no D1 read
+120,C-120-1,PUBLISH,production health,data files carry immutable cache headers; the bundle has no data
+121,C-121-1,SKELAPI,production health,health returns every part and refuses without the header
+122,C-122-1,OPS,production health,a forced red opens exactly one issue
+123,C-123-1,OPS,production health,promise results are stored daily
+124,C-124-1,OPS,production health,each dependency check reports
+125,C-125-1,BACKUP,production health,the backup heartbeat is green nightly (after cutover)
+126,C-126-1,BACKUP,production health,"the drill restores into the preview D1, compares counts and reports (after cutover)"
+127,C-127-1,BACKUP,production health,the tracker lists every secret in the secrets list with its expiry
+128,C-128-1,BACKUP,contract,rows past the archive age move to Parquet and leave D1
+129,C-129-1,JOBS,contract,past the daily cap a model Job is refused and the pane says next update tomorrow; a repeat brief returns the cached answer
+130,C-130-1,MODELS,main run,"comparison report: ≥95% form checks and ≥80% verdict agreement, else Sonnet for forecasts"
+131,C-131-1,MODELS,main run,the bench scores on main after a prompt or model change; red pauses releases
+132,C-132-1,CIGATES,unit,a workflow with any trigger other than workflow_dispatch fails; the models environment is main-only
+133,C-133-1,MODELNOTES,contract,the summary route needs the task's key; the note is written back through the API
+134,C-134-1,RETIRE,session report,no production part depends on the VM; every heartbeat comes from Cloudflare or GitHub
+135,C-135-1,SKELAPI,production health,running versions match production after each release
+136,C-136-1,OPS,production health,a forced red rolls back production and pauses releases
+137,C-137-1,SKELAPI,production health,lane branches start no build; each preview branch gets its own address on the preview D1
+137,C-137-2,FIXTURES,contract,the preview reads production's public files; private tables hold only made-up rows; the nightly reseed restores them
+138,C-138-1,SKELAPI,contract,the migration runner refuses a drop in an expand step
+139,C-139-1,CIGATES,unit,a removed or narrowed contract field fails against production's schema
+140,C-140-1,CIGATES,unit,"the privacy check catches planted fixtures in a diff, title and body"
+141,C-141-1,CIGATES,unit,the never-order check runs on every PR
+142,C-142-1,CIGATES,unit,"a PR touching workflows, tools/gates or a passed check fails unless stockpilot-bot added the planner label"
+143,C-143-1,CIGATES,unit,a story with no check fails; a changed passed check without the planner label fails
+144,C-144-1,HARDEN,screenshot,a merged screen that differs from its approved prototype screenshots beyond the threshold fails
+144,C-144-2,HARDEN,preview e2e,axe passes; bundle size and throttled-phone load are under budget
+145,C-145-1,SKELAPI,unit,docker compose smoke runs the Ping path on Node and SQLite
+146,C-146-1,FIXTURES,unit,the generator's output passes the contract and seeds the preview D1
+147,C-147-1,HARDEN,unit,the golden-day replay produces the recorded outputs
+148,C-148-1,HARDEN,unit,the Renovate config is valid; patch updates auto-merge
+149,C-149-1,SKELAPI,unit,"new-area creates the contract file, route, schema, pane, words and a passing test, and the new area touches no file outside its folders and contract/"
+150,C-150-1,SETUP,session report,every setup step is recorded green in setup.md
+151,C-151-1,ORCH,unit,dispatch picks ready tickets with disjoint files and claims each once per account
+151,C-151-2,ORCH,unit,two dispatchers claiming one ticket: the earliest claim comment wins and the other withdraws; a claim with no push for 6 hours while its account is refused is released
+152,C-152-1,ORCH,unit,a stopped builder with a red PR is resumed with the failing output; a merged PR's session is archived; builders hold their own PR subscription
+152,C-152-2,ORCH,unit,"a builder silent 45 minutes, disconnected or failed is nudged, then replaced from lane/<key> at the next wake, then labelled needs-planner after three; a prototype-waiting builder is never touched"
+153,C-153-1,ORCH,unit,a builder that stopped with unticked checks is resumed; a Left over line outside owned paths becomes a ticket
+153,C-153-2,ORCH,unit,a due private-run check plans one session in private; the trace copy differing from the private trace plans a sync PR
+153,C-153-3,ORCH,unit,a ticket with no owned paths runs alone until its claim comment declares them
+154,C-154-1,ORCH,unit,an open hotfix issue plans a builder on the next wake even above 90%
+155,C-155-1,ORCH,unit,"pace reads each session's rate-limit status and starts nothing at allowed_warning, at rejected before resetsAt, or at a seven-day warning on the driver"
+155,C-155-2,SKELAPI,contract,"/api/status answers without a secret, carries check results and budget percentages, and no private value"
+156,C-156-1,ORCH,unit,"each account's pinned comment shows its quota reading, running tickets and prototypes waiting"
+157,C-157-1,SETUP,session report,the banner is shown; no sp-* timer or v2 workflow runs
+158,C-158-1,CUTOVER,contract,"the final migration report matches every table's count and checksum, by the per-table list"
+158,C-158-2,MIGRATE,contract,"on fixtures, every v2 D1 table, the KV queue and the vault's tables is copied, rebuilt or dropped per its list, and a rerun changes nothing"
+159,C-159-1,CUTOVER,production health,the cutover gate reads every check green except those marked after cutover
+159,C-159-2,SKELAPI,production health,"after each promotion the check runner stores every production check's result, shown on health"
+160,C-160-1,CUTOVER,production health,the soak counter shows in the morning email until the tag (after cutover)
+161,C-161-1,RETIRE,production health,each retired path answers gone or is absent
+162,C-162-1,VMCLEAN,session report,"sp-* units, the DuckDB file and site/ are absent"
+163,C-163-1,RETIRE,unit,"doc check: pointers resolve, ADRs are indexed"
+164,C-164-1,SHELL,unit,"every colour, type size and spacing comes from the one token file; a hard-coded colour fails lint"
+165,C-165-1,EMAIL,contract,the digest route lists newly waiting prototypes with links and is empty when none are new
+166,C-166-1,MIGRATE,session report,the cockpit ran the rehearsal into v3 production; holdings at the v3 address equal the last Kite snapshot
+167,C-167-1,SETUP,session report,a forced red health makes the hourly Apps Script check send its email
+168,C-168-1,CUTOVER,production health,stockpilotgn.pages.dev serves v3 through the front door and the Kite callback path answers; a rollback restores v2
+169,C-169-1,OPS,contract,watcher issues are opened by stockpilot-bot
+169,C-169-2,FEEDBACK,contract,feedback tickets are opened by stockpilot-bot
+170,C-170-1,CALLS,contract,"a call outside 5% to 95%, without a base rate of 30 cases or a horizon is held back; a thin or moved bucket adds ""limited evidence""; the screen is deterministic"
+170,C-170-2,MODELS,contract,"a model answer citing a number not in the brief, or moving a call without evidence, is rejected and the code-only call stands"
+171,C-171-1,CALLS,unit,every code-made sentence template has its Kolkata Bengali form; a template without one fails
+171,C-171-2,FACTS,unit,every facts sentence template has its Kolkata Bengali form
+172,C-172-1,PANES,preview e2e,"every number slot shows its plain sentence and opens ""how we worked it out"""
