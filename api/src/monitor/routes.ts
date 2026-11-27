@@ -7,12 +7,25 @@ import { type Ctx, istDay, istText, rawBody } from "../app";
 export const METRICS = ["d1_reads", "d1_writes", "worker_requests", "build_minutes"] as const;
 
 export async function d1Bytes(ctx: Ctx): Promise<number> {
-  const row = await ctx.d1
-    .prepare(
-      "select (select page_count from pragma_page_count()) * (select page_size from pragma_page_size()) as bytes",
-    )
-    .first();
-  return Number(row?.bytes ?? 0);
+  // The pragma table functions work in SQLite but D1 may refuse them; D1 reports the size on
+  // every query result (meta.size_after), so fall back to that rather than answering 500.
+  try {
+    const row = await ctx.d1
+      .prepare(
+        "select (select page_count from pragma_page_count()) * (select page_size from pragma_page_size()) as bytes",
+      )
+      .first();
+    const bytes = Number(row?.bytes ?? 0);
+    if (bytes > 0) return bytes;
+  } catch {
+    // fall through to the D1 meta size
+  }
+  try {
+    const r = await ctx.d1.prepare("select 1").all();
+    return Number(r?.meta?.size_after ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function usageToday(ctx: Ctx) {
