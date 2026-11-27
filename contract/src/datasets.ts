@@ -22,6 +22,18 @@ export type Dataset = {
   /** Most D1 rows this dataset may write in a day (a row costs 1 + its indexes). */
   writeBudget: number;
   row: z.ZodType;
+  /** `rows` (default, up to 1,000 per run) or `file`: one content-hashed file per run, only its pointer and summary in D1. */
+  delivery?: "rows" | "file";
+  /** Extra row check beyond `row`'s schema: a reason holds the row back and the run goes on. */
+  rowCheck?: (row: Record<string, unknown>) => string | null;
+  /** Run check: a reason fails the run. `rows` is present for `rows` delivery only. */
+  runCheck?: (run: {
+    rowCount: number;
+    rows?: Record<string, unknown>[];
+    summary: Record<string, unknown>;
+  }) => string | null;
+  /** Share of a run's rows that may be held back before the run fails (default 0.2). */
+  heldBackLimit?: number;
 };
 
 export const datasets = {
