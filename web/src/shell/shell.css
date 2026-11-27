@@ -523,3 +523,38 @@ ul {
     display: none;
   }
 }
+
+/* Search results (WORDS) */
+.search {
+  position: relative;
+}
+.search-results {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: var(--sp-2);
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+}
+.search-results button {
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.search-results button:hover,
+.search-results button:focus {
+  background: var(--line-2);
+}
+.whatsnew {
+  margin-bottom: var(--sp-4);
+}

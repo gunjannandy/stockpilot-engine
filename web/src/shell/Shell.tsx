@@ -3,6 +3,8 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Pane } from "../areas";
+import { WhatsNew } from "../i18n/WhatsNew";
+import { SearchBox } from "../search";
 import {
   getLang,
   getSize,
@@ -109,10 +111,7 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
         </Link>
       </nav>
       <header className="top">
-        <label className="search">
-          <span className="sr">{t("shell.search")}</span>
-          <input ref={search} type="search" placeholder={t("shell.search.hint")} />
-        </label>
+        <SearchBox ref={search} />
         <span className="sync note">
           {syncedAt ? `${t("shell.synced")} ${syncedAt}` : t("shell.synced.none")}
         </span>
@@ -164,6 +163,7 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
         </div>
       </header>
       <main id="page" className="page" tabIndex={-1}>
+        <WhatsNew lang={lang} />
         <Screens.Provider value={items}>
           <Outlet />
         </Screens.Provider>
