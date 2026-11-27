@@ -66,6 +66,11 @@ def decide(tickets, state, now, cfg, me, main=None):
             free[taker] -= 1
             if taker == me:
                 events.append({"kind": "start", "account": me, "number": x["number"], "key": x["key"]})
+    for x in sorted(tickets, key=lambda x: x["number"]):
+        reply = x.get("owner_reply")
+        mine = (x["claim"] or {}).get("account") == me or (not x["claim"] and active[:1] == [me])
+        if reply and mine and "needs-owner" in x["labels"] and _once(new["sent"], f"reply:{reply[0]}", now):
+            events.append({"kind": "owner-reply", "account": me, "number": x["number"], "key": x["key"], "text": reply[1]})
     for x in sorted((x for x in tickets if x["claim"] and x["claim"]["account"] == me), key=lambda x: x["number"]):
         events += _watch_builder(x, new["sent"], now, cfg)
     return events, new
@@ -116,7 +121,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gather  # noqa: E402
 
 ENGINE, PRIVATE = gather.ENGINE, gather.PRIVATE
-SKIP = {133, 195}            # the spec and the build-status issue are not tickets
+BOARD_ISSUE = 195
+SKIP = {133, BOARD_ISSUE}            # the spec and the build-status issue are not tickets
 CLAIM = re.compile(r"Claimed by (\w+): (\S+)(?: \((lane/[\w-]+)\))?")
 
 
@@ -132,10 +138,56 @@ def to_ticket(issue, comments, open_numbers):
         claim = {"account": m.group(1), "session": m.group(2), "at": live[-1]["created_at"]}
         if m.group(3):
             claim["lane"] = m.group(3)
+    ask, reply = None, None
+    for c in comments:
+        b = c.get("body", "")
+        if b.startswith(ASK):
+            ask, reply = b[len(ASK):].strip(), None
+        elif ask and not b.startswith("🤖") and not CLAIM.match(b) and not re.match(r"(Withdrawn|Released) by", b):
+            reply = (str(c.get("id", c["created_at"])), b.strip())
     blockers = gather.parse_blockers(body)
-    return {"number": issue["number"], "key": gather.parse_key(body) or f"LO{issue['number']}", "labels": labels,
+    return {"ask": ask, "owner_reply": reply, "number": issue["number"], "key": gather.parse_key(body) or f"LO{issue['number']}", "labels": labels,
             "blocked_by": blockers, "open_blockers": [b for b in blockers if b in open_numbers],
             "ui": "v3-ui" in labels, "claim": claim, "pr": None, "pushed_at": None}
+
+
+ASK = "🤖 Needs you:"
+
+
+def board(tickets, state, now):
+    """The owner's one view of both accounts, written into the pinned build-status issue."""
+    from zoneinfo import ZoneInfo
+    ist = ZoneInfo("Asia/Kolkata")
+
+    def link(x):
+        c = x["claim"]
+        return f" · [session](https://claude.ai/code/{c['session']}) ({c['account']})" if c else ""
+    def pr(x):
+        p = x["pr"]
+        return f" · engine#{p['number']} {p['ci']}" if p else ""
+    def ago_(x):
+        last = _latest((x["claim"] or {}).get("at"), x["pushed_at"], (x["pr"] or {}).get("updated_at"))
+        return f" · {int((_t(now) - last).total_seconds() // 60)} min since last activity" if last else ""
+    needs = [x for x in tickets if {"needs-owner", "prototype-waiting", "needs-planner"} & set(x["labels"])]
+    live = [x for x in tickets if x["claim"] and x not in needs and not (x["pr"] and x["pr"]["state"] == "merged")]
+    out = [f"_Written by the VM watcher, {_t(now).astimezone(ist).strftime('%d %b %H:%M')} IST. "
+           "Reply on a ticket's issue to answer it._", "", "## Needs you"]
+    for x in needs:
+        why = ("prototype ready to review in its builder chat" if "prototype-waiting" in x["labels"] else
+               x.get("ask") or "stuck: a planning session must look at it")
+        out.append(f"- **#{x['number']} {x['key']}**: {why}{link(x)}")
+    out += ["- nothing" if not needs else "", "## Building"]
+    out += [f"- #{x['number']} {x['key']}{pr(x)}{ago_(x)}{link(x)}" for x in live] or ["- nothing"]
+    counts = {k: sum(1 for x in tickets if status(x) == k) for k in ("status:ready", "status:blocked")}
+    lim = state.get("limited_until", {})
+    out += ["", "## Queue", f"Ready: {counts['status:ready']} · Blocked: {counts['status:blocked']}", "",
+            "## Accounts"]
+    for a in CFG["accounts"]:
+        until = lim.get(a["name"])
+        role = "reserve" if a.get("reserve") else "works first"
+        out.append(f"- {a['name']} ({role}): " + (f"at its limit until {_t(until).astimezone(ist).strftime('%H:%M IST')}" if until and
+                                                    _t(until) > _t(now) else "available"))
+    return "\n".join(out).replace("\n\n\n", "\n\n")
 
 
 RESET = re.compile(r"resets (\d{1,2})(?::(\d\d))?\s*([ap]m)(?: \(([\w/]+)\))?", re.I)
@@ -227,7 +279,7 @@ ACCOUNTS = [{"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"},
             {"name": "primary", "slots": 3, "config_dir": "~/.claude", "reserve": True}]   # owner, 2026-11-27
 STATUS_LABELS = ["status:ready", "status:blocked", "status:building", "status:pr", "status:prototype", "status:stuck"]
 CFG = {"accounts": ACCOUNTS, "quiet_minutes": 60}
-HANDOFF_AT = 120_000
+HANDOFF_AT = 300_000   # a fresh orchestrator already starts near 90k
 
 
 def _load():
@@ -301,6 +353,14 @@ def step(account, now=None):
     tickets = collect(now=now)
     sync_labels(tickets)
     ev, new = decide(tickets, {"limited_until": lim, "sent": sent}, now, CFG, account, main=main_state())
+    md = board(tickets, {"limited_until": lim}, now)
+    key = re.sub(r"_Written by.*?_", "", md)
+    if st.get("board") != key:
+        try:
+            _gh("issue", "edit", str(BOARD_ISSUE), "-R", PRIVATE, "--body", md)
+            st["board"] = key
+        except subprocess.CalledProcessError as e:
+            print(f"watch: board not written: {e}", file=sys.stderr)
     st["limited_until"], st["sent"][account] = new["limited_until"], new["sent"]
     f = _my_transcript(account)
     if f and context_tokens(f) > HANDOFF_AT and f"handoff:{f.name}" not in st["sent"][account]:
