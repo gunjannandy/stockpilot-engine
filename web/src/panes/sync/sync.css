@@ -4,7 +4,7 @@
   height: 0.55rem;
   margin-inline-start: 0.4rem;
   border-radius: 50%;
-  background: #f5c400;
-  box-shadow: 0 0 0 2px rgb(245 196 0 / 0.3);
+  background: var(--warn);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 30%, transparent);
   vertical-align: middle;
 }
