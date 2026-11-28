@@ -15,7 +15,7 @@ Status: building
 - [ ] Register each consumer's files in `CONSUMER_FILES` (api/src/news/contract.ts) as their areas land (refresh triggers, forecast, change marks, near-live picks, exposure, nightly note).
 - [ ] Email: call line from `money/src/callline/` (not on main yet), mood, coming up, changes, build progress and soak counter feeds; Apps Script fetch (C-108-2, C-109-1 are production checks).
 - [ ] Model access for the judge in the Job (see Blocked); until then items are ranked and published but not judged.
-- [ ] Archive of news older than 90 days; heartbeat for the duty.
+- [ ] Archive of news older than 90 days (the Job already beats `job.news`; the duty beats through the shared duty runner).
 - [ ] Set Status: done when all green.
 
 ## Decisions
@@ -30,3 +30,5 @@ Status: building
 - Model token for the news Job (judging needs a model; `_job.yml` carries none). Name: a model API secret passed to `news.yml`.
 - private run: C-108-2 morning email sent each trading day
 - private run: C-109-1 the father's version is sent
+
+Chapter end: 1
