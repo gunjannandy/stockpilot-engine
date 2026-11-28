@@ -16,6 +16,7 @@ Status: building
 - [x] Check C-040-4 (`checks/C-040-4.py`): `backfill_all` in the history Job (subject `backfill`), unexplained jumps held back, 2% threshold.
 - [x] Chart file: `GET /api/stocks/:symbol/chart` (`api/src/stocks/chart.ts`, shape `ChartResponse`): split-adjusted prices, 2- and 10-month averages. Search index is the universe dataset behind `/api/stocks/search`.
 - [x] Facts Job and checks C-048-1, C-171-2.
+- [ ] Quotes duty in `api/src/schedule/duties.ts` (shared file; quotes stay empty until wired) and typed web client entries in `tools/contract-gen/gen.ts`.
 - [ ] Facts: feed `price_sentences` (biggest fall, swings, trading) from history rows in the Job (written and tested, not yet fed); similar companies list.
 - [ ] Production check C-040-3 (last close vs bhavcopy for 5 samples) once data runs.
 - [ ] Set Status: done when all green.
@@ -31,3 +32,5 @@ Status: building
 
 ## Blocked
 - none
+
+Chapter end: 2
