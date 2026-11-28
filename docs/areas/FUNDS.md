@@ -13,7 +13,7 @@ Status: building
 - Fund calls, public part: `py/stockpilot/jobs/funds/calls.py` (screen, backtested base rate by kind and 3-year quartile, track record), published by the funds Job as dataset `fund_calls` (`contract/src/fundcalls/`, route `GET /api/fund-calls` in `api/src/fundcalls/`, tests beside each).
 
 ## Next
-- [ ] Confirm `gate` is green on PR #69 and it merges.
+- [ ] Confirm `gate` is green on PR #80 after the fund_calls privacy fix (pushed 16ea3ce) and it merges.
 - [ ] Find a source each of the 10 houses serves to Actions (`config/fund_house_sources.json` has 5 of 10 unfound); until then they report 'cannot be fetched' in the run's lines.
 - [x] Held-fund call and scored-later track record: `held_calls` and `score_calls` in `py/stockpilot/jobs/funds/calls.py` (tests beside). Remaining: the VM caller passes held ids and past published rows to them (private side, outside this repo's data). Was: weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
 - [x] Fund detail report: see section below.
@@ -41,4 +41,4 @@ Not supportable free: exit load, fund manager and tenure, official benchmark and
 
 - Chapter 4: PR #80 `ts` was red on C-203-1 (`fund_calls` was public); set it private rather than touch the gate.
 
-Chapter end: 3
+Chapter end: 4
