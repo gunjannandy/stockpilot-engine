@@ -2,6 +2,7 @@
 // as `Row`, `RateOn` and `Holding` repeat across modules and mean different things in each.
 export * as allocation from "./budget/allocation";
 export * as budget from "./budget/budget";
+export * as callline from "./callline/callline";
 export * as dates from "./core/dates";
 export * as kinds from "./core/kinds";
 export * as round from "./core/round";

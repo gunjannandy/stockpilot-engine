@@ -18,6 +18,7 @@ import { DividendsRun, UsPricesRun } from "./money/money";
 import { NewsItemRow } from "./news/news";
 import { RecordRun } from "./record/record";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
+import { MarketRow, marketRowCheck } from "./today/today";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
  * JSON Schema; the door enforces `writeBudget` per day. */
@@ -223,6 +224,20 @@ export const datasets = {
     writeBudget: 10,
     row: RecordRun,
     run: { at: "23:30", on: "trading" },
+  },
+  market: {
+    name: "market",
+    job: "market",
+    table: "market_health",
+    schedule: "every trading day at 22:00 IST",
+    freshnessHours: 72,
+    checks: { row: ["at least one figure", "every sentence has Bengali"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: MarketRow,
+    rowCheck: marketRowCheck,
+    run: { at: "22:00", on: "trading" },
   },
   dividends: {
     name: "dividends",
