@@ -25,7 +25,7 @@ const trade = (
       key,
       extra.kind ?? "stock",
       extra.symbol ?? "ABC",
-      extra.isin ?? "INE000A01010",
+      extra.isin ?? "TESTID0001",
       side,
       date,
       qty,
@@ -40,7 +40,7 @@ describe("lots loader", () => {
     const db = await fresh();
     await trade(db, "b1", "buy", "2024-01-10", 10, 100);
     await db.exec(
-      "insert into corporate_actions (symbol, ex_date, kind, isin, numerator, denominator) values ('ABC', '2024-06-01', 'split', 'INE000A01010', 2, 1)",
+      "insert into corporate_actions (symbol, ex_date, kind, isin, numerator, denominator) values ('ABC', '2024-06-01', 'split', 'TESTID0001', 2, 1)",
     );
     const { lots } = await loadRebuild(db);
     const l = lots.find((x) => x.symbol === "ABC");
@@ -51,8 +51,8 @@ describe("lots loader", () => {
   it("reads a demerger's terms from action_terms", async () => {
     const db = await fresh();
     await trade(db, "b1", "buy", "2024-01-10", 10, 100);
-    await db.exec(`insert into corporate_actions (symbol, ex_date, kind, isin, numerator, denominator) values ('ABC', '2024-06-01', 'demerger', 'INE000A01010', 1, 1);
-      insert into action_terms (symbol, ex_date, kind, new_isin, new_symbol, cost_fraction) values ('ABC', '2024-06-01', 'demerger', 'INE000B01010', 'NEWCO', 0.25)`);
+    await db.exec(`insert into corporate_actions (symbol, ex_date, kind, isin, numerator, denominator) values ('ABC', '2024-06-01', 'demerger', 'TESTID0001', 1, 1);
+      insert into action_terms (symbol, ex_date, kind, new_isin, new_symbol, cost_fraction) values ('ABC', '2024-06-01', 'demerger', 'TESTID0002', 'NEWCO', 0.25)`);
     const { lots } = await loadRebuild(db);
     expect(lots.find((x) => x.symbol === "NEWCO")?.quantity).toBe(10);
   });
