@@ -85,6 +85,13 @@ describe("money harvest and risk", () => {
     expect(r.concentration.total).toBe(1500);
     expect(r.shock.lossInr).toBeCloseTo(-150);
     expect(r.shock.assumedBeta).toEqual(["AAA"]);
+    await db.exec(
+      "insert into facts (id,symbol,exchange,sector,as_of,sentences_json,figures_json) values ('f','AAA','NSE','Banks','2025-01-01','[]','{}');",
+    );
+    const r2 = (await (await app.request("/api/money/risk")).json()) as {
+      concentration: { bySector: { key: string }[] };
+    };
+    expect(r2.concentration.bySector.map((s) => s.key)).toEqual(["Banks"]);
   });
 });
 

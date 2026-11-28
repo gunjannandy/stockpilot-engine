@@ -183,8 +183,8 @@ export default function routes(ctx: Ctx) {
     );
   });
 
-  // Concentration and the Nifty −10% view over held INR stocks at the newest close. Sector and beta are not
-  // stored yet, so every stock is "Unknown" and moves with the market (beta 1); the response says so.
+  // Concentration and the Nifty −10% view over held INR stocks at the newest close. Sector comes from the newest
+  // `facts` row; beta is not stored yet, so every stock moves with the market (beta 1) and the response says so.
   app.get("/api/money/risk", ctx.guard.person, async (c) => {
     const rows =
       (
@@ -202,6 +202,17 @@ export default function routes(ctx: Ctx) {
       );
     const items: Exposure[] = [];
     const warnings: string[] = [];
+    const sectorOf = async (symbol: string): Promise<string | null> => {
+      try {
+        const row = (await ctx.d1
+          .prepare("select sector from facts where symbol = ? order by as_of desc limit 1")
+          .bind(symbol)
+          .first()) as { sector?: string | null } | null;
+        return row?.sector ? String(row.sector) : null;
+      } catch {
+        return null; // facts not stored yet
+      }
+    };
     for (const [symbol, q] of qty) {
       if (q <= 1e-9) continue;
       const p = await latestClose(symbol);
@@ -209,7 +220,7 @@ export default function routes(ctx: Ctx) {
         warnings.push(`No price for ${symbol}.`);
         continue;
       }
-      items.push({ symbol, sector: null, value: q * p.close, beta: null });
+      items.push({ symbol, sector: await sectorOf(symbol), value: q * p.close, beta: null });
     }
     return c.json(
       RiskResponse.parse({
