@@ -1,8 +1,9 @@
 // Shared v3 prototype pieces: the list row, the meter, the sparkline, the section heading, the segmented switch.
 import { type ReactNode, useEffect, useState } from "react";
+import { money } from "../../format";
 import { useWords } from "../../words";
-import { sparkPath } from "../stock/sample";
-import { type Change, callCard, money, quote, type SampleStock } from "./data";
+import { type Change, callCard, growthOf, peOf, quote, type StockView } from "./pending";
+import { sparkPath } from "./stockbits";
 import "./kit.css";
 
 export function Spark({ closes }: { closes: number[] }) {
@@ -156,7 +157,7 @@ export function StockRow({
   mark,
   star,
 }: {
-  st: SampleStock;
+  st: StockView;
   active?: boolean;
   onClick?: () => void;
   reasons?: ReactNode;
@@ -208,13 +209,13 @@ export function StockTable({
   onPick,
   cols,
 }: {
-  rows: SampleStock[];
+  rows: StockView[];
   onPick: (id: string) => void;
   cols?: ("sector" | "pe" | "growth")[];
 }) {
   const t = useWords();
   const [sort, setSort] = useState<{ k: string; dir: 1 | -1 }>({ k: "chance", dir: -1 });
-  const val = (s: SampleStock, k: string) =>
+  const val = (s: StockView, k: string) =>
     k === "name"
       ? s.name
       : k === "chance"
@@ -224,9 +225,9 @@ export function StockTable({
           : k === "day"
             ? quote(s).day
             : k === "pe"
-              ? 8 + ((s.seed * 7) % 30)
+              ? peOf(s)
               : k === "growth"
-                ? ((s.seed * 11) % 40) - 8
+                ? growthOf(s)
                 : s.sector;
   const sorted = [...rows].sort((a, b) => {
     const x = val(a, sort.k);

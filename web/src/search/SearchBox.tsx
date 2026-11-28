@@ -1,7 +1,7 @@
 // The top-bar search. `/` focuses it (Shell owns that key); typing lists matches; Enter or a click opens the stock.
 import { useNavigate } from "@tanstack/react-router";
 import { forwardRef, useEffect, useMemo, useState } from "react";
-import { UNIVERSE } from "../panes/_kit/data";
+import { UNIVERSE } from "../panes/_kit/pending";
 import { useWatch, watch } from "../panes/_kit/watch";
 import { useWords } from "../words";
 import { createSearch, type Entry } from "./core";

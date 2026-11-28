@@ -23,5 +23,7 @@
   "title": "Admin",
   "updated": "Updated",
   "usage": "What gets used",
-  "usageP": "Which screens and buttons get used. Counts only, no names."
+  "usageP": "Which screens and buttons get used. Counts only, no names.",
+  "screens.title": "Screens",
+  "screens.body": "Switch a screen off to show only a short notice that it is being fixed."
 }

@@ -2,13 +2,13 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useWords } from "../../words";
 import { Detail } from "../stock";
-import { barsOf, callCard, growthOf, peOf, quote, type SampleStock } from "./data";
+import { barsOf, callCard, growthOf, peOf, quote, type StockView } from "./pending";
 import { Toast } from "./Toast";
 import { Seg, StockRow, StockTable } from "./ui";
 import { useWatch, watch } from "./watch";
 
 export type Group = { id: string; label: string; sentence?: string; cls: string };
-export type ChipDef = { id: string; label: string; test: (s: SampleStock) => boolean };
+export type ChipDef = { id: string; label: string; test: (s: StockView) => boolean };
 
 export function ListPage({
   eyebrow,
@@ -28,16 +28,16 @@ export function ListPage({
   eyebrow: string;
   title: string;
   sub: string;
-  rows: SampleStock[];
+  rows: StockView[];
   chips: ChipDef[];
-  groupOf: (s: SampleStock) => Group;
+  groupOf: (s: StockView) => Group;
   groupOrder: string[];
-  reasonsOf?: (s: SampleStock) => string[];
+  reasonsOf?: (s: StockView) => string[];
   top?: ReactNode;
   tableCols?: ("sector" | "pe" | "growth")[];
   empty: string;
   updated?: string;
-  rowExtra?: (s: SampleStock) => ReactNode;
+  rowExtra?: (s: StockView) => ReactNode;
 }) {
   const t = useWords();
   const w = useWatch();
@@ -204,14 +204,14 @@ export { quote };
 
 const SCREEN: Record<
   string,
-  { label: string; opts: { id: string; label: string; test: (s: SampleStock) => boolean }[] }
+  { label: string; opts: { id: string; label: string; test: (s: StockView) => boolean }[] }
 > = {
   verdict: {
     label: "v3.fVerdict",
     opts: (["sell", "weak", "buy", "keep", "watch"] as const).map((v) => ({
       id: v,
       label: `stock.verdict.${v}`,
-      test: (s: SampleStock) => s.verdict === v,
+      test: (s: StockView) => s.verdict === v,
     })),
   },
   pe: {
@@ -239,7 +239,7 @@ const SCREEN: Record<
     ],
   },
 };
-const matchScreen = (s: SampleStock, sf: Record<string, string>) =>
+const matchScreen = (s: StockView, sf: Record<string, string>) =>
   Object.entries(sf).every(([k, v]) => !v || SCREEN[k]?.opts.find((o) => o.id === v)?.test(s));
 
 function Screener({

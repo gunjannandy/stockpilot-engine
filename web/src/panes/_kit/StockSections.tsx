@@ -1,4 +1,6 @@
 // The stock page's v2 sections, rebuilt for v3: changed band, call card, numbers in plain words, holding, news, similar companies.
+
+import { money, pct, RS } from "../../format";
 import { useWords } from "../../words";
 import { Analyse } from "./Analyse";
 import {
@@ -6,23 +8,20 @@ import {
   callCard,
   facts,
   HOLDINGS,
-  money,
   type NewsItem,
   newsFor,
-  pct,
   quote,
-  RS,
-  type SampleStock,
+  type StockView,
   similar,
   stockById,
-} from "./data";
+} from "./pending";
 import { ChangeText, Icon, Sec, VChip } from "./ui";
 import { useWatch, watch } from "./watch";
 
 const fill = (s: string, v: Record<string, string | number>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
-export function Actions({ st }: { st: SampleStock }) {
+export function Actions({ st }: { st: StockView }) {
   const t = useWords();
   const w = useWatch();
   const on = w.star.has(st.id);
@@ -54,7 +53,7 @@ export function Actions({ st }: { st: SampleStock }) {
   );
 }
 
-export function ChangedBand({ st }: { st: SampleStock }) {
+export function ChangedBand({ st }: { st: StockView }) {
   const t = useWords();
   const w = useWatch();
   const c = callCard(st).changed;
@@ -104,7 +103,7 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
   );
 }
 
-export function CallSec({ st }: { st: SampleStock }) {
+export function CallSec({ st }: { st: StockView }) {
   const t = useWords();
   const c: CallCardData = callCard(st);
   const q = quote(st);
@@ -175,7 +174,7 @@ function Bars({ vals, label }: { vals: number[]; label: string }) {
   );
 }
 
-export function FactsSec({ st }: { st: SampleStock }) {
+export function FactsSec({ st }: { st: StockView }) {
   const t = useWords();
   const names: Record<string, string> = {
     pe: "v2.fPe",
@@ -190,7 +189,7 @@ export function FactsSec({ st }: { st: SampleStock }) {
   const lo = Math.min(...q.closes);
   const hi = Math.max(...q.closes);
   const at = ((q.last - lo) / (hi - lo || 1)) * 100;
-  const seed = st.seed;
+  const seed = 0; // the stock session replaces this drawing with real figures
   const sales = Array.from({ length: 8 }, (_, i) => 60 + Math.sin(seed + i) * 14 + i * 3);
   const profit = Array.from({ length: 8 }, (_, i) => 8 + Math.cos(seed * 2 + i) * 9 + i * 0.6);
   return (
@@ -256,7 +255,7 @@ export function FactsSec({ st }: { st: SampleStock }) {
   );
 }
 
-export function HoldingSec({ st }: { st: SampleStock }) {
+export function HoldingSec({ st }: { st: StockView }) {
   const t = useWords();
   const h = HOLDINGS.find((r) => r.st.id === st.id)?.h ?? null;
   return (
@@ -306,7 +305,7 @@ export function HoldingSec({ st }: { st: SampleStock }) {
   );
 }
 
-function NewsLine({ n, st }: { n: NewsItem; st: SampleStock }) {
+function NewsLine({ n, st }: { n: NewsItem; st: StockView }) {
   const t = useWords();
   const hit = n.hits.find((h) => h.id === st.id);
   return (
@@ -331,7 +330,7 @@ function NewsLine({ n, st }: { n: NewsItem; st: SampleStock }) {
   );
 }
 
-export function NewsSec({ st }: { st: SampleStock }) {
+export function NewsSec({ st }: { st: StockView }) {
   const t = useWords();
   const list = newsFor(st);
   return (
@@ -347,7 +346,7 @@ export function NewsSec({ st }: { st: SampleStock }) {
   );
 }
 
-export function PeersSec({ st, onPick }: { st: SampleStock; onPick: (id: string) => void }) {
+export function PeersSec({ st, onPick }: { st: StockView; onPick: (id: string) => void }) {
   const t = useWords();
   return (
     <Sec icon="peers" title={t("v3.similar")} sub={t("v3.similarP")}>
@@ -369,7 +368,7 @@ export function PeersSec({ st, onPick }: { st: SampleStock; onPick: (id: string)
 export { stockById, RS, Icon };
 
 /** The numbers that matter in one dense table: this stock against its sector, the way v2 showed them. */
-export function KeyNumbers({ st }: { st: SampleStock }) {
+export function KeyNumbers({ st }: { st: StockView }) {
   const t = useWords();
   const names: Record<string, string> = {
     pe: "v2.fPe",
@@ -383,7 +382,7 @@ export function KeyNumbers({ st }: { st: SampleStock }) {
   const q = quote(st);
   const lo = Math.min(...q.closes);
   const hi = Math.max(...q.closes);
-  const seed = st.seed;
+  const seed = 0; // the stock session replaces this drawing with real figures
   const rows: { k: string; v: string; sector?: string; better?: string }[] = [
     { k: t("v3.kn.range"), v: `${money(lo, 0)} – ${money(hi, 0)}` },
     { k: t("v2.xVolS"), v: `${(0.8 + (seed % 5) * 0.4).toFixed(1)}× ${t("v3.kn.usual")}` },

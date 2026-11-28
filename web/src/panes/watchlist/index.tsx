@@ -1,8 +1,9 @@
 // Watchlist: the stocks we chose to watch. Star on, star off, add inline, Hide for 30 days, Undo.
 import type { Pane } from "../../areas";
+import { pct } from "../../format";
 import { useWords } from "../../words";
-import { pct, quote, UNIVERSE, universeById } from "../_kit/data";
 import { ListPage } from "../_kit/ListPage";
+import { quote, UNIVERSE, universeById } from "../_kit/pending";
 import { Toast } from "../_kit/Toast";
 import { useWatch, watch } from "../_kit/watch";
 

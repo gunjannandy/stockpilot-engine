@@ -15,3 +15,29 @@ export const FlagWriteResponse = z.object({ key: z.string(), enabled: z.boolean(
 export function paneVisible(pane: { flag?: string }, flags: Record<string, boolean>): boolean {
   return pane.flag === undefined || flags[pane.flag] === true;
 }
+
+/**
+ * Banner flags: a screen, or one section of it, can be put "under maintenance" by the owner in Admin.
+ * `banner.<screen>` or `banner.<screen>.<section>`; true shows only the banner. A screen with no row
+ * follows the release plan below; an explicit row always wins. A bannered screen bannered whole
+ * hides its sections too.
+ */
+export const BANNER_PREFIX = "banner.";
+export const bannerKey = (screen: string, section?: string) =>
+  section ? `${BANNER_PREFIX}${screen}.${section}` : `${BANNER_PREFIX}${screen}`;
+/** Screens that are live in the first rolling release; every other screen starts bannered. */
+export const LIVE_SCREENS = ["today", "portfolio", "market", "watchlist", "stock"] as const;
+/** Screens the owner needs to reach whatever the banners say, or that are plumbing: never bannered by default. */
+export const ALWAYS_OPEN_SCREENS = ["admin", "signin", "sync", "ping", "more"] as const;
+const OPEN: readonly string[] = [...LIVE_SCREENS, ...ALWAYS_OPEN_SCREENS];
+
+export function isBannered(
+  flags: Record<string, boolean>,
+  screen: string,
+  section?: string,
+): boolean {
+  const own = flags[bannerKey(screen)];
+  const screenOn = own === undefined ? !OPEN.includes(screen) : own;
+  if (screenOn || section === undefined) return screenOn;
+  return flags[bannerKey(screen, section)] === true;
+}

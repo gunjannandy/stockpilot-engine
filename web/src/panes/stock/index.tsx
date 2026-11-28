@@ -3,7 +3,7 @@ import type { Pane } from "../../areas";
 import { StockChart } from "../../charts/StockChart";
 import { useWords } from "../../words";
 import "./stock.css";
-import { callCard } from "../_kit/data";
+import { callCard, callFor, history, STOCKS, type StockView, type Verdict } from "../_kit/pending";
 import {
   Actions,
   CallSec,
@@ -14,18 +14,10 @@ import {
   NewsSec,
   PeersSec,
 } from "../_kit/StockSections";
+import { openLinks, sparkPath } from "../_kit/stockbits";
 import { Toast } from "../_kit/Toast";
 import { StockRow } from "../_kit/ui";
 import { useWatch, watch } from "../_kit/watch";
-import {
-  callFor,
-  history,
-  openLinks,
-  type SampleStock,
-  STOCKS,
-  sparkPath,
-  type Verdict,
-} from "./sample";
 
 const ORDER: Verdict[] = ["sell", "weak", "buy", "keep", "watch"];
 const money = (v: number) =>
@@ -59,7 +51,7 @@ function _Meter({ v }: { v: number }) {
   );
 }
 
-function OpenIn({ st }: { st: SampleStock }) {
+function OpenIn({ st }: { st: StockView }) {
   const t = useWords();
   const l = openLinks(st);
   return (
@@ -105,7 +97,7 @@ export function Detail({
   bars,
   onPick,
 }: {
-  st: SampleStock;
+  st: StockView;
   bars: ReturnType<typeof history>;
   onPick?: (id: string) => void;
 }) {

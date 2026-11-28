@@ -1,6 +1,6 @@
 // A fund's overlap with the stocks we hold, from the fund houses' monthly holdings. Made-up weights.
 import { useWords } from "../../words";
-import { HOLDINGS } from "../_kit/data";
+import { HOLDINGS } from "../_kit/pending";
 import { Sec } from "../_kit/ui";
 
 export function Overlap({ name }: { name: string }) {
@@ -13,9 +13,9 @@ export function Overlap({ name }: { name: string }) {
       </Sec>
     );
   }
-  const shared = HOLDINGS.filter((r) => (h + r.st.seed) % 3 !== 0).map((r) => ({
+  const shared = HOLDINGS.filter((r) => (h + r.st.name.length) % 3 !== 0).map((r) => ({
     name: r.st.name,
-    w: 1 + ((h + r.st.seed * 7) % 60) / 10,
+    w: 1 + ((h + r.st.name.length * 7) % 60) / 10,
   }));
   const total = shared.reduce((a, s) => a + s.w, 0);
   return (
