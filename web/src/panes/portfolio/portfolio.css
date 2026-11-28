@@ -1,0 +1,188 @@
+/* Portfolio: value line, this month's plan beside three small cards, one holdings table. Tokens only. */
+.pf {
+  display: grid;
+  gap: var(--sp-4);
+}
+.pf-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.pf-head h1 {
+  margin: var(--sp-1) 0;
+  font-size: var(--fs-hero);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.pf-top {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+.pf-month,
+.pf-card {
+  display: grid;
+  gap: var(--sp-2);
+  align-content: start;
+  padding: var(--sp-4);
+}
+.pf-month h2,
+.pf-card h2 {
+  margin: 0;
+  font-size: var(--fs-section);
+  font-weight: 800;
+}
+.pf-ch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.pf-ch h2 {
+  flex: 1;
+}
+.pf-ch .sk-btn {
+  height: 32px;
+  font-size: var(--fs-cell);
+  text-decoration: none;
+}
+.pf-big {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.pf-money {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0 var(--sp-3);
+  border-bottom: 1px solid var(--line-2);
+}
+.pf-money > div {
+  display: grid;
+  gap: var(--sp-1);
+  align-content: start;
+}
+.pf-money .k-eyebrow {
+  margin: 0;
+}
+.pf-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.pf-edit {
+  display: flex;
+  gap: var(--sp-2);
+}
+.pf-edit .k-input {
+  width: 140px;
+}
+.pf-mixh {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pf-mixh .k-eyebrow {
+  margin: 0;
+}
+.pf-mix {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2) var(--sp-5);
+}
+.pf-mixrow {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: var(--sp-2);
+  align-items: center;
+  font-size: var(--fs-cell);
+}
+.pf-mixbar {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-chip);
+  background: var(--c2);
+}
+.pf-mixbar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-chip);
+  background: var(--primary);
+}
+.pf-mixbar em {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--text);
+}
+.pf-mixedit {
+  display: grid;
+  gap: var(--sp-1);
+}
+.pf-slider {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 44px;
+  gap: var(--sp-3);
+  align-items: center;
+  font-size: var(--fs-cell);
+}
+.pf-slider input {
+  accent-color: var(--primary);
+}
+.pf-ul {
+  margin: var(--sp-1) 0 0;
+  padding-left: var(--sp-4);
+  font-size: var(--fs-cell);
+  color: var(--text-2);
+}
+.pf-ev {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pf-ev li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  gap: var(--sp-2);
+  align-items: center;
+  font-size: var(--fs-cell);
+}
+.pf-tablewrap {
+  padding: 0;
+  overflow-x: auto;
+}
+.pf-table {
+  max-width: none;
+}
+.pf-table th,
+.pf-table td {
+  padding: var(--sp-2) var(--sp-4);
+}
+.pf-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+.pf-name .chip {
+  min-width: 52px;
+}
+@media (max-width: 1100px) {
+  .pf-top {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .pf-mix,
+  .pf-money {
+    grid-template-columns: 1fr;
+  }
+}

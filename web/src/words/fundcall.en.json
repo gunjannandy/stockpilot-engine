@@ -1,0 +1,16 @@
+{
+  "this": "This week's call",
+  "keep": "Keep",
+  "add": "Add",
+  "stop": "Stop adding",
+  "switch": "Switch",
+  "review": "Review",
+  "chance": "Chance it beats the middle fund of its kind, next 12 months",
+  "base": "Funds like it did {b}% of the time ({n} cases).",
+  "why.keep": "Still above the middle of its kind; cost is low.",
+  "why.add": "Top quarter of its kind for 3 years; room in the budget.",
+  "why.stop": "Slipped to the middle of its kind; keep what we have, stop new money.",
+  "why.switch": "A cheaper fund of the same kind does the same job; the tax and exit cost are small.",
+  "why.review": "Bottom quarter of its kind for 3 years; look at it this week.",
+  "needs": "A shaded forecast range on the chart needs a NAV range from the fund forecaster; not there yet."
+}
