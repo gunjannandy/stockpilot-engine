@@ -120,6 +120,7 @@ export async function migrate(opts: {
         v2: none,
         v3: {},
       });
+      problems.push(`${key}: no map yet from area "${entry.area}"`);
       continue;
     }
     const missing = map.datasets.filter((d) => !opts.sink.hasDataset(d));
@@ -131,6 +132,7 @@ export async function migrate(opts: {
         v2: none,
         v3: {},
       });
+      problems.push(`${key}: v3 has no dataset ${missing.join(", ")}`);
       continue;
     }
     const { v2, v3 } = await copyTable(entry, map, opts.source, opts.sink);

@@ -1,6 +1,7 @@
 // `tsx tools/migrate/core/cli.ts --from <export dir> --to <https://v3 address>`; INGEST_HMAC_KEY in the environment.
 // Prints the report (counts and checksums, never rows) and exits 1 on any problem. Rerunning changes nothing.
 import { datasets } from "../../../contract/src/datasets";
+import { migrationDatasets } from "../../../contract/src/migrate/migrate";
 import { discoverMaps } from "./discover";
 import { ingestSink, jsonDirSource } from "./io";
 import { migrate } from "./run";
@@ -15,7 +16,11 @@ if (!from || !to || !key) {
 }
 const report = await migrate({
   source: jsonDirSource(from),
-  sink: ingestSink({ baseUrl: to.replace(/\/$/, ""), hmacKey: key, datasets }),
+  sink: ingestSink({
+    baseUrl: to.replace(/\/$/, ""),
+    hmacKey: key,
+    datasets: { ...datasets, ...migrationDatasets },
+  }),
   maps: await discoverMaps(),
 });
 console.log(JSON.stringify(report, null, 1));
