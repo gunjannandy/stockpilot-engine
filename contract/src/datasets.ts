@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
+import { FACTS_MIN, FactsRow, factsRowCheck } from "./facts/facts";
 import { FeedbackRow } from "./feedback/feedback";
 import {
   FUND_HOLDINGS_MIN,
@@ -119,6 +120,24 @@ export const datasets = {
     rowCheck: fundHoldingsRowCheck,
     run: { at: "22:00", on: "every" },
     runCheck: (run) => (run.rowCount < FUND_HOLDINGS_MIN ? "fewer than 20 funds" : null),
+  },
+  facts: {
+    name: "facts",
+    job: "facts",
+    table: "facts",
+    schedule: "every Sunday at 03:00 IST",
+    freshnessHours: 24 * 9,
+    checks: {
+      row: ["symbol is present", "at least one raw figure", "every sentence has Bengali"],
+      run: ["at least 100 stocks"],
+    },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 5000,
+    row: FactsRow,
+    rowCheck: factsRowCheck,
+    run: { at: "03:00", on: "every" },
+    runCheck: (run) => (run.rowCount < FACTS_MIN ? "fewer than 100 stocks" : null),
   },
   history: {
     name: "history",
