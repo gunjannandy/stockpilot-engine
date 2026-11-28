@@ -35,17 +35,6 @@ const GROUPS = [
   { id: "odd", t: "v2.secOdd", p: "v2.secOddP", cls: "r-watch" },
 ] as const;
 
-function Money() {
-  const t = useWords();
-  const v = useCountUp(184000);
-  return (
-    <Tile title={t("v2.tLeft")}>
-      <p className="k-big num">{money(Math.round(v), 0)}</p>
-      <p className="k-note">{t("v3.moneyP")}</p>
-    </Tile>
-  );
-}
-
 function Health() {
   const t = useWords();
   const rising = useCountUp(64);
@@ -73,22 +62,6 @@ function Health() {
           </span>
         </dd>
       </dl>
-    </Tile>
-  );
-}
-
-function PortfolioTile() {
-  const t = useWords();
-  const value = HOLDINGS.reduce((a, r) => a + r.h.value, 0);
-  const cost = HOLDINGS.reduce((a, r) => a + r.h.cost, 0);
-  const v = useCountUp(value);
-  return (
-    <Tile title={t("v3.portfolioT")}>
-      <p className="k-big num">{lakh(Math.round(v))}</p>
-      <p className="k-note">
-        {t("v3.todayWord")} <b className="up num">{pct(0.6)}</b> · {t("v2.pGain")}{" "}
-        <b className={`num ${value >= cost ? "up" : "dn"}`}>{pct((value / cost - 1) * 100)}</b>
-      </p>
     </Tile>
   );
 }

@@ -911,3 +911,194 @@
   gap: var(--sp-2);
   align-items: center;
 }
+
+/* Long pages: open groups with a sticky jump row (no tabs), and the shared motion. */
+.k-gnav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  padding: var(--sp-2) 0;
+  margin-bottom: var(--sp-4);
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line-2);
+  scrollbar-width: none;
+}
+.k-gnav a {
+  flex: none;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-chip);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+.k-gnav a:hover {
+  background: var(--c2);
+}
+.k-gnav a:active {
+  transform: scale(0.97);
+}
+.k-gnav a[aria-current="true"] {
+  background: var(--tonal);
+  color: var(--on-tonal);
+}
+.k-group {
+  margin: 0 0 var(--sp-6);
+  scroll-margin-top: calc(var(--sp-6) + var(--sp-4));
+  animation: k-fade 0.4s var(--ease) both;
+}
+@supports (animation-timeline: view()) {
+  .k-group {
+    animation: k-fade linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+.k-group-h {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-3);
+}
+.k-group-h h2 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 800;
+}
+.k-group-h p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-body);
+  max-width: 70ch;
+}
+/* press and hover feel for every button the kit draws */
+.sk-btn,
+.k-seg button,
+.k-chipbtn {
+  transition:
+    background 0.18s var(--ease),
+    transform 0.12s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+.sk-btn:active,
+.k-seg button:active,
+.k-chipbtn:active {
+  transform: scale(0.97);
+}
+/* shimmer while a part loads */
+.k-skel {
+  display: block;
+  border-radius: var(--r-control);
+  background: linear-gradient(90deg, var(--c2) 25%, var(--c3) 50%, var(--c2) 75%);
+  background-size: 200% 100%;
+  animation: k-shim 1.3s linear infinite;
+  min-height: var(--sp-5);
+}
+@keyframes k-shim {
+  to {
+    background-position: -200% 0;
+  }
+}
+/* a bar that grows in from the left when it first shows */
+.k-grow {
+  transform-origin: left center;
+  animation: k-barin 0.7s var(--ease) both;
+}
+@keyframes k-barin {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-group,
+  .k-grow,
+  .k-skel,
+  .k-gnav a,
+  .sk-btn,
+  .k-seg button {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Portfolio */
+.pf-strip {
+  display: flex;
+  gap: 2px;
+  height: var(--sp-4);
+  margin: var(--sp-2) 0 var(--sp-4);
+  border-radius: var(--r-chip);
+  overflow: hidden;
+}
+.pf-strip i {
+  display: block;
+  background: var(--hold);
+}
+.pf-strip i.v-sell {
+  background: var(--loss);
+}
+.pf-strip i.v-weak {
+  background: var(--warn);
+}
+.pf-strip i.v-buy {
+  background: var(--gain);
+}
+.pf-strip i.v-watch {
+  background: var(--watch);
+}
+.pf-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+.pf-table tbody tr:hover {
+  background: var(--c1);
+}
+.pf-table tbody tr[aria-selected="true"] {
+  background: var(--selected);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.pf-share {
+  white-space: nowrap;
+}
+.pf-share .k-bar-h {
+  display: inline-block;
+  width: 56px;
+  margin-right: var(--sp-2);
+  vertical-align: middle;
+}
+
+/* Settings */
+.st-mix {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-3) 0;
+}
+.st-row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr 3rem;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-body);
+}
+.st-row input[type="range"] {
+  accent-color: var(--primary);
+  min-width: 0;
+}
+.st-row b {
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .st-mix {
+    grid-template-columns: 1fr;
+  }
+}

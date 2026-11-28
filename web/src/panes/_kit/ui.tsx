@@ -1,5 +1,5 @@
 // Shared v3 prototype pieces: the list row, the meter, the sparkline, the section heading, the segmented switch.
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useWords } from "../../words";
 import { sparkPath } from "../stock/sample";
 import { growthOf, money, peOf, quote, type SampleStock } from "./data";
@@ -269,5 +269,81 @@ export function StockTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** One open group on a long page: a heading, one plain sentence, then its content. It rises in as it scrolls into view. */
+export function Group({
+  id,
+  title,
+  sub,
+  children,
+  aside,
+}: {
+  id: string;
+  title: string;
+  sub?: string;
+  children: ReactNode;
+  aside?: ReactNode;
+}) {
+  return (
+    <section className="k-group" id={`g-${id}`} aria-labelledby={`g-${id}-h`}>
+      <header className="k-group-h">
+        <div>
+          <h2 id={`g-${id}-h`}>{title}</h2>
+          {sub ? <p>{sub}</p> : null}
+        </div>
+        {aside}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/** A sticky row of jump links for a long page. The link of the group in view is marked. */
+export function GroupNav({
+  items,
+  label,
+}: {
+  items: { id: string; label: string }[];
+  label: string;
+}) {
+  const [on, setOn] = useState(items[0]?.id ?? "");
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (es) => {
+        for (const e of es) if (e.isIntersecting) setOn(e.target.id.replace(/^g-/, ""));
+      },
+      { rootMargin: "-20% 0px -70% 0px" },
+    );
+    for (const i of items) {
+      const el = document.getElementById(`g-${i.id}`);
+      if (el) io.observe(el);
+    }
+    return () => io.disconnect();
+  }, [items]);
+  return (
+    <nav className="k-gnav" aria-label={label}>
+      {items.map((i) => (
+        <a
+          key={i.id}
+          href={`#g-${i.id}`}
+          aria-current={on === i.id ? "true" : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            setOn(i.id);
+            document.getElementById(`g-${i.id}`)?.scrollIntoView({
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "auto"
+                : "smooth",
+              block: "start",
+            });
+          }}
+        >
+          {i.label}
+        </a>
+      ))}
+    </nav>
   );
 }
