@@ -13,8 +13,8 @@ it("C-116-3 the cron puts one message per due duty on the queue", async () => {
   expect(ids(sent)).toEqual([
     "digest",
     "feedback",
-    "models",
     "lists",
+    "models",
     "news",
     "quotes",
     "scheduler",
@@ -30,8 +30,8 @@ it("C-116-3 the cron puts one message per due duty on the queue", async () => {
   expect(DUTIES.map((d) => d.id).sort()).toEqual([
     "digest",
     "feedback",
-    "models",
     "lists",
+    "models",
     "news",
     "quotes",
     "scheduler",
