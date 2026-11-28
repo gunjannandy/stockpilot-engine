@@ -94,16 +94,42 @@ def load_one(ctx: JobContext, symbol: str, fetch_json: Callable[[str], object], 
     raise RuntimeError(f"no price history found for {symbol}")
 
 
+def backfill_all(ctx: JobContext, stocks: list[dict], fetch_json: Callable[[str], object], today: date) -> tuple[int, dict[str, dict]]:
+    """Full lifetime history for every listed stock in `stocks` (universe rows). A series with an unexplained jump is held back
+    with its reason; the run fails only when more than HELD_BACK_LIMIT of the stocks are held back. Returns (loaded, held)."""
+    loaded, held, empty = 0, {}, 0
+    listed = [s for s in stocks if s.get("status", "listed") == "listed"]
+    for s in listed:
+        rows = yahoo_rows(s["symbol"], s["exchange"], fetch_json, today)
+        if not rows:
+            empty += 1
+            continue
+        bad = unexplained_move(rows)
+        if bad:
+            held[s["id"]] = bad
+            ctx.progress.line(f"{s['id']} held back: moved {bad['from']} to {bad['to']} on {bad['date']}, no corporate action", "fail")
+            continue
+        _post(ctx, s["exchange"], s["symbol"], rows)
+        loaded += 1
+    if listed and (len(held) + empty) / len(listed) > HELD_BACK_LIMIT:
+        raise RuntimeError(f"{len(held)} held back and {empty} without prices out of {len(listed)} stocks (limit {HELD_BACK_LIMIT:.0%})")
+    return loaded, held
+
+
 def run(ctx: JobContext, fetch: Callable[[str], bytes | None] | None = None,
         fetch_json: Callable[[str], object] | None = None) -> str:
     today = ctx.range.end
-    if ctx.subject not in DAILY_SUBJECTS:
+    if ctx.subject == "backfill" or ctx.subject not in DAILY_SUBJECTS:
         if fetch_json is None:
             from stockpilot.sources.http import fetch as raw
 
             def fetch_json(url):
                 blob = raw(url)
                 return json.loads(blob) if blob else None
+        if ctx.subject == "backfill":
+            stocks = ctx.client._ok("/api/stocks/universe", None, "GET").get("rows", [])
+            loaded, held = backfill_all(ctx, stocks, fetch_json, today)
+            return f"backfilled {loaded} stocks, held back {len(held)}"
         return load_one(ctx, ctx.subject.upper(), fetch_json, today)
     if fetch is None:
         from stockpilot.sources.http import fetch

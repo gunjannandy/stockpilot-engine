@@ -11,7 +11,7 @@ Status: building
 
 ## Next
 - [x] Check C-047-1 (`checks/C-047-1.py`): universe keeps delisted and renamed stocks (old name kept as alias).
-- [ ] Check C-040-4: backfill gives each listed fixture stock full history; unexplained jump held back with reason; run passes under threshold.
+- [x] Check C-040-4 (`checks/C-040-4.py`): `backfill_all` in the history Job (subject `backfill`), unexplained jumps held back, 2% threshold.
 - [ ] Chart files and search index output in the universe/history Jobs.
 - [ ] Facts Job (XBRL first, yfinance fallback, sector comparison, plain sentences in English and Bengali, raw figures table with value, period, source): `py/stockpilot/jobs/facts/`, `api/src/facts/`, `api/drizzle/facts.ts`, `.github/workflows/facts.yml`, contract shapes. Checks C-048-1, C-171-2.
 - [ ] Production check C-040-3 (last close vs bhavcopy for 5 samples) once data runs.
