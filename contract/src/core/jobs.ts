@@ -5,6 +5,7 @@ import { IstTime } from "./time";
  * feedback) and the dropped weekly review are gone (decisions §3, §7). */
 export const JobKind = z.enum([
   "sync",
+  "documents",
   "analyse",
   "refresh_call",
   "news_tag",
@@ -14,6 +15,7 @@ export const JobKind = z.enum([
   "history_backfill",
   "nightly",
   "backup",
+  "drill",
   "ping",
   "calendar",
 ]);

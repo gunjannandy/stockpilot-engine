@@ -1,5 +1,7 @@
 // The one Worker's app: shared types, the guards, and `createApp`. No area edits this file:
 // routes, schema files, migrations and production checks are found by folder (api/migrate/discover.ts).
+
+import { CONTRACT_HEADER, CONTRACT_VERSION } from "@stockpilot/contract";
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import * as core from "../drizzle/core";
@@ -107,8 +109,9 @@ export function createApp(deps: {
     await next();
   };
   const secret: MiddlewareHandler = async (c, next) => {
-    if (!(await sameSecret(deps.env.HEALTH_SECRET, c.req.header("x-health-secret"))))
-      return c.json({ error: "no" }, 401);
+    // The live Apps Script bridge sends `x-health-key`; everything else sends `x-health-secret`. Both count.
+    const given = c.req.header("x-health-secret") ?? c.req.header("x-health-key");
+    if (!(await sameSecret(deps.env.HEALTH_SECRET, given))) return c.json({ error: "no" }, 401);
     await next();
   };
   // Fails closed: until sign-in installs its guard, every person route answers 401. Areas capture
@@ -139,6 +142,11 @@ export function createApp(deps: {
       .bind(version, istText(now()))
       .run();
   };
+  // Every answer says which contract it speaks, so a page left open on an older one can show "updating".
+  app.use("*", async (c, next) => {
+    await next();
+    c.res.headers.set(CONTRACT_HEADER, CONTRACT_VERSION);
+  });
   app.use("*", async (c, next) => {
     ready ??= boot();
     try {

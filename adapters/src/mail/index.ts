@@ -3,17 +3,23 @@
 
 export type Mailer = {
   /** True only when the send endpoint answers {ok: true}. Never throws. */
-  sendSigninLink(to: string, token: string): Promise<boolean>;
+  sendSigninLink(to: string, token: string, base?: string): Promise<boolean>;
 };
 
 const TIMEOUT_MS = 25_000;
 
 export function bridgeMailer(cfg: { url: string; key: string; fetch?: typeof fetch }): Mailer {
   return {
-    async sendSigninLink(to, token) {
+    async sendSigninLink(to, token, base) {
       try {
         const url = new URL(cfg.url);
-        url.search = new URLSearchParams({ key: cfg.key, op: "signin", to, t: token }).toString();
+        url.search = new URLSearchParams({
+          key: cfg.key,
+          op: "signin",
+          to,
+          t: token,
+          ...(base ? { base } : {}),
+        }).toString();
         const res = await (cfg.fetch ?? fetch)(url.toString(), {
           redirect: "follow",
           signal: AbortSignal.timeout(TIMEOUT_MS),

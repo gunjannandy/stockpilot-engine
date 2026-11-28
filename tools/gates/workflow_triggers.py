@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 
 EXEMPT = {"ci.yml", "promote.yml"}
+REUSABLE = {"_job.yml"}  # called by the dispatch-only workflows; starts nothing by itself
 MAIN_GUARD = "refs/heads/main"
 
 
@@ -29,8 +30,9 @@ def check(files):
     problems = []
     for name, text in sorted(files.items()):
         doc = yaml.safe_load(text) or {}
-        if name not in EXEMPT and _triggers(doc) != {"workflow_dispatch"}:
-            problems.append(f"{name}: triggers {sorted(_triggers(doc))}; only workflow_dispatch is allowed")
+        allowed = {"workflow_call"} if name in REUSABLE else {"workflow_dispatch"}
+        if name not in EXEMPT and _triggers(doc) != allowed:
+            problems.append(f"{name}: triggers {sorted(_triggers(doc))}; only {' and '.join(sorted(allowed))} is allowed")
         for job_id, job in (doc.get("jobs") or {}).items():
             if _env_name(job) != "models":
                 continue
