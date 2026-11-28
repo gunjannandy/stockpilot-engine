@@ -21,10 +21,12 @@ import { WordsProvider } from "./words";
 
 applyStored();
 // The prototype's sample screens show until each area's own pane folder replaces them.
+// A real pane replaces the sample screen with the same id, in the same rail place.
+const found = discoverPanes(import.meta.glob("./panes/*/index.tsx", { eager: true }));
+const byId = new Map(found.map((p) => [p.id, p]));
 const panes = [
-  ...samplePanes,
-  morePane,
-  ...discoverPanes(import.meta.glob("./panes/*/index.tsx", { eager: true })),
+  ...[...samplePanes, morePane].map((p) => byId.get(p.id) ?? p),
+  ...found.filter((p) => ![...samplePanes, morePane].some((s) => s.id === p.id)),
 ];
 const wordFiles = import.meta.glob("./words/*.json", { eager: true }) as Record<
   string,

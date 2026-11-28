@@ -15,14 +15,15 @@ Status: building
 - usprices Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`, dataset `usprices` (06:30 IST daily, budget 300), test `py/tests/usprices/`.
 - `GET /api/money/calendar` (dated actions of held stocks from `calendar`; expected dividend cash = last year's ex-dates +1y × shares held; `CalendarResponse`); dividends Job `py/stockpilot/jobs/dividends/`, `.github/workflows/dividends.yml`, dataset `dividends` (06:45 IST), ingest `POST /api/money/dividends`, `GET /api/money/held-symbols`, table `dividends`.
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
+- Chapter 10 review: `docs/areas/MONEY-review.md`. Fixed F1–F10 (XIRR and risk now see corporate actions; harvest room; RSU 24-month term, loss set-off, cess, future vests; Schedule FA closes in the ITR pack; leap-day dividend dates; IST day; pre-2018 warning). Tests in `api/src/money/review.test.ts` and `api/src/itr/itr.test.ts`.
 
 ## Next
-- [ ] Beta: no stored source yet (stocks area); risk keeps beta 1 until one exists.
-- [ ] RSU: splits for expected vests (corporate-action terms of US symbols); payslip vests.
-- [ ] #218: C-069-2 passed, so deleting is allowed, but `trades/lots.py` (`Trade`) and `book/positions.py` are still imported by unported Python (`trades/{coin,rsu,tradebook,contract_note}.py`, `jobs/docs.py`, forecast, dossier and their tests). Delete only after those move off them (other areas' files); `book/{units,record,acted}.py` go with them.
-- [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
-- [ ] RSU splits need US corporate-action terms (no source yet).
-- [ ] Opus review chapter over the whole diff for money correctness.
+- [ ] O1: correct FY 2024-25 rule set (its own slabs and rebate; 15%/10% on equity sold before 23 Jul 2024). Fix the Python `rules_for` first, regenerate `money/captured/tax.json` with `money/src/tax/capture.py`, then the TS, so C-060-1 still compares like with like.
+- [ ] O2: carry Fidelity's rupee cost on RSU lots so tax/ITR and the RSU pane use the perquisite value, not a dollar round trip at two rates.
+- [ ] O3: store 31 Jan 2018 highest price (NSE bhavcopy, free) and pass it as `fmv2018` in the tax and ITR routes.
+- [ ] O9: warn when a dollar lot has no rate for its own day instead of using today's.
+- [ ] O6, O7: apply upcoming splits to expected dividends; dividends as XIRR cash flows once received cash is stored.
+- [ ] O4, O5, O8: charges into sale expenses (needs a column), marginal relief on special-rate tax, FA initial value for part-sold lots (low impact, see review).
 
 ## Decisions
 - Chapter 6: merged main (news area added `news` Job kind, dataset and workflow allow-list entry); kept both sides in `contract/src/core/jobs.ts`, `contract/src/datasets.ts`, `checks/MOVE-2.py`. Full `pnpm test` green. No stored beta or US corporate-action source exists yet, so nothing new could be built.
@@ -43,8 +44,24 @@ Status: building
 - Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
 
 - #218 not deleted in chapter 6: the ported lots and positions Python still has live importers outside this area, and removing them would break CI.
+- Chapter 7: #250 is met by C-069-2 (real rows went through the compared rebuild); real-row fixtures never go in the public engine, so none are added.
+- Left out: stored beta (no free source; risk keeps beta 1 and lists the assumed symbols) and US corporate-action split terms for expected RSU vests (no free source).
+- Left out: deleting `trades/lots.py` and `book/{positions,units,record,acted}.py` (#218). About 25 live importers sit in other areas (forecast, verify, asks, fundcall, dossier, analysis, jobs/docs, trades parsers) and their tests; removing the modules would break CI or mean rewriting those areas. They go with their last importer when that area ports. Not an owner blocker.
+- Tax/ITR Python (#233) stays; its private check and deletion are #297, outside this area.
+
+- Chapter 8: re-checked #218 after C-069-2 passed. Every module still has live importers outside this area (`jobs/docs.py` imports acted and lots; `forecast.py`, `verify/*`, `dossier.py`, `fundcall.py`, `asks.py`, `analysis/{allocation,fundreview,opportunities}.py` import positions, record, units; all `trades/*` parsers import `Trade` from lots) plus about 30 tests. Deleting now would break CI, which the rules forbid, so the deletion stays left out; each module goes with its last importer when that area ports. Not a blocker.
+- Beta and US split terms: left out, no free source.
+
+- Chapter 9: nothing new to build; branch matches the open PR, Status stays done. #218 deletion stays left out (live importers in other areas, rules forbid breaking CI). The Opus money-correctness review is the next chapter.
+
+- Chapter 10: where a captured parity check (C-060-1 harvest, C-062-1 rsuView) pins a Python mistake, the fix is an opt-in argument the route turns on; the check and the port's default stay as they are.
+- Chapter 10: RSU "tax if sold" adds cess but no surcharge (that depends on income we do not hold).
+- Chapter 10: XIRR leaves out Kite-only (estimated) lots, which have no known buy, and says so; risk counts them.
+- Chapter 10: FY 2024-25 rule set left as is (C-060-1 pins it); the tax route warns for that year.
+- Chapter 10: touched `api/src/itr/routes.ts` (ITR is this area) to pass stored dollar closes.
 
 ## Blocked
-- Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
+none
 
-Chapter end: 6
+Chapter end: 9
+Chapter end: 10

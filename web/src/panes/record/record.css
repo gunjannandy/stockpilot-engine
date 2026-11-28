@@ -1,0 +1,89 @@
+/* Record: one dense grid. Four numbers, then calibration beside value added, then misses beside months. */
+.rc {
+  display: grid;
+  gap: var(--sp-3);
+}
+.rc .k-head {
+  margin: 0;
+}
+.rc-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.rc-layout > .k-tile {
+  grid-column: span 3;
+}
+.rc-layout .k-tile {
+  display: grid;
+  gap: var(--sp-1);
+  align-content: start;
+  padding: var(--sp-4);
+}
+.rc-layout .k-tile .k-eyebrow {
+  margin: 0;
+}
+.rc-cal-wrap {
+  grid-column: span 4;
+  display: grid;
+}
+.rc-cmp-wrap {
+  grid-column: span 8;
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+}
+.rc-half {
+  grid-column: span 6;
+  display: grid;
+}
+.rc-layout .rc-cal {
+  max-width: 15rem;
+  justify-self: center;
+}
+.rc-layout .rc-ring {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+.rc-layout .rc-beat {
+  gap: var(--sp-3);
+}
+.rc-layout .rc-months {
+  height: 7rem;
+}
+.rc-sc p {
+  margin: 0;
+}
+.rc-pts {
+  margin-left: auto;
+}
+.rc-layout .rc-miss summary {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+}
+@media (max-width: 1100px) {
+  .rc-layout > .k-tile {
+    grid-column: span 6;
+  }
+  .rc-cal-wrap,
+  .rc-cmp-wrap,
+  .rc-half {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 720px) {
+  .rc-layout > .k-tile {
+    grid-column: 1 / -1;
+  }
+}
+.rc-layout .rc-miss {
+  padding: var(--sp-2) 0;
+}
+.rc-layout .rc-miss summary {
+  min-height: 0;
+  padding: 0;
+}
+.rc-layout .rc-miss p {
+  margin: var(--sp-1) 0 0;
+}

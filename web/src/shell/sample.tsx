@@ -225,11 +225,11 @@ const screen = (id: string, Component: FunctionComponent): Pane => ({
 /** The prototype's screens, in rail order. Replaced as each area's own pane folder lands. */
 export const samplePanes: Pane[] = [
   screen("today", StockList),
+  screen("watchlist", StockList),
+  screen("market", stub("shell.nav.market")),
   screen("worth", StockList),
   screen("portfolio", StockList),
-  screen("watchlist", StockList),
   screen("funds", stub("shell.nav.funds")),
-  screen("market", stub("shell.nav.market")),
   screen("record", stub("shell.nav.record")),
   screen("feedback", stub("shell.nav.feedback")),
   screen("admin", stub("shell.nav.admin")),

@@ -1,0 +1,86 @@
+.change-mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  background: var(--mark);
+  flex: none;
+}
+.news-icon {
+  width: 18px;
+  height: 18px;
+  fill: var(--text-2);
+  flex: none;
+}
+.reason-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.chip.reason {
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-chip);
+  background: var(--tonal);
+  color: var(--on-tonal);
+  font-size: var(--fs-note);
+  white-space: nowrap;
+}
+.changed-strip {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-left: 4px solid var(--mark);
+  border-radius: var(--r-card);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.changed-strip header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.changed-strip h2 {
+  margin: 0;
+  font-size: var(--fs-section);
+}
+.changed-strip ul {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+}
+.changed-strip li button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--row);
+  padding: var(--sp-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.mark-all {
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mark-all:hover {
+  background: var(--c1);
+}
+.pane-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

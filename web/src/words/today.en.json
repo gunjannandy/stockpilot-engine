@@ -1,0 +1,22 @@
+{
+  "title": "Today",
+  "heading": "What should we do today?",
+  "moneyLeft": "Money left this month",
+  "market": "How the market looks",
+  "breadth": "Stocks up today",
+  "trend": "Trend",
+  "value": "Value",
+  "portfolio": "Our portfolio",
+  "worth": "Worth now",
+  "dayChange": "Today",
+  "total": "Since we bought",
+  "holdings": "Stocks held",
+  "groupSell": "Sell",
+  "groupWeak": "Weak",
+  "groupKeep": "Fine, keep",
+  "groupBuy": "Close to a buy",
+  "groupUnusual": "Unusual today",
+  "empty": "None today.",
+  "print": "Print this page",
+  "sample": "Made-up sample rows, to judge the look."
+}
