@@ -1,6 +1,6 @@
 // The ingest door (from v2's web/ingest): write-only, HMAC-signed, held to each dataset's day budget.
 
-import { datasets, IngestRequest } from "@stockpilot/contract";
+import { datasets, IngestRequest, migrationDatasets } from "@stockpilot/contract";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -23,6 +23,34 @@ export default function routes(ctx: Ctx) {
   app.post("/api/ingest", ctx.guard.ingest, async (c) => {
     const req = IngestRequest.safeParse(json(rawBody(c)));
     if (!req.success) return c.json({ error: "bad body" }, 400);
+    // The one-time v2 copy's tables: checked, no day budget, replaced by key so a rerun changes nothing.
+    const mig = Object.hasOwn(migrationDatasets, req.data.dataset)
+      ? (
+          migrationDatasets as Record<
+            string,
+            (typeof migrationDatasets)[keyof typeof migrationDatasets]
+          >
+        )[req.data.dataset]
+      : undefined;
+    if (mig) {
+      const keep = req.data.rows.flatMap((r) => {
+        const p = mig.row.safeParse(r);
+        return p.success ? [p.data as Record<string, unknown>] : [];
+      });
+      const cols = Object.keys(mig.row.shape);
+      const del = `delete from ${mig.table} where ${mig.keys.map((k) => `${k} is ?`).join(" and ")}`;
+      const ins = `insert into ${mig.table} (${cols.join(",")}) values (${cols.map(() => "?").join(",")})`;
+      for (let i = 0; i < keep.length; i += 40)
+        await ctx.d1.batch(
+          keep
+            .slice(i, i + 40)
+            .flatMap((r) => [
+              ctx.d1.prepare(del).bind(...mig.keys.map((k) => r[k])),
+              ctx.d1.prepare(ins).bind(...cols.map((k) => r[k])),
+            ]),
+        );
+      return c.json({ accepted: keep.length, held_back: req.data.rows.length - keep.length });
+    }
     const ds = Object.hasOwn(datasets, req.data.dataset)
       ? (datasets as Record<string, (typeof datasets)[keyof typeof datasets]>)[req.data.dataset]
       : undefined;

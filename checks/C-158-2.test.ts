@@ -213,7 +213,7 @@ describe("C-158-2 the per-table list", () => {
       expect(trades?.status).toBe("skipped");
       expect(trades?.reason).toMatch(/no dataset trades/);
       expect(r.tables.find((t) => t.table === "calls" && t.kind === "d1")?.reason).toMatch(
-        /no map yet/,
+        /no dataset calls/,
       );
       expect(r.problems.join()).toMatch(/surprise.*not on the list/);
       expect(r.ok).toBe(false);

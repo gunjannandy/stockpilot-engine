@@ -14,7 +14,7 @@ Status: building
 ## Next
 - [ ] Smallcase against our trades (C-091-1): port the v2 comparison (`py/stockpilot/book/smallcase.py`) into `money/src/record/` as a pure function over the pairs MONEY already has; check from fixtures.
 - [ ] Today: "Unusual today" group (fed by the lists' busy today rows); production check C-025-3 (every holding has a call dated after the last trading day) reads `stale_held` from `/api/today`.
-- [ ] `tools/migrate/calls.ts`, `lists.ts`, `record.ts`: v2's calls, watchlist, Not now rows and track record (see how other areas wrote theirs).
+- [x] `tools/migrate/calls.ts`, `lists.ts`, `record.ts`: v2 calls (one row per horizon, v2 date kept), lists, watchlist, Not now, archived days, marks, Smallcase orders; the door takes their tables (`contract/src/migrate`).
 - [ ] Wire the call line into the email feed (NEWS notebook lists it as waiting on `money/src/callline/`).
 - [ ] Set Status: done when all green.
 
