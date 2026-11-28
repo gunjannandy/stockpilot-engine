@@ -40,3 +40,17 @@ export const FeedbackReview = z.object({
   decision: z.enum(["reviewed", "not_planned"]),
 });
 export type FeedbackReview = z.infer<typeof FeedbackReview>;
+
+/** One `feedback` table row as the ingest door takes it (the one-time v2 migration writes these). */
+export const FeedbackRow = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  understanding: z.string().nullable(),
+  status: AskStatus,
+  ticket: z.number().int().positive().nullable(),
+  stale_ticket: z.number().int().positive().nullable(),
+  created_at: IstTime,
+  reviewed_at: IstTime.nullable(),
+  updated_at: IstTime,
+});
+export type FeedbackRow = z.infer<typeof FeedbackRow>;

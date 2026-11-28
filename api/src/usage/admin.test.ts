@@ -30,3 +30,15 @@ it("admin overview parses, try again requeues a failed Job, a click writes one c
     });
   expect(AdminOverview.parse(await (await app.request("/api/admin")).json()).usage[0]?.n).toBe(2);
 });
+
+it("a received ask shows in Needs you", async () => {
+  const { app, db } = await makeApp();
+  await app.request("/api/admin");
+  await db
+    .prepare(
+      "insert into feedback (id, text, status, created_at, updated_at) values ('fb-1','make it bigger','received','2026-11-28T09:00:00+05:30','2026-11-28T09:00:00+05:30')",
+    )
+    .run();
+  const o = AdminOverview.parse(await (await app.request("/api/admin")).json());
+  expect(o.needs_you.some((n) => n.kind === "feedback")).toBe(true);
+});

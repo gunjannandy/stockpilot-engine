@@ -270,8 +270,9 @@ def collect(api=_api, now=None):
                        "left_over": [lo["line"] for lo in gather.parse_left_over(p.get("body"))]}
         elif x["claim"]:
             try:
-                c = api(f"repos/{ENGINE}/commits/{lane}")
-                x["pushed_at"] = c["commit"]["committer"]["date"]
+                # the branch endpoint is one object; the commits endpoint pages by files and breaks --paginate
+                c = api(f"repos/{ENGINE}/branches/{lane}")
+                x["pushed_at"] = c["commit"]["commit"]["committer"]["date"]
             except subprocess.CalledProcessError:
                 pass   # no branch yet
     return tickets
@@ -279,10 +280,11 @@ def collect(api=_api, now=None):
 
 # ---- command line ------------------------------------------------------------------------------------------------
 STATE = Path.home() / ".local/state/stockpilot-watch/state.json"
-ACCOUNTS = [{"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"},
+ACCOUNTS = [{"name": "secondary", "slots": 5, "config_dir": "~/.claude-second"},
             {"name": "primary", "slots": 3, "config_dir": "~/.claude"}]   # both work at once, 2026-11-28
 STATUS_LABELS = ["status:ready", "status:blocked", "status:building", "status:pr", "status:prototype", "status:stuck"]
 CFG = {"accounts": ACCOUNTS, "quiet_minutes": 60}
+MAX_FAILS = 3          # reads that fail in a row before `wait` tells the session
 HANDOFF_AT = 160_000   # every wake re-reads the context; a fresh one starts near 90k
 
 
@@ -406,12 +408,16 @@ def main(argv=None):
 
     if a.cmd == "wait":
         end = time.time() + a.max_minutes * 60
+        fails = 0
         while time.time() < end:
             try:
                 ev = step(a.account)
+                fails = 0
             except Exception as e:   # a GitHub hiccup must not end the watch
                 print(f"watch: read failed: {e}", file=sys.stderr)
-                ev = []
+                fails += 1
+                ev = [{"kind": "watch-error", "account": a.account, "failures": fails, "error": str(e)[:300]}] \
+                    if fails >= MAX_FAILS else []
             if ev:
                 for e in ev:
                     print(json.dumps(e), flush=True)

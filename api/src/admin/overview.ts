@@ -1,7 +1,9 @@
 // Admin's one read, and Try again. Needs you, freshness per dataset, recent Job runs, Problems, usage.
 import { AdminRetry, datasets } from "@stockpilot/contract";
 import { Hono } from "hono";
+import { type GithubBot, githubFromEnv } from "../../../adapters/src/github";
 import { type Ctx, istText } from "../app";
+import { TICKET_REPO } from "../feedback/feedback";
 
 type Row = Record<string, string | number | null>;
 const all = async (ctx: Ctx, sql: string, ...args: unknown[]): Promise<Row[]> =>
@@ -14,7 +16,11 @@ const all = async (ctx: Ctx, sql: string, ...args: unknown[]): Promise<Row[]> =>
 
 const hoursSince = (now: Date, at: string) => (now.getTime() - new Date(at).getTime()) / 3_600_000;
 
-export function adminRoutes(ctx: Ctx) {
+export function adminRoutes(
+  ctx: Ctx,
+  botOf: () => GithubBot | undefined = () =>
+    githubFromEnv(ctx.env as Record<string, string | undefined>),
+) {
   const app = new Hono();
 
   app.get("/api/admin", ctx.guard.person, async (c) => {
@@ -79,7 +85,7 @@ export function adminRoutes(ctx: Ctx) {
       )
     ).map((u) => ({ screen: String(u.screen), button: String(u.button), n: Number(u.n) }));
 
-    const needs: { id: string; text: string; kind: string }[] = [];
+    const needs: { id: string; text: string; kind: string; url?: string }[] = [];
     for (const r of runs.filter((r) => r.status === "failed"))
       needs.push({
         id: `run-${r.key}`,
@@ -90,8 +96,31 @@ export function adminRoutes(ctx: Ctx) {
       needs.push({ id: `alert-${a.subject}`, kind: "alert", text: `${a.subject} needs a look.` });
     for (const d of await all(ctx, "select dep, detail from dep_checks where ok = 0"))
       needs.push({ id: `dep-${d.dep}`, kind: "dependency", text: `${d.dep}: ${d.detail}` });
+    for (const f of await all(
+      ctx,
+      "select id, text from feedback where status = 'received' order by created_at",
+    ))
+      needs.push({
+        id: `feedback-${f.id}`,
+        kind: "feedback",
+        text: `Feedback to review: ${String(f.text).slice(0, 80)}`,
+      });
     for (const f of freshness.filter((f) => f.state === "stale"))
       needs.push({ id: `stale-${f.dataset}`, kind: "stale", text: `${f.dataset} is out of date.` });
+    // Waiting prototypes: the owner's answer is needed. A GitHub hiccup leaves the rest of the list intact.
+    const bot = botOf();
+    if (bot) {
+      const waiting = await bot
+        .openIssuesWithLabel({ repo: TICKET_REPO, label: "prototype-waiting" })
+        .catch(() => []);
+      for (const i of waiting)
+        needs.push({
+          id: `prototype-${i.number}`,
+          kind: "prototype",
+          text: `Prototype waiting for your answer: ${i.title.slice(0, 80)}`,
+          url: i.url,
+        });
+    }
     return c.json({ at: istText(now), needs_you: needs, freshness, runs, problems, usage });
   });
 
