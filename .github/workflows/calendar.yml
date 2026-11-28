@@ -1,6 +1,7 @@
 # The calendar Job (decisions §2 Schedules): started only by the Worker's 5-minute tick through
 # workflow_dispatch, never by a schedule of its own. Public data only, so no model token and no private repo.
 # Fetches holidays and corporate actions from NSE and publishes the `calendar` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
 name: calendar
 on:
   workflow_dispatch:
@@ -27,30 +28,13 @@ permissions:
   contents: read
 jobs:
   calendar:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      STOCKPILOT_API_URL: https://stockpilot-app.stockpilotgn.workers.dev
-      STOCKPILOT_INGEST_KEY: ${{ secrets.INGEST_HMAC_KEY }}
-      JOB_DAY: ${{ inputs.day }}
-    steps:
-      # Jobs run the code that is live, not the branch the dispatch named.
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: production
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: py/uv.lock
-      - run: uv sync --frozen --project py
-      - name: Run the Job
-        env:
-          SUBJECT: ${{ inputs.subject }}
-          FROM: ${{ inputs.from }}
-          TO: ${{ inputs.to }}
-          STOCKPILOT_VERSION: ${{ github.sha }}
-        run: |
-          args=(--subject "${SUBJECT:-calendar}")
-          [ -n "$FROM" ] && args+=(--from "$FROM")
-          [ -n "$TO" ] && args+=(--to "$TO")
-          uv run --frozen --project py python -m stockpilot.runtime calendar "${args[@]}"
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: calendar
+      subject: ${{ inputs.subject || 'calendar' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
