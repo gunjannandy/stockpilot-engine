@@ -6,6 +6,7 @@ import {
   barsOf,
   callCard,
   callLine,
+  HOLDINGS,
   isHeld,
   lakh,
   money,
@@ -78,13 +79,15 @@ function Health() {
 
 function PortfolioTile() {
   const t = useWords();
-  const v = useCountUp(2846000);
+  const value = HOLDINGS.reduce((a, r) => a + r.h.value, 0);
+  const cost = HOLDINGS.reduce((a, r) => a + r.h.cost, 0);
+  const v = useCountUp(value);
   return (
     <Tile title={t("v3.portfolioT")}>
       <p className="k-big num">{lakh(Math.round(v))}</p>
       <p className="k-note">
         {t("v3.todayWord")} <b className="up num">{pct(0.6)}</b> · {t("v2.pGain")}{" "}
-        <b className="up num">{pct(18.4)}</b>
+        <b className={`num ${value >= cost ? "up" : "dn"}`}>{pct((value / cost - 1) * 100)}</b>
       </p>
     </Tile>
   );

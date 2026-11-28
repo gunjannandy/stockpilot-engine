@@ -18,6 +18,7 @@ import {
   vs,
 } from "./funds-core";
 import "./funds.css";
+import { Overlap } from "../fundoverlap/Overlap";
 
 type Item = Fund & Row;
 const pct = (n: number | null, d = 1) => (n == null ? "–" : `${n.toFixed(d)}`);
@@ -254,6 +255,8 @@ function FundPage({ fund }: { fund: Fund }) {
           </span>
         </div>
       </div>
+
+      <Overlap name={fund.name} />
 
       <h2>{t("funds.buys")}</h2>
       {fund.lots.length ? (

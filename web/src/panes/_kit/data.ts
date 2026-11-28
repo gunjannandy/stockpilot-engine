@@ -351,3 +351,84 @@ export const barsOf = (st: SampleStock) => {
   }
   return b;
 };
+
+const ADJ = [
+  "Blue",
+  "Cedar",
+  "Delta",
+  "Ember",
+  "Falcon",
+  "Granite",
+  "Harbor",
+  "Indus",
+  "Jade",
+  "Kestrel",
+  "Lotus",
+  "Maple",
+  "Nimbus",
+  "Orbit",
+  "Pine",
+  "Quartz",
+  "Raven",
+  "Sable",
+  "Teak",
+  "Umber",
+  "Vertex",
+  "Willow",
+  "Xenon",
+  "Yarrow",
+  "Zephyr",
+  "Amber",
+];
+const KIND: [string, string][] = [
+  ["Foods", "Consumer"],
+  ["Cables", "Industrials"],
+  ["Pharma", "Health"],
+  ["Housing", "Finance"],
+  ["Textiles", "Textiles"],
+  ["Logistics", "Transport"],
+  ["Agro", "Agri"],
+  ["Software", "IT"],
+  ["Paints", "Materials"],
+  ["Hotels", "Leisure"],
+];
+/** Every stock in the made-up universe: the 14 named ones plus generated fillers, so the screener has something to sift. */
+export const UNIVERSE: SampleStock[] = [
+  ...STOCKS,
+  ...Array.from({ length: 30 }, (_, i): SampleStock => {
+    const [kind, sector] = KIND[i % KIND.length] as [string, string];
+    const name = `${ADJ[i % ADJ.length]} ${kind}`;
+    const v: Verdict = i % 5 === 0 ? "buy" : i % 3 === 0 ? "weak" : i % 7 === 0 ? "sell" : "watch";
+    return {
+      id: name.toLowerCase().replace(/\W+/g, "-"),
+      name,
+      symbol: name.toUpperCase().replace(/\W+/g, "").slice(0, 9),
+      sector,
+      exchange: i % 4 === 0 ? "BSE" : "NSE",
+      verdict: v,
+      strength: 22 + ((i * 17) % 60),
+      seed: 30 + i,
+      start: 150 + ((i * 97) % 2400),
+      drift: ((i % 5) - 2) * 0.0002,
+      trades: [],
+      ageSeconds: 30,
+    };
+  }),
+];
+export const universeById = (id: string) => UNIVERSE.find((s) => s.id === id);
+
+export type Reason = "top" | "near" | "view" | "held" | "fall" | "busy";
+export function reasonsOf(st: SampleStock): Reason[] {
+  const r: Reason[] = [];
+  const k = UNIVERSE.indexOf(st);
+  if (k % 4 === 0) r.push("top");
+  else if (k % 4 === 1) r.push("near");
+  if (st.verdict !== "watch" || st.seed % 2) r.push("view");
+  if (isHeld(st)) r.push("held");
+  if (st.drift < 0 || st.seed % 6 === 0) r.push("fall");
+  if (UNUSUAL[st.id] || st.seed % 5 === 0) r.push("busy");
+  return r;
+}
+
+export const peOf = (s: SampleStock) => 8 + ((s.seed * 7) % 30);
+export const growthOf = (s: SampleStock) => ((s.seed * 11) % 40) - 8;

@@ -2,7 +2,7 @@
 import { type ReactNode, useState } from "react";
 import { useWords } from "../../words";
 import { sparkPath } from "../stock/sample";
-import { money, quote, type SampleStock } from "./data";
+import { growthOf, money, peOf, quote, type SampleStock } from "./data";
 import "./kit.css";
 
 export function Spark({ closes }: { closes: number[] }) {

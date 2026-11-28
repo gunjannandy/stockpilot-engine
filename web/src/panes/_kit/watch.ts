@@ -42,6 +42,10 @@ export const watch = {
     else if (!on) s.toast = null;
     emit();
   },
+  say(text: string) {
+    toast(text, () => {});
+    emit();
+  },
   markSeen(ids: string[]) {
     for (const i of ids) s.seen.add(i);
     emit();
