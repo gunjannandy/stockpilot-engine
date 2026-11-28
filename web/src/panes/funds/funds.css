@@ -176,3 +176,39 @@
     padding-inline: 4px;
   }
 }
+
+.fd-tag {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  background: var(--c2);
+  color: var(--text-2);
+}
+.fd-tag.fd-own {
+  background: var(--tonal);
+  color: var(--on-tonal);
+}
+.fd-tag.fd-buy {
+  background: var(--gain);
+  color: var(--on-verdict);
+}
+.fd-glance {
+  margin: var(--sp-4) 0;
+}
+.fd-forecast {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-card);
+}
+.fd-forecast h2 {
+  margin-top: 0;
+}
+.fd-fc-ph {
+  margin: var(--sp-2) 0 0;
+  color: var(--warn);
+  font-weight: 600;
+}

@@ -20,7 +20,12 @@ import {
 import "./funds.css";
 import { FundNote, Overlap } from "../fundoverlap/Overlap";
 
-type Item = Fund & Row;
+type Call = "own" | "buy" | "watch";
+const ORDER: Call[] = ["own", "buy", "watch"];
+type Item = Fund & Row & { call: Call };
+// Needs data: our Buy / Watch view of a fund is not in the funds feed yet. The preview alternates the funds not held.
+const callOf = (f: Fund): Call =>
+  f.lots.length ? "own" : f.id.charCodeAt(f.id.length - 1) % 2 ? "buy" : "watch";
 const pct = (n: number | null, d = 1) => (n == null ? "–" : `${n.toFixed(d)}`);
 const inr = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const money = (n: number) => `₹${inr(n)}`;
@@ -144,6 +149,28 @@ function FundPage({ fund }: { fund: Fund }) {
         {t("funds.nav")}. {t("funds.nav.note")}
       </p>
 
+      <div className="wl-glance fd-glance">
+        {[
+          [
+            t("funds.glance.ret"),
+            headline?.f == null ? "–" : `${pct(headline.f)}%`,
+            headline ? `${headline.y}Y` : "",
+          ],
+          [t("funds.cost"), `${fund.cost.toFixed(2)}%`, t("funds.glance.costN")],
+          [t("funds.size"), fund.size == null ? "–" : `₹${inr(fund.size)} cr`, ""],
+          [
+            t("funds.glance.fall"),
+            m.falls[0] ? `${pct(m.falls[0].fund, 0)}%` : "–",
+            t("funds.glance.fallN"),
+          ],
+        ].map(([k, v, n], i) => (
+          <div key={k} className="wl-g" style={{ animationDelay: `${i * 60}ms` }}>
+            <span className="k-eyebrow">{k}</span>
+            <b className="num">{v}</b>
+            <span className="k-note">{n}</span>
+          </div>
+        ))}
+      </div>
       <menu className="fund-ranges" aria-label={t("funds.range")}>
         {RANGES.map((r) => (
           <button
@@ -158,6 +185,12 @@ function FundPage({ fund }: { fund: Fund }) {
         ))}
       </menu>
       <Chart fund={fund} range={range} />
+
+      <section className="fd-forecast" aria-label={t("funds.fc.h")}>
+        <h2>{t("funds.fc.h")}</h2>
+        <p className="note">{t("funds.fc.p")}</p>
+        <p className="fd-fc-ph">{t("funds.fc.needs")}</p>
+      </section>
 
       <h2>{t("funds.returns")}</h2>
       {headline?.f != null ? (
@@ -289,12 +322,9 @@ export function FundsPane() {
     return FUNDS.filter(
       (f) => !needle || `${f.name} ${f.amc} ${f.category}`.toLowerCase().includes(needle),
     )
-      .sort((a, b) => Number(b.lots.length > 0) - Number(a.lots.length > 0))
-      .map((f) => ({
-        ...f,
-        group: f.lots.length ? "held" : "all",
-        groupLabel: f.lots.length ? t("funds.held") : t("funds.not.held"),
-      }));
+      .map((f) => ({ ...f, call: callOf(f) }))
+      .sort((a, b) => ORDER.indexOf(a.call) - ORDER.indexOf(b.call))
+      .map((f) => ({ ...f, group: f.call, groupLabel: t(`funds.g.${f.call}`) }));
   }, [q, t]);
   return (
     <div className="funds">
@@ -320,7 +350,10 @@ export function FundsPane() {
                   {f.amc} · {f.category}
                 </span>
               </span>
-              <span className="num lp-price">{pct(cagr(f.series, 3) ?? cagr(f.series, 1))}%</span>
+              <span className="num lp-price">
+                {pct(cagr(f.series, 3) ?? cagr(f.series, 1))}%
+                <span className={`fd-tag fd-${f.call}`}>{t(`funds.tag.${f.call}`)}</span>
+              </span>
             </>
           )}
           renderPane={(f) => <FundPage fund={f} />}
