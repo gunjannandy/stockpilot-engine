@@ -2,5 +2,18 @@
   "top": "Top stories",
   "topP": "Big news on what you hold or watch. Stays here for 7 days.",
   "latest": "Latest",
-  "newN": "{n} new"
+  "newN": "{n} new",
+  "lang": "en",
+  "title": "Market and news",
+  "sub": "The latest stories, newest first, with the stocks each one touches.",
+  "sources": "{n} sources",
+  "dir.good": "good for it",
+  "dir.bad": "bad for it",
+  "dir.mixed": "mixed",
+  "size.small": "small",
+  "size.medium": "medium",
+  "size.large": "large",
+  "sectorLater": "Sector mood is not ready yet. It will show here once the sector figures are collected.",
+  "fundsLater": "What the big funds bought and sold is not ready yet. It will show here when that data is collected.",
+  "exposureLater": "What the news means for each holding is not ready yet. It needs the news to be judged first."
 }
