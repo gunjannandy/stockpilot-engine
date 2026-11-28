@@ -16,6 +16,7 @@ import { RawTrade } from "./kite/kite";
 import { LISTS_MIN_TOP, ListRow, listRowCheck } from "./lists/lists";
 import { DividendsRun, UsPricesRun } from "./money/money";
 import { NewsItemRow } from "./news/news";
+import { RecordRun } from "./record/record";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -209,6 +210,19 @@ export const datasets = {
       (run.rows ?? []).filter((r) => r.list === "top10").length < LISTS_MIN_TOP
         ? "the Top 10 list has fewer than 10 stocks"
         : null,
+  },
+  record_runs: {
+    name: "record_runs",
+    job: "record",
+    table: "record_runs",
+    schedule: "every trading day at 23:30 IST",
+    freshnessHours: 72,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: RecordRun,
+    run: { at: "23:30", on: "trading" },
   },
   dividends: {
     name: "dividends",

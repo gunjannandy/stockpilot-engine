@@ -32,4 +32,7 @@ export const callScores = sqliteTable("call_scores", {
   callId: text("call_id").primaryKey(),
   beat: integer("beat").notNull(),
   scoredOn: text("scored_on").notNull(),
+  stockRet: real("stock_ret"),
+  niftyRet: real("nifty_ret"),
+  equalRet: real("equal_ret"),
 });
