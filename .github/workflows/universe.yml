@@ -1,0 +1,40 @@
+# The universe Job (decisions §2 Schedules): started by the Worker's 5-minute tick through workflow_dispatch
+# (the `universe` dataset runs every morning at 07:30 IST). Public lists only, so no model token and no private repo.
+# Reads the NSE and BSE stock lists and publishes the `universe` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: universe
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always universe)
+        default: universe
+      subject:
+        description: Job subject
+        default: universe
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-universe
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  universe:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: universe
+      subject: ${{ inputs.subject || 'universe' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}

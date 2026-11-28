@@ -20,6 +20,8 @@ export const JobKind = z.enum([
   "calendar",
   "funds",
   "fundholdings",
+  "universe",
+  "history",
 ]);
 export type JobKind = z.infer<typeof JobKind>;
 

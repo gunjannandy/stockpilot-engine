@@ -10,14 +10,21 @@ it("C-116-3 the cron puts one message per due duty on the queue", async () => {
   const sent: { duty: string }[] = [];
   const queue = { send: async (m: { duty: string }) => void sent.push(m) };
   await enqueueDuties(queue, at("2026-11-27T04:00:00Z"));
-  expect(ids(sent)).toEqual(["digest", "quotes", "scheduler", "secrets", "watcher"]);
+  expect(ids(sent)).toEqual(["digest", "feedback", "quotes", "scheduler", "secrets", "watcher"]);
   sent.length = 0;
   await enqueueDuties(queue, at("2026-11-27T04:05:00Z"));
   expect(ids(sent)).toEqual(["quotes", "scheduler"]);
   sent.length = 0;
   await enqueueDuties(queue, at("2026-11-27T04:15:00Z"));
-  expect(ids(sent)).toEqual(["quotes", "scheduler", "watcher"]);
-  expect(DUTIES.map((d) => d.id).sort()).toEqual(["digest", "quotes", "scheduler", "secrets", "watcher"]);
+  expect(ids(sent)).toEqual(["feedback", "quotes", "scheduler", "watcher"]);
+  expect(DUTIES.map((d) => d.id).sort()).toEqual([
+    "digest",
+    "feedback",
+    "quotes",
+    "scheduler",
+    "secrets",
+    "watcher",
+  ]);
 });
 
 it("C-116-3 a duty that cannot be queued does not stop the others being queued", async () => {
@@ -29,7 +36,7 @@ it("C-116-3 a duty that cannot be queued does not stop the others being queued",
     },
   };
   await enqueueDuties(queue, at("2026-11-27T04:00:00Z"));
-  expect(sent.sort()).toEqual(["digest", "quotes", "secrets", "watcher"]);
+  expect(sent.sort()).toEqual(["digest", "feedback", "quotes", "secrets", "watcher"]);
 });
 
 it("C-116-3 each message runs its own duty with its own heartbeat, and one throwing leaves the others run", async () => {

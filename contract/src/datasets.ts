@@ -10,6 +10,7 @@ import {
 } from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
+import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
  * JSON Schema; the door enforces `writeBudget` per day. */
@@ -118,6 +119,40 @@ export const datasets = {
     rowCheck: fundHoldingsRowCheck,
     run: { at: "22:00", on: "every" },
     runCheck: (run) => (run.rowCount < FUND_HOLDINGS_MIN ? "fewer than 20 funds" : null),
+  },
+  history: {
+    name: "history",
+    job: "history",
+    table: "history_runs",
+    schedule: "every trading day at 21:00 IST",
+    freshnessHours: 96,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 50,
+    row: HistoryRun,
+    run: { at: "21:00", on: "trading" },
+  },
+  universe: {
+    name: "universe",
+    job: "universe",
+    table: "universe",
+    schedule: "every morning at 07:30 IST",
+    freshnessHours: 48,
+    checks: {
+      row: ["symbol and name are present"],
+      run: ["at least 1,500 NSE stocks listed"],
+    },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 30000,
+    row: UniverseRow,
+    rowCheck: universeRowCheck,
+    run: { at: "07:30", on: "every" },
+    runCheck: (run) =>
+      (run.rows ?? []).filter((r) => r.exchange === "NSE" && r.status === "listed").length >= 1500
+        ? null
+        : "fewer than 1,500 NSE stocks listed",
   },
   feedback: {
     name: "feedback",
