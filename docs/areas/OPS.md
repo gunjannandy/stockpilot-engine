@@ -14,6 +14,7 @@ Status: building
 - [ ] Drill on the Job runtime (private repo workflow; needs the owner's word).
 
 ## Decisions
+- Chapter 2: merged main, rechecked; every item left under Next needs the owner (prototype review, bridge run, private-repo word), so no code was added.
 - Archive token is its own secret (`CF_D1_ARCHIVE_TOKEN`, needs delete rights) so the read-only backup token stays read-only.
 - The archive reads only rows past the archive age in SQL, so a big table is never pulled whole.
 
@@ -23,3 +24,4 @@ Status: building
 - Private-repo workflow changes (backup, drill) wait on the owner's word.
 
 Chapter end: 1
+Chapter end: 2
