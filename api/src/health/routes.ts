@@ -6,9 +6,10 @@ import {
   PARTS,
   PAUSE_RELEASES,
 } from "@stockpilot/contract";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { checkResults, flags, heartbeats, writeBudget } from "../../drizzle/core";
+import { depChecks, promiseResults } from "../../drizzle/ops";
 import { type Ctx, istDay, istText, rawBody } from "../app";
 import { latest as latestBackup } from "../backup/routes";
 import { calendarStatus, loadCalendar } from "../calendar/routes";
@@ -102,6 +103,21 @@ export default function routes(ctx: Ctx) {
         detail: r.detail,
       }),
     );
+    // Newest day first, so the first row seen per promise is its latest.
+    const seen = new Set<string>();
+    const promises = (await ctx.db.select().from(promiseResults).orderBy(desc(promiseResults.day)))
+      .filter((r) => !seen.has(r.promise) && seen.add(r.promise))
+      .map((r) => ({ promise: r.promise, day: r.day, ok: r.ok, detail: r.detail, at: r.at }))
+      .sort((a, b) => a.promise.localeCompare(b.promise));
+    const dependencies = (await ctx.db.select().from(depChecks).orderBy(depChecks.dep)).map(
+      (r) => ({
+        dep: r.dep,
+        ok: r.ok,
+        detail: r.detail,
+        fallback: r.fallback,
+        at: r.at,
+      }),
+    );
     const worst = parts.reduce<Colour>(
       (w, p) => (RANK[p.status] > RANK[w] ? p.status : w),
       "green",
@@ -117,6 +133,8 @@ export default function routes(ctx: Ctx) {
       overall,
       parts,
       checks,
+      promises,
+      dependencies,
       backup,
     });
   });

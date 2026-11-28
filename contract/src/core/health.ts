@@ -48,6 +48,26 @@ export const BackupReport = z.object({
 });
 export type BackupReport = z.infer<typeof BackupReport>;
 
+/** One of the three daily promises, latest day measured; none before the first measure. */
+export const PromiseResult = z.object({
+  promise: z.string(),
+  day: z.string(),
+  ok: z.boolean(),
+  detail: z.string(),
+  at: IstTime,
+});
+export type PromiseResult = z.infer<typeof PromiseResult>;
+
+/** The latest check of one outside dependency, with what we do while it is down. */
+export const DependencyResult = z.object({
+  dep: z.string(),
+  ok: z.boolean(),
+  detail: z.string(),
+  fallback: z.string(),
+  at: IstTime,
+});
+export type DependencyResult = z.infer<typeof DependencyResult>;
+
 /** Behind the health secret header: every part's colour, the running version, stored check results. */
 export const HealthResponse = z.object({
   at: IstTime,
@@ -55,6 +75,10 @@ export const HealthResponse = z.object({
   overall: Colour,
   parts: z.array(HealthPart),
   checks: z.array(CheckResult),
+  /** The latest result of each daily promise (site up, data fresh, Analyse fast). */
+  promises: z.array(PromiseResult),
+  /** The latest result of each outside dependency check. */
+  dependencies: z.array(DependencyResult),
   /** /api/backup, shown here so one page tells whether the vault and its restore proof are fresh. */
   backup: z.object({ backup: BackupReport.nullable(), drill: BackupReport.nullable() }),
 });

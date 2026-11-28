@@ -64,3 +64,36 @@ it("Health shows the latest backup and drill, and the drill is a Job kind", asyn
   expect(got.drill?.detail).toBe("2 tables match");
   expect(JobKind.safeParse("drill").success).toBe(true);
 });
+
+it("Health lists the latest promises and dependency results", async () => {
+  const { app, db } = await makeApp();
+  const get = async () =>
+    HealthResponse.parse(
+      await (await app.request("/api/health", { headers: { "x-health-secret": HEALTH } })).json(),
+    );
+  const empty = await get();
+  expect(empty.promises).toEqual([]);
+  expect(empty.dependencies).toEqual([]);
+  const at = "2026-11-28T08:00:00+05:30";
+  for (const [day, ok] of [
+    ["2026-11-27", false],
+    ["2026-11-28", true],
+  ] as const)
+    await db
+      .prepare(
+        "insert into promise_results (day, promise, ok, detail, at) values (?, 'site_up', ?, 'd', ?)",
+      )
+      .bind(day, ok ? 1 : 0, at)
+      .run();
+  await db
+    .prepare(
+      "insert into dep_checks (dep, ok, detail, fallback, at) values ('nse', 0, 'answered 503', 'use last data', ?)",
+    )
+    .bind(at)
+    .run();
+  const got = await get();
+  expect(got.promises).toEqual([
+    { promise: "site_up", day: "2026-11-28", ok: true, detail: "d", at },
+  ]);
+  expect(got.dependencies[0]).toMatchObject({ dep: "nse", ok: false, fallback: "use last data" });
+});
