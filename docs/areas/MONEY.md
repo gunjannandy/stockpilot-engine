@@ -24,6 +24,7 @@ Status: building
 - [ ] Opus review chapter over the whole diff for money correctness.
 
 ## Decisions
+- Chapter 6: merged main (news area added `news` Job kind, dataset and workflow allow-list entry); kept both sides in `contract/src/core/jobs.ts`, `contract/src/datasets.ts`, `checks/MOVE-2.py`. Full `pnpm test` green. No stored beta or US corporate-action source exists yet, so nothing new could be built.
 - Budget and mix are tables of rows (month / asset class), not a JSON blob, so v2's rows migrate one for one; a write replaces the whole setting in one batch.
 - Holdings route returns only the newest snapshot of each source, so a new Kite sync shows with no Job.
 - `money` exports are namespaces, because `Row`, `RateOn`, `Holding` collide across modules.
@@ -43,4 +44,4 @@ Status: building
 ## Blocked
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
 
-Chapter end: 5
+Chapter end: 6
