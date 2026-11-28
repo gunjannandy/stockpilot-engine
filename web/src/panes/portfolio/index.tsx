@@ -1,13 +1,14 @@
 // Portfolio: what we own and what to do with the month's money. One value line, a row of small cards
 // (this month's plan, tax, RSUs, coming up), then one holdings table. The plan (budget, target mix) is edited here:
 // there is no Settings screen. Made-up numbers throughout.
-import { useQuery } from "@tanstack/react-query";
+import type { SettingsResponse, TradesResponse } from "@stockpilot/contract";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { callCard, HOLDINGS, lakh, money, pct } from "../_kit/data";
 import { useCountUp } from "../_kit/hooks";
-import { BUDGET, MONEY_LEFT, TARGET } from "../_kit/plan";
+import { BUDGET, budgetFor, istMonth, MONEY_LEFT, spentIn, TARGET } from "../_kit/plan";
 import { Toast } from "../_kit/Toast";
 import { Seg, VChip } from "../_kit/ui";
 import { watch } from "../_kit/watch";
@@ -23,11 +24,53 @@ const fill = (s: string, v: Record<string, string | number>) =>
 function Month({ rows }: { rows: Rows }) {
   const t = useWords();
   const sync = useQuery({ ...syncQuery, retry: false });
-  const [budget, setBudget] = useState(BUDGET);
+  const qc = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["portfolio", "settings"],
+    queryFn: async () => {
+      const r = await fetch("/api/portfolio/settings");
+      if (!r.ok) throw new Error(String(r.status));
+      return (await r.json()) as SettingsResponse;
+    },
+    retry: false,
+  });
+  const trades = useQuery({
+    queryKey: ["portfolio", "trades"],
+    queryFn: async () => {
+      const r = await fetch("/api/portfolio/trades");
+      if (!r.ok) throw new Error(String(r.status));
+      return (await r.json()) as TradesResponse;
+    },
+    retry: false,
+  });
+  const month = istMonth();
+  const real = budgetFor(settings.data?.budget, month);
+  // Real figures when the routes answer (owner only); the made-up ones stay while they do not.
+  const [draft, setBudget] = useState<number | null>(null);
+  const budget = draft ?? real ?? BUDGET;
+  const MONEY_LEFT_NOW =
+    trades.data && real !== null
+      ? Math.max(0, real - spentIn(trades.data.trades, month))
+      : MONEY_LEFT;
+  const saveBudget = useMutation({
+    mutationFn: async (v: number) => {
+      const b = settings.data?.budget;
+      const r = await fetch("/api/portfolio/budget", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          default: b?.default ?? v,
+          months: { ...(b?.months ?? {}), [month]: v },
+        }),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio"] }),
+  });
   const [editB, setEditB] = useState(false);
   const [target, setTarget] = useState(TARGET);
   const [editM, setEditM] = useState(false);
-  const left = useCountUp(MONEY_LEFT);
+  const left = useCountUp(MONEY_LEFT_NOW);
   const total = rows.reduce((a, r) => a + r.h.value, 0) || 1;
   const now = new Map<string, number>();
   for (const r of rows)
@@ -54,12 +97,12 @@ function Month({ rows }: { rows: Rows }) {
           <span className="k-bar-h gain" aria-hidden="true">
             <i
               className="k-grow"
-              style={{ width: `${Math.min(100, (MONEY_LEFT / (budget || 1)) * 100)}%` }}
+              style={{ width: `${Math.min(100, (MONEY_LEFT_NOW / (budget || 1)) * 100)}%` }}
             />
           </span>
           <span className="k-note">
             {fill(t("v3.spentOf"), {
-              a: money(Math.max(0, budget - MONEY_LEFT), 0),
+              a: money(Math.max(0, budget - MONEY_LEFT_NOW), 0),
               b: money(budget, 0),
             })}
           </span>
@@ -81,6 +124,7 @@ function Month({ rows }: { rows: Rows }) {
                 className="sk-btn sk-tonal"
                 onClick={() => {
                   setEditB(false);
+                  if (settings.data) saveBudget.mutate(budget);
                   watch.say(t("v2.budgetSet"));
                 }}
               >
