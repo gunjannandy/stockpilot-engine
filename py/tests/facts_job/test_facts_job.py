@@ -55,3 +55,13 @@ def test_every_template_has_bengali_with_the_same_placeholders():
         assert BN.search(t["bn"]) and fields(t["en"]) == fields(t["bn"]), key
 
 
+
+
+def test_history_feeds_price_sentences_and_similar_lists_same_sector_peers():
+    rows = [{"close": 100 + (i % 7), "volume": 1000 + i} for i in range(80)]
+    out = job.collect(universe(7), lambda s: recs(), {f"S{i}": 100.0 + i for i in range(7)}, DAY,
+                      history=lambda s: rows if s != "S2" else 1 / 0)
+    by = {r["symbol"]: r for r in out}
+    assert "biggest_fall" in by["S0"]["sentences_json"] and "biggest_fall" not in by["S2"]["sentences_json"]
+    sim = json.loads(by["S0"]["similar_json"])
+    assert len(sim) == 5 and "S0" not in sim

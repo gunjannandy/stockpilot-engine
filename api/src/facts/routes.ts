@@ -5,6 +5,7 @@ import {
   type FactsRow,
   factFigures,
   factSentences,
+  factSimilar,
 } from "@stockpilot/contract";
 import { Hono } from "hono";
 import type { Ctx } from "../app";
@@ -27,13 +28,14 @@ export default function routes(ctx: Ctx) {
       .first()) as { body: string } | null;
     if (!r) return c.json(empty);
     const row = JSON.parse(r.body) as FactsRow;
-    const { sentences_json, figures_json, ...rest } = row;
+    const { sentences_json, figures_json, similar_json, ...rest } = row;
     const out: FactsResponse = {
       as_of: p.as_of,
       facts: {
         ...rest,
         sentences: factSentences(sentences_json),
         figures: factFigures(figures_json),
+        similar: factSimilar(similar_json ?? "[]"),
       },
     };
     return c.json(out);

@@ -17,7 +17,7 @@ Status: building
 - [x] Chart file: `GET /api/stocks/:symbol/chart` (`api/src/stocks/chart.ts`, shape `ChartResponse`): split-adjusted prices, 2- and 10-month averages. Search index is the universe dataset behind `/api/stocks/search`.
 - [x] Facts Job and checks C-048-1, C-171-2.
 - [x] Quotes duty wired in `api/src/schedule/duties.ts` (`quotesDuty`, one line in a shared file). Typed web client entries come from `routes` through `tools/contract-gen/gen.ts` on its own, no edit needed.
-- [ ] Facts: feed `price_sentences` (biggest fall, swings, trading) from history rows in the Job (written and tested, not yet fed); similar companies list.
+- [x] Facts: `price_sentences` fed from two years of history rows through `/api/stocks/:symbol/history`; similar companies (`similar_json`, five same-sector peers nearest by market cap) in the row, contract and `/api/facts/:symbol` (`similar`).
 - [ ] Production check C-040-3 (last close vs bhavcopy for 5 samples) once data runs.
 - [ ] Set Status: done when all green.
 
@@ -30,7 +30,11 @@ Status: building
 
 - Chart files are built by the Worker from stored days on request, not as static files, so they need no extra Job output or release.
 
+- `similar_json` is optional in the contract (default empty) so older rows still pass; migration `20261129100000_facts_similar.sql` adds the column.
+
 ## Blocked
 - none
 
-Chapter end: 3
+private run: C-040-3 production check (last close vs bhavcopy) once data runs
+
+Chapter end: 4
