@@ -70,7 +70,18 @@ def figures(records, day: date) -> list[dict]:
     return out
 
 
-def row(doc: dict, records, day: date, history: list[dict] | None = None) -> dict:
+def similar(doc: dict, docs: dict[str, dict], limit: int = 5) -> list[str]:
+    """Symbols of up to `limit` other stocks of the same sector, nearest by market cap (no sector, no list)."""
+    if not doc.get("sector") or doc["valuation"].get("market_cap_cr") is None:
+        return []
+    cap = doc["valuation"]["market_cap_cr"]
+    peers = [d for d in docs.values() if d["symbol"] != doc["symbol"] and d.get("sector") == doc["sector"]
+             and d["valuation"].get("market_cap_cr") is not None]
+    peers.sort(key=lambda d: (abs(d["valuation"]["market_cap_cr"] - cap), d["symbol"]))
+    return [d["symbol"] for d in peers[:limit]]
+
+
+def row(doc: dict, records, day: date, history: list[dict] | None = None, similar_symbols: list[str] | None = None) -> dict:
     v, q = doc["valuation"], doc["quality"]
     s = sentences(v, q) + price_sentences(history or [])
     return {"id": f"{doc['exchange']}:{doc['symbol']}", "symbol": doc["symbol"], "exchange": doc["exchange"],
@@ -79,11 +90,13 @@ def row(doc: dict, records, day: date, history: list[dict] | None = None) -> dic
             **{k: q.get(k) for k in F.QUALITY_KEYS},
             "sentences_json": json.dumps(s, ensure_ascii=False, separators=(",", ":")),
             "figures_json": json.dumps(figures(records, day), separators=(",", ":")),
+            "similar_json": json.dumps(similar_symbols or [], separators=(",", ":")),
             "not_available": "|".join(doc["not_available"])}
 
 
 def collect(universe: list[dict], gather: Callable[[str], list], prices: dict[str, float], day: date,
-            progress: Callable[[str], None] = lambda _: None) -> list[dict]:
+            progress: Callable[[str], None] = lambda _: None,
+            history: Callable[[str], list[dict]] | None = None) -> list[dict]:
     """universe: [{symbol, exchange, name, sector}]. One failing symbol is reported, not fatal."""
     docs, recs, failed = {}, {}, []
     for u in universe:
@@ -97,7 +110,14 @@ def collect(universe: list[dict], gather: Callable[[str], list], prices: dict[st
             docs[u["symbol"]] = F.build_facts(u["symbol"], u["exchange"], u["name"], u["sector"], r, day, prices.get(u["symbol"]))
     F.add_sector_pe(docs)
     progress(f"{len(docs)} of {len(universe)} stocks with facts, {len(failed)} failed")
-    return [row(d, recs[s], day) for s, d in docs.items()]
+    out = []
+    for s, d in docs.items():
+        try:
+            h = history(s) if history else []
+        except Exception:  # noqa: BLE001 - no history only drops the price sentences
+            h = []
+        out.append(row(d, recs[s], day, h, similar(d, docs)))
+    return out
 
 
 def run(ctx, universe: list[dict] | None = None, gather=None, prices: dict | None = None) -> str:
@@ -110,9 +130,16 @@ def run(ctx, universe: list[dict] | None = None, gather=None, prices: dict | Non
             universe = [u for u in universe if u["symbol"] == ctx.subject]
     if gather is None:
         gather, prices = _live(universe, day)
-    out = collect(universe, gather, prices or {}, day, ctx.progress.line)
+    out = collect(universe, gather, prices or {}, day, ctx.progress.line,
+                  lambda sym: _history(ctx, sym))
     ctx.publish(DATASET, out, source="nse filings, yfinance", as_of=str(day))
     return f"published facts of {len(out)} stocks"
+
+
+def _history(ctx, symbol: str) -> list[dict]:
+    """Two years of daily rows from our own stock route, oldest first."""
+    since = date(ctx.range.end.year - 2, ctx.range.end.month, min(ctx.range.end.day, 28)).isoformat()
+    return ctx.client._ok(f"/api/stocks/{symbol}/history?from={since}", None, "GET").get("rows", [])
 
 
 def _live(universe: list[dict], day: date):

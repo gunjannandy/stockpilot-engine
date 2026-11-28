@@ -45,6 +45,8 @@ export const FactsRow = z.object({
   pledge_pct: num,
   sentences_json: z.string(),
   figures_json: z.string(),
+  /** JSON list of up to five symbols of the same sector, nearest by market cap. */
+  similar_json: z.string().default("[]"),
   /** Metrics with no figure, `|` separated. */
   not_available: z.string(),
 });
@@ -65,10 +67,16 @@ function list<T>(text: string, schema: z.ZodType<T>): T[] {
 export const factSentences = (t: string): Sentence[] => list(t, Sentence);
 export const factFigures = (t: string): Figure[] => list(t, Figure);
 
+export const factSimilar = (t: string): string[] => list(t, z.string());
+
 export const FactsResponse = z.object({
   as_of: z.string().nullable(),
-  facts: FactsRow.omit({ sentences_json: true, figures_json: true })
-    .extend({ sentences: z.array(Sentence), figures: z.array(Figure) })
+  facts: FactsRow.omit({ sentences_json: true, figures_json: true, similar_json: true })
+    .extend({
+      sentences: z.array(Sentence),
+      figures: z.array(Figure),
+      similar: z.array(z.string()),
+    })
     .nullable(),
 });
 export type FactsResponse = z.infer<typeof FactsResponse>;
