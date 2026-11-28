@@ -166,3 +166,28 @@
     height: 4rem;
   }
 }
+
+.mk-filter {
+  margin: var(--sp-3) 0 var(--sp-4);
+}
+.mk-card {
+  transition:
+    border-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+.mk-card:hover {
+  border-color: var(--line);
+  transform: translateY(-2px);
+}
+@media (min-width: 1100px) {
+  .mk-side {
+    position: sticky;
+    top: var(--sp-4);
+    align-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-card {
+    transition: none;
+  }
+}

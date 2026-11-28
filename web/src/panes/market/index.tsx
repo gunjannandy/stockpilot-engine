@@ -1,4 +1,5 @@
 // Market & news: ranked news cards with the stocks each affects, sector mood, coming up, big-fund money, exposure per holding.
+import { useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { HOLDINGS, money, NEWS, type NewsItem, pct, quote, stockById } from "../_kit/data";
@@ -130,7 +131,7 @@ function Exposure() {
           <span>{r.st.name}</span>
           <span className="mk-expbar" aria-hidden="true">
             <i
-              className={score >= 0 ? "up" : "dn"}
+              className={`k-grow ${score >= 0 ? "up" : "dn"}`}
               style={{
                 width: `${Math.min(50, Math.abs(score) * 4)}%`,
                 [score >= 0 ? "left" : "right"]: "50%",
@@ -150,6 +151,15 @@ function Exposure() {
 function MarketScreen() {
   const t = useWords();
   const ranked = [...NEWS].sort((a, b) => RANK[a.kind] - RANK[b.kind] || b.matters - a.matters);
+  const [f, setF] = useState<"all" | "mine" | "filing" | "wire">("all");
+  const isMine = (n: NewsItem) => n.hits.some((h) => HOLDINGS.some((r) => r.st.id === h.id));
+  const test = {
+    all: () => true,
+    mine: isMine,
+    filing: (n: NewsItem) => n.kind === "filing",
+    wire: (n: NewsItem) => n.kind !== "filing",
+  } as const;
+  const shown = ranked.filter(test[f]);
   const mine = [
     ...new Set(NEWS.flatMap((n) => n.hits.filter((h) => h.rel === "direct").map((h) => h.id))),
   ];
@@ -169,7 +179,22 @@ function MarketScreen() {
               return h ? <Tilelet key={id} id={id} dir={h.dir} size={h.size} /> : null;
             })}
           </div>
-          {ranked.map((n) => (
+          <div className="k-chips mk-filter">
+            {(["all", "mine", "filing", "wire"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                className="k-chipbtn"
+                aria-pressed={f === k}
+                onClick={() => setF(k)}
+              >
+                {t(`v3.nf.${k}`)}
+                <span className="num">{ranked.filter(test[k]).length}</span>
+              </button>
+            ))}
+          </div>
+          {shown.length === 0 ? <p className="k-note">{t("v2.noneHere")}</p> : null}
+          {shown.map((n) => (
             <Card key={n.id} n={n} />
           ))}
         </div>
@@ -189,7 +214,7 @@ function MarketScreen() {
                 <span>{s.k}</span>
                 <span className="mk-expbar" aria-hidden="true">
                   <i
-                    className={s.v >= 0 ? "up" : "dn"}
+                    className={`k-grow ${s.v >= 0 ? "up" : "dn"}`}
                     style={{
                       width: `${Math.abs(s.v) * 10}%`,
                       [s.v >= 0 ? "left" : "right"]: "50%",

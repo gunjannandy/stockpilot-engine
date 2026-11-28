@@ -26,7 +26,8 @@
   background: var(--surface);
   color: var(--text);
 }
-.fb button {
+.fb-box button,
+.fb-review button {
   min-height: var(--row);
   padding: 0 20px;
   border: 0;
@@ -37,7 +38,8 @@
   font-weight: 600;
   cursor: pointer;
 }
-.fb button:disabled {
+.fb-box button:disabled,
+.fb-review button:disabled {
   opacity: 0.5;
   cursor: default;
 }

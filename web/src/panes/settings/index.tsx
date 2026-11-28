@@ -25,7 +25,7 @@ function MoneyGroup() {
           />
         </span>
         <p className="k-note">
-          {t("v3.moneyP")}{" "}
+          {t("v3.moneyLeftP")}{" "}
           {t("v3.spentOf").replace("{a}", money(spent, 0)).replace("{b}", money(budget, 0))}
         </p>
       </Tile>
@@ -59,8 +59,8 @@ function MixGroup() {
   const [target, setTarget] = useState(TARGET);
   const sum = Object.values(target).reduce((a, b) => a + b, 0);
   return (
-    <Tile title={t("v2.pMix")} wide>
-      <p className="k-note">{t("v2.setMixP")}</p>
+    <Tile title={t("v3.stMix")} wide>
+      <p className="k-note">{t("v3.stMixTile")}</p>
       <div className="st-mix">
         {Object.entries(target).map(([s, g]) => (
           <label key={s} className="st-row">
@@ -111,13 +111,13 @@ function SettingsScreen() {
         label={t("v3.groupsNav")}
         items={[
           { id: "money", label: t("v3.stMoney") },
-          { id: "mix", label: t("v2.pMix") },
+          { id: "mix", label: t("v3.stMix") },
         ]}
       />
       <Group id="money" title={t("v3.stMoney")} sub={t("v3.stMoneyP")}>
         <MoneyGroup />
       </Group>
-      <Group id="mix" title={t("v2.pMix")} sub={t("v3.stMixP")}>
+      <Group id="mix" title={t("v3.stMix")} sub={t("v3.stMixP")}>
         <MixGroup />
       </Group>
       <Toast />

@@ -195,7 +195,7 @@
   background: var(--gain);
   color: var(--on-verdict);
 }
-.fd-glance {
+.wl-glance.fd-glance {
   margin: var(--sp-4) 0;
 }
 .fd-forecast {
@@ -211,4 +211,7 @@
   margin: var(--sp-2) 0 0;
   color: var(--warn);
   font-weight: 600;
+}
+.wl-glance.fd-glance {
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
 }

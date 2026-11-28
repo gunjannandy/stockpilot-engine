@@ -23,6 +23,8 @@
   --watch: #0b57d0;
   --on-verdict: #ffffff;
   --shadow: rgb(10 20 40 / 14%);
+  --mark: #e6a700;
+  --mark-ink: #5c4100;
 
   --font: "Google Sans Flex", "Noto Sans Bengali", system-ui, sans-serif;
   --fs-note: 0.75rem;
@@ -70,6 +72,8 @@
   --watch: #8ab4ff;
   --on-verdict: #0b1220;
   --shadow: rgb(0 0 0 / 50%);
+  --mark: #f5c542;
+  --mark-ink: #f5c542;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -95,6 +99,8 @@
     --watch: #8ab4ff;
     --on-verdict: #0b1220;
     --shadow: rgb(0 0 0 / 50%);
+    --mark: #f5c542;
+    --mark-ink: #f5c542;
     color-scheme: dark;
   }
 }
