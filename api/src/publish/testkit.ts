@@ -39,6 +39,14 @@ export const testDatasets: Datasets = {
     row: Item,
   },
   roomy: { ...base, name: "roomy", checks: { row: ["id"], run: [] }, writeBudget: 5000, row: Item },
+  wide: {
+    ...base,
+    name: "wide",
+    checks: { row: [], run: [] },
+    writeBudget: 5000,
+    rowsLimit: 1500,
+    row: Item,
+  },
   big: {
     ...base,
     name: "big",

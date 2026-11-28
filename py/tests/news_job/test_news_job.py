@@ -42,3 +42,22 @@ def test_high_impact_items_are_read_in_full_and_bad_answers_are_skipped():
     impact.judge([it("a", "NSE"), it("b", "Some Blog")], m, "t", article=lambda link: seen.append(link) or "full text")
     assert seen == ["https://x/a"] and "ARTICLE: full text" in m.prompts[0]
     assert impact.judge([it("a", "NSE")], Model("garbage"), "t") == ([], [])
+
+
+def test_a_run_publishes_a_capped_number_of_items_and_a_missing_feed_is_not_a_failure(monkeypatch):
+    from types import SimpleNamespace
+
+    from stockpilot.jobs import news
+
+    lines, sent = [], []
+    ctx = SimpleNamespace(progress=SimpleNamespace(line=lambda m, *a: lines.append(m)), range=SimpleNamespace(end="2026-11-28"),
+                          publish=lambda ds, rows, **kw: sent.append(rows), client=None)
+
+    def fetch(url):
+        return None if "livemint" in url or "nse" in url or "bse" in url else b"<rss><channel></channel></rss>"
+    monkeypatch.setattr(news.nc, "parse_rss", lambda text, name: [{"title": f"story {i} {name}", "link": f"https://x/{i}", "source": name,
+                                             "published_at": "2026-11-28T09:00:00+05:30"} for i in range(200)] if name == "Mint" else [])
+    news.run(ctx, fetch=fetch, universe=[], now=NOW)
+    assert not any("Mint failed" in m for m in lines)
+    assert any("Mint has nothing" in m for m in lines)
+    assert len(sent[0]) <= news.MAX_PUBLISHED
