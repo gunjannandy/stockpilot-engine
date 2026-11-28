@@ -1,0 +1,39 @@
+# The forecast Job: started only by the Worker's 5-minute tick through workflow_dispatch (every trading night). Public data only
+# (NSE filings, yfinance), so no model token and no private repo. Publishes the `forecast` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: forecast
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always forecast)
+        default: forecast
+      subject:
+        description: Job subject
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-forecast
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  forecast:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: forecast
+      subject: ${{ inputs.subject || 'all' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 20
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}

@@ -1,0 +1,39 @@
+# The screen Job: started only by the Worker 5-minute tick through workflow_dispatch. Public data only
+# (NSE filings, yfinance), so no model token and no private repo. Publishes the `screen` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: screen
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always screen)
+        default: screen
+      subject:
+        description: Job subject
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-screen
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  screen:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: screen
+      subject: ${{ inputs.subject || 'all' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 30
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
+import { CallsRun, SCREEN_MIN, ScreenRow } from "./calls/calls";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 import { FACTS_MIN, FactsRow, factsRowCheck } from "./facts/facts";
@@ -159,6 +160,34 @@ export const datasets = {
     rowCheck: factsRowCheck,
     run: { at: "03:00", on: "every" },
     runCheck: (run) => (run.rowCount < FACTS_MIN ? "fewer than 100 stocks" : null),
+  },
+  screen: {
+    name: "screen",
+    job: "screen",
+    table: "screen_runs",
+    schedule: "every trading day at 22:30 IST",
+    freshnessHours: 72,
+    checks: { row: [], run: ["at least 100 stocks"] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: ScreenRow,
+    delivery: "file",
+    run: { at: "22:30", on: "trading" },
+    runCheck: (run) => (run.rowCount < SCREEN_MIN ? "fewer than 100 stocks" : null),
+  },
+  calls_runs: {
+    name: "calls_runs",
+    job: "forecast",
+    table: "calls_runs",
+    schedule: "every trading day at 23:00 IST",
+    freshnessHours: 72,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: CallsRun,
+    run: { at: "23:00", on: "trading" },
   },
   dividends: {
     name: "dividends",
