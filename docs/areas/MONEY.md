@@ -9,11 +9,12 @@ Status: building
 - `contract/src/portfolio/portfolio.ts`: shapes for all of the above.
 - `tools/migrate/settings.ts`: v2 budgets and target mix map.
 - `api/src/money/routes.ts`: signed-in `GET /api/money/tax?fy=` (gains booked, net by pool, tax, tax-free room left); shape in `contract/src/money/money.ts`.
+- `GET /api/money/xirr`: portfolio and per-stock XIRR from INR stock trades and newest `stock_history` close; Nifty read from symbol `NIFTY 50` there (null until that history exists); shape `XirrResponse`.
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
 - [ ] Register `money_budgets` / `money_mix` as private datasets if the migrate sink needs them (check `contract/src/datasets.ts` rules).
-- [ ] `api/src/money/`: harvest ideas on the tax route (needs latest prices), RSU view route, XIRR and risk routes over `loadRebuild` (`money/src/{rsu,xirr,risk}`); shapes in `contract/`.
+- [ ] `api/src/money/`: harvest ideas on the tax route (needs latest prices), RSU view route and risk route over `loadRebuild` (`money/src/{rsu,risk}`); shapes in `contract/`.
 - [ ] US price and USD/INR Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`; reuse `api/src/fx/rates.ts`; register dataset, write budget, heartbeat.
 - [ ] Dividends and corporate-actions calendar data with expected cash.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
@@ -25,5 +26,10 @@ Status: building
 - `money` exports are namespaces, because `Row`, `RateOn`, `Holding` collide across modules.
 - Owner-only uses the existing `ownerOnly` guard from auth (read and write alike).
 
+- XIRR skips dollar trades (RSU view will value those) and returns null, with a warning, when a held stock has no price.
+- CI `ts` failure on #78 (C-129-1 could not resolve a scaffold package) did not reproduce after merging main: full `pnpm test` green locally; treated as a flake from another area's scaffold check.
+
 ## Blocked
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
+
+Chapter end: 2

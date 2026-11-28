@@ -35,3 +35,24 @@ export const TaxResponse = z.object({
   warnings: z.array(z.string()),
 });
 export type TaxResponse = z.infer<typeof TaxResponse>;
+
+/** `GET /api/money/xirr`: the yearly return of the stock trades, whole and per stock, against the Nifty over
+ * the same cash flows. Each value is a fraction (0.12 is 12%) or null when it cannot be worked out. */
+export const XirrResponse = z.object({
+  as_of: z.string().nullable(),
+  portfolio: z.object({
+    xirr: z.number().nullable(),
+    nifty: z.number().nullable(),
+    edge: z.number().nullable(),
+  }),
+  holdings: z.array(
+    z.object({
+      symbol: z.string(),
+      quantity: z.number(),
+      value: z.number().nullable(),
+      xirr: z.number().nullable(),
+    }),
+  ),
+  warnings: z.array(z.string()),
+});
+export type XirrResponse = z.infer<typeof XirrResponse>;

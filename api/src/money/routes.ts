@@ -1,6 +1,6 @@
 // MONEY's computed routes, behind sign-in. Lots are rebuilt from the stored trades on every call (nothing is
 // cached or written, except the USD/INR rates the ITR route also refreshes); no broker is called.
-import { TaxResponse } from "@stockpilot/contract";
+import { TaxResponse, XirrResponse } from "@stockpilot/contract";
 import { Hono } from "hono";
 import {
   fyLabel,
@@ -13,6 +13,7 @@ import {
   type TaxLot,
   type TaxSale,
 } from "../../../money/src/tax/tax";
+import { type Flow, returnVsNifty, xirr } from "../../../money/src/xirr/xirr";
 import type { Ctx } from "../app";
 import { loadRateOn } from "../fx/rates";
 import { loadRebuild } from "../lots/load";
@@ -71,6 +72,85 @@ export default function routes(ctx: Ctx) {
         );
       throw e;
     }
+  });
+
+  // Stock trades only (INR; dollar trades are valued on the RSU view). Today's value of what is still held
+  // is the newest stored close; the Nifty is read from the same history table when it holds the index.
+  app.get("/api/money/xirr", ctx.guard.person, async (c) => {
+    const rows =
+      (
+        (await ctx.d1
+          .prepare(
+            "select symbol, side, trade_date, quantity, price from trades where kind = 'stock' and currency = 'INR' and status = 'confirmed' order by trade_date",
+          )
+          .all()) as { results?: Record<string, unknown>[] }
+      ).results ?? [];
+    const warnings: string[] = [];
+    const close = async (symbol: string, day?: string) => {
+      const r = (await ctx.d1
+        .prepare(
+          `select date, close from stock_history where symbol = ? ${day ? "and date <= ?" : ""} order by date desc limit 1`,
+        )
+        .bind(...(day ? [symbol, day] : [symbol]))
+        .first()) as { date: string; close: number } | null;
+      return r;
+    };
+    const bySymbol = new Map<string, { flows: Flow[]; qty: number }>();
+    for (const r of rows) {
+      const sym = String(r.symbol);
+      const q = Number(r.quantity);
+      const amt = q * Number(r.price);
+      const e = bySymbol.get(sym) ?? { flows: [], qty: 0 };
+      const buy = r.side === "buy";
+      e.flows.push({ day: String(r.trade_date), amount: buy ? -amt : amt });
+      e.qty += buy ? q : -q;
+      bySymbol.set(sym, e);
+    }
+    let asOf: string | null = null;
+    const all: Flow[] = [];
+    let total = 0;
+    let complete = true;
+    const holdings = [];
+    for (const [symbol, e] of bySymbol) {
+      all.push(...e.flows);
+      const last = e.qty > 1e-9 ? await close(symbol) : null;
+      if (e.qty > 1e-9 && !last) {
+        complete = false;
+        warnings.push(`No price for ${symbol}.`);
+      }
+      const value = last ? e.qty * last.close : e.qty > 1e-9 ? null : 0;
+      if (last && (!asOf || last.date > asOf)) asOf = last.date;
+      total += value ?? 0;
+      holdings.push({
+        symbol,
+        quantity: Math.max(e.qty, 0),
+        value,
+        xirr:
+          value === null
+            ? null
+            : xirr([...e.flows, ...(value ? [{ day: last?.date ?? "", amount: value }] : [])]),
+      });
+    }
+    const nifty = new Map<string, number>();
+    for (const f of all) {
+      const n = await close("NIFTY 50", f.day);
+      if (n) nifty.set(f.day, n.close);
+    }
+    const end = asOf;
+    const endNifty = end ? await close("NIFTY 50", end) : null;
+    if (end && endNifty) nifty.set(end, endNifty.close);
+    const ret =
+      complete && end && all.length
+        ? returnVsNifty(all, total, end, (d) => nifty.get(d) ?? null)
+        : { holding: null, nifty: null, edge: null };
+    return c.json(
+      XirrResponse.parse({
+        as_of: asOf,
+        portfolio: { xirr: ret.holding, nifty: ret.nifty, edge: ret.edge },
+        holdings,
+        warnings,
+      }),
+    );
   });
   return app;
 }

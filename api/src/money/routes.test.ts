@@ -32,3 +32,34 @@ describe("money tax route", () => {
     expect((await app.request("/api/money/tax?fy=abc")).status).toBe(400);
   });
 });
+
+describe("money xirr route", () => {
+  it("works out a return from trades and the newest close, null without a price", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/xirr");
+    await db.exec(
+      trade("b", "buy", "2024-01-01", 10, 100) +
+        "insert into stock_history (symbol,exchange,date,close) values ('AAA','NSE','2025-01-01',110);",
+    );
+    const j = (await (await app.request("/api/money/xirr")).json()) as {
+      as_of: string;
+      portfolio: { xirr: number; nifty: null };
+      holdings: { value: number }[];
+    };
+    expect(j.as_of).toBe("2025-01-01");
+    expect(j.holdings[0]?.value).toBe(1100);
+    expect(j.portfolio.xirr).toBeCloseTo(0.1, 1);
+    expect(j.portfolio.nifty).toBeNull();
+  });
+  it("says so when a held stock has no price", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/xirr");
+    await db.exec(trade("b", "buy", "2024-01-01", 10, 100));
+    const j = (await (await app.request("/api/money/xirr")).json()) as {
+      portfolio: { xirr: null };
+      warnings: string[];
+    };
+    expect(j.portfolio.xirr).toBeNull();
+    expect(j.warnings.length).toBe(1);
+  });
+});
