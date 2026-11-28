@@ -20,6 +20,8 @@ migrations_dir = "api/.generated/migrations"
 
 [vars]
 CF_WORKER_NAME = "stockpilot-app"
+# The preview Worker's address: the scheduler asks it to reseed its database each night (docs/adr/0009).
+PREVIEW_URL = "https://stockpilot-preview.stockpilotgn.workers.dev"
 
 # Duties: cron every 5 minutes queues one message per due duty; the consumer runs one per invocation.
 # Worker secrets (set in the dashboard, never here): GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_APP_KEY,
