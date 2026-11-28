@@ -417,6 +417,10 @@ svg.sp.dn path.a {
   display: none;
 }
 .sk-legend {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);

@@ -45,7 +45,7 @@ function Worth() {
       empty={t("v2.noneHere")}
       top={
         <>
-          <div className="wl-glance wt-funnel" aria-label={t("v3.funnelT")}>
+          <section className="wl-glance wt-funnel" aria-label={t("v3.funnelT")}>
             {[
               [UNIVERSE_N.toLocaleString("en-IN"), t("v3.funAnalysed")],
               [PASSED_N.toLocaleString("en-IN"), t("v3.funPassed")],
@@ -56,7 +56,7 @@ function Worth() {
                 <span className="k-note">{l}</span>
               </div>
             ))}
-          </div>
+          </section>
           <Find placeholder={t("v3.findAny")} />
         </>
       }

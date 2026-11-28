@@ -380,7 +380,7 @@ export function StockChart(props: {
           {readout}
         </div>
       </div>
-      <div className="sk-legend" role="group" aria-label={t("stock.layers")}>
+      <fieldset className="sk-legend" aria-label={t("stock.layers")}>
         <span className="sk-lg-on">
           <i className="ln" style={{ borderColor: "var(--primary)" }} />
           {t("stock.price")}
@@ -403,7 +403,7 @@ export function StockChart(props: {
             {t(`stock.layer.${k}`)}
           </button>
         ))}
-      </div>
+      </fieldset>
       <p className="note">
         {t("stock.hint")}
         {last ? "" : ""}

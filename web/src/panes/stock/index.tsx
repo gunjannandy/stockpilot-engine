@@ -31,7 +31,7 @@ const ORDER: Verdict[] = ["sell", "weak", "buy", "keep", "watch"];
 const money = (v: number) =>
   `₹${v.toLocaleString("en-IN", { maximumFractionDigits: v < 1000 ? 1 : 0 })}`;
 
-function Spark({ closes }: { closes: number[] }) {
+function _Spark({ closes }: { closes: number[] }) {
   const s = sparkPath(closes);
   return (
     <svg
@@ -46,7 +46,7 @@ function Spark({ closes }: { closes: number[] }) {
   );
 }
 
-function Meter({ v }: { v: number }) {
+function _Meter({ v }: { v: number }) {
   const t = useWords();
   const tone = v >= 62 ? "strong" : v >= 40 ? "fair" : "weak";
   return (
