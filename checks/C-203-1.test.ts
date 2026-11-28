@@ -3,8 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { datasets } from "../contract/src/datasets";
 
-const SENSITIVE =
-  /holding|trade|order|tax|fund|portfolio|position|feedback|pan\b|isin|pnl|contract_note/i;
+const SENSITIVE = /holding|trade|order|tax|fund|portfolio|position|feedback|pan\b|isin|pnl|contract_note/i;
 
 describe("C-203-1 dataset visibility", () => {
   const all = Object.values(datasets) as {

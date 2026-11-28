@@ -17,9 +17,7 @@ describe("C-138-1 expand-only migrations", () => {
       expect(isExpandOnly(sql), sql).toBe(false);
   });
   it("lets additive steps through, even when a comment says drop", () => {
-    expect(isExpandOnly("-- drop later, in the contract step\ncreate table a (x text);")).toBe(
-      true,
-    );
+    expect(isExpandOnly("-- drop later, in the contract step\ncreate table a (x text);")).toBe(true);
     expect(isExpandOnly("alter table a add column y text;")).toBe(true);
   });
   it("refuses to apply an expand step with a drop and changes nothing", async () => {
