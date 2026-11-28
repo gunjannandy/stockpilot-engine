@@ -18,6 +18,8 @@ export const JobKind = z.enum([
   "drill",
   "ping",
   "calendar",
+  "funds",
+  "fundholdings",
   "universe",
   "history",
 ]);
