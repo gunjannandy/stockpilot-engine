@@ -127,3 +127,20 @@ describe("C-012-1 arrows move the selection", () => {
     expect(current()).toBe(first);
   });
 });
+
+describe("the top bar shows when Kite last synced", () => {
+  it("reads the time from /api/sync", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url === "/api/sync"
+          ? new Response(
+              JSON.stringify({ synced_at: "2026-11-28T09:15:00+05:30", changes: 0, steps: [] }),
+            )
+          : new Response("{}", { status: 404 }),
+      ),
+    );
+    await open();
+    expect(await screen.findByText("Kite synced at 28 Nov, 09:15")).toBeTruthy();
+  });
+});

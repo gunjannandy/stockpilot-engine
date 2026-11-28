@@ -234,3 +234,5 @@ story,check_id,ticket,kind,what
 171,C-171-1,CALLS,unit,every code-made sentence template has its Kolkata Bengali form; a template without one fails
 171,C-171-2,FACTS,unit,every facts sentence template has its Kolkata Bengali form
 172,C-172-1,PANES,preview e2e,"every number slot shows its plain sentence and opens ""how we worked it out"""
+69,C-069-4,MONEYLOTS,unit,"the own record's pairs come from the tax matcher, first in first out, tagged with the buying route"
+62,C-062-5,MONEYLOTS,unit,"Fidelity statement lots replace the documents' lots up to the statement day and the gap is one estimated lot"

@@ -71,12 +71,12 @@ class Door:
             validate_row(dataset, row)
         return self._call("ingest_write", "POST", "/api/ingest", {"dataset": dataset, "run_id": run_id, "rows": rows})  # type: ignore[return-value]
 
-    def job_start(self, kind: str, run_id: str) -> dict:
-        return self._call("job_start", "POST", "/api/jobs/start", {"kind": kind, "run_id": run_id})  # type: ignore[return-value]
+    def job_begin(self, kind: str, run_id: str, subject: str = "all") -> dict:
+        return self._call("job_begin", "POST", "/api/job/begin", {"kind": kind, "subject": subject, "run_id": run_id})  # type: ignore[return-value]
 
-    def job_finish(self, run_id: str, ok: bool, result: str | None = None, error: str | None = None) -> dict:
+    def job_end(self, run_id: str, ok: bool, result: str | None = None, error: str | None = None) -> dict:
         body = {"run_id": run_id, "status": "done" if ok else "failed", "result": result, "error": error}
-        return self._call("job_finish", "POST", "/api/jobs/finish", body)  # type: ignore[return-value]
+        return self._call("job_end", "POST", "/api/job/end", body)  # type: ignore[return-value]
 
     def market_status(self) -> dict:
         return self._call("market_status", "GET", "/api/market/status", None)  # type: ignore[return-value]

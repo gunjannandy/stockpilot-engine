@@ -36,6 +36,8 @@ export const JobEndRequest = z.object({
   error: z.string().nullable().optional(),
 });
 
+export const JobEndResponse = z.object({ ok: z.literal(true), retry_at: IstTime.nullable() });
+
 /** A press on a button Job (Analyse, load a stock, Refresh, Recompute): dispatched at once. */
 export const JobPressRequest = z.object({
   kind: JobKind,

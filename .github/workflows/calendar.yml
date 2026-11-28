@@ -1,0 +1,40 @@
+# The calendar Job (decisions §2 Schedules): started only by the Worker's 5-minute tick through
+# workflow_dispatch, never by a schedule of its own. Public data only, so no model token and no private repo.
+# Fetches holidays and corporate actions from NSE and publishes the `calendar` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: calendar
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always calendar)
+        default: calendar
+      subject:
+        description: Job subject
+        default: calendar
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-calendar
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  calendar:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: calendar
+      subject: ${{ inputs.subject || 'calendar' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}

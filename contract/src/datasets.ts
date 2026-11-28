@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
+import { RawTrade } from "./kite/kite";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
  * JSON Schema; the door enforces `writeBudget` per day. */
@@ -51,6 +52,18 @@ export const datasets = {
     recomputable: false,
     writeBudget: 200,
     row: PingRow,
+  },
+  documents: {
+    name: "documents",
+    job: "documents",
+    table: "document_trades",
+    schedule: "on Refresh, and when the Documents Job runs",
+    freshnessHours: 24 * 365,
+    checks: { row: ["account and source are present", "date is a date"], run: [] },
+    visibility: "private",
+    recomputable: false,
+    writeBudget: 1000,
+    row: RawTrade,
   },
   calendar: {
     name: "calendar",

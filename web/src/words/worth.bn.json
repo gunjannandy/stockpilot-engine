@@ -1,0 +1,18 @@
+{
+  "wfLead": "আপনার নেই, অথচ দেখার মতো stock। Forecast নেই? Analyse চাপুন।",
+  "wfNoFc": "এখনও forecast নেই",
+  "wfAnalyse": "Analyse",
+  "wfRunning": "দেখা হচ্ছে",
+  "wfOod": "পুরনো হয়ে গেছে",
+  "wfStrong": "Strong",
+  "wfFair": "Fair",
+  "wfWeak": "Weak",
+  "wfChance": "সম্ভাবনা",
+  "wfEmpty": "এখন নজরে রাখার মতো কিছু নেই।",
+  "wfLoading": "তালিকা আসছে...",
+  "wfFailed": "তালিকাটা আনা গেল না। Internet দেখে আবার চেষ্টা করুন।",
+  "wfRetry": "আবার চেষ্টা করুন",
+  "wfAnalyseStarted": "শুরু হয়েছে। forecast এখানেই দেখাবে।",
+  "wfTipStrong": "এরকম 100টা stock-এর মধ্যে এতগুলো Nifty-কে ছাড়িয়েছে। 57 বা বেশি মানে strong।",
+  "wfTipWeak": "40-এর নিচে মানে weak।"
+}

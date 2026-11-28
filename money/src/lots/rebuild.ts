@@ -5,6 +5,8 @@
 import { compareDays, type Day } from "../core/dates";
 import { canon, isForeign } from "../core/kinds";
 import { pyProd, pyRound, pySum } from "../core/round";
+import { fidelityGapLots, statementLots } from "./fidelity";
+import { EPS, sell } from "./fifo";
 import type {
   Action,
   Holding,
@@ -18,7 +20,6 @@ import type {
   Trade,
 } from "./types";
 
-const EPS = 1e-9;
 export const OWNED = "trades:";
 
 export const r6 = (x: number): number => pyRound(x, 6);
@@ -142,19 +143,6 @@ function oneCompanyOneKey(rows: Row[], current: Record<string, string>): Row[] {
   });
 }
 
-function sell(open: Open[], qty: number): number {
-  let left = qty;
-  for (const lot of open) {
-    if (left <= EPS) break;
-    const take = Math.min(left, lot.qty - lot.closed);
-    if (take > 0) {
-      lot.closed += take;
-      left -= take;
-    }
-  }
-  return left;
-}
-
 function demergerReady(a: Action): boolean {
   return (
     a.kind === "demerger" &&
@@ -236,8 +224,14 @@ function applyAction(open: Open[], a: Action, exDate: Day, spawned: Map<string, 
 /** Units Kite shows that the documents do not explain become one lot per holding, at Kite's average
  *  price and dated its snapshot, marked estimated; the next rebuild finds a later document's units
  *  already in `built` and adds less, so a document always replaces the estimate. */
-function estimatedLots(built: Open[], kite: KiteSnapshot | null | undefined): Open[] {
-  if (!kite) return [];
+function estimatedLots(
+  built: Open[],
+  kite: KiteSnapshot | null | undefined,
+  fidelityHoldings: RebuildInput["fidelityHoldings"],
+  rateOn: RebuildInput["rateOn"],
+): Open[] {
+  const gap = fidelityGapLots(built, fidelityHoldings ?? [], rateOn);
+  if (!kite) return gap;
   const have = new Map<string, number>();
   for (const lot of built) {
     if (!isForeign({ kind: lot.kind, currency: lot.cur })) {
@@ -245,7 +239,7 @@ function estimatedLots(built: Open[], kite: KiteSnapshot | null | undefined): Op
       have.set(key, (have.get(key) ?? 0) + lot.qty - lot.closed);
     }
   }
-  const out: Open[] = [];
+  const out: Open[] = gap;
   const entries = [...kiteHoldings(kite.rows).entries()].sort((a, b) =>
     pyTupleStr(a[0]) < pyTupleStr(b[0]) ? -1 : pyTupleStr(a[0]) > pyTupleStr(b[0]) ? 1 : 0,
   );
@@ -358,7 +352,7 @@ export function rebuild(input: RebuildInput): RebuildResult {
     .concat([...groups.keys()].filter((k) => children.has(k)));
 
   const unmatched: [string, Day, number][] = [];
-  const out: Open[] = [];
+  let out: Open[] = [];
   const sold: Sold[] = [];
   for (const key of order) {
     const events = groups.get(key) as Event[];
@@ -412,7 +406,8 @@ export function rebuild(input: RebuildInput): RebuildResult {
     }
     out.push(...open);
   }
-  out.push(...estimatedLots(out, input.kite));
+  out = statementLots(out, input.fidelityLots ?? [], input.trades, input.rateOn);
+  out.push(...estimatedLots(out, input.kite, input.fidelityHoldings, input.rateOn));
 
   const lots: StoredLot[] = out.map((lot) => ({
     kind: lot.kind,
