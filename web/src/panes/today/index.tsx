@@ -167,10 +167,8 @@ function TodayScreen() {
           {t("v3.print")}
         </button>
       </header>
-      <div className="k-grid c3 td-tiles k-in">
-        <Money />
+      <div className="td-tiles k-in">
         <Health />
-        <PortfolioTile />
       </div>
       <InNews onPick={pick} />
       <div className="k-bar td-bar">

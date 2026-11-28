@@ -1,17 +1,15 @@
 // Worth following: one list (Top 10, Just missed, has our view, you hold, falling, busy today) and the Table screener over every stock.
-import { useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { isHeld, type Reason, reasonsOf, STOCKS, UNIVERSE } from "../_kit/data";
 import { ListPage } from "../_kit/ListPage";
-import { Seg } from "../_kit/ui";
 
 const fill = (s: string, v: Record<string, string | number>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
 function Worth() {
   const t = useWords();
-  const [scope, setScope] = useState<"follow" | "all">("follow");
+  const scope = "follow" as "follow" | "all";
   const base =
     scope === "all" ? UNIVERSE : STOCKS.filter((s) => !isHeld(s) || s.verdict !== "keep");
   const has = (r: Reason) => (s: (typeof STOCKS)[number]) => reasonsOf(s).includes(r);
@@ -41,20 +39,6 @@ function Worth() {
       reasonsOf={reasonText}
       tableCols={["sector", "pe", "growth"]}
       empty={t("v2.noneHere")}
-      top={
-        <div className="k-bar">
-          <Seg
-            label={t("v2.universeS")}
-            value={scope}
-            onChange={setScope}
-            options={[
-              { id: "follow", label: t("v2.follow") },
-              { id: "all", label: t("v2.universeS") },
-            ]}
-          />
-          <span className="k-note">{t("v3.tableHint")}</span>
-        </div>
-      }
     />
   );
 }

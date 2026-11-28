@@ -4,7 +4,7 @@ import type { Pane } from "../areas";
 
 export type LayoutRow = { rail: string[]; hidden?: string[] };
 /** Screens that exist as routes but never sit in the rail. */
-const NEVER_IN_RAIL = new Set(["signin", "more"]);
+const NEVER_IN_RAIL = new Set(["signin", "more", "ping", "sync", "changes", "stock", "itr"]);
 
 /** v10's lower group: desk, feedback and admin screens sit at the bottom of the rail. */
 const LOWER = new Set(["record", "feedback", "admin", "settings", "health"]);
