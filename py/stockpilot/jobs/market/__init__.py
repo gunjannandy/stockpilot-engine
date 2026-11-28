@@ -65,7 +65,7 @@ def run(ctx, nifty: list[float] | None = None, series: dict | None = None, pes: 
 
 def _live(ctx):
     import yfinance as yf
-    facts = ctx.client._ok("/api/data/facts", None, "GET").get("rows", [])
+    facts = ctx.client._ok("/api/job-data/facts", None, "GET").get("rows", [])
     pes = [r["pe"] for r in facts if r.get("pe")]
     top = [r["symbol"] for r in sorted(facts, key=lambda r: -(r.get("market_cap_cr") or 0))[:BREADTH_TOP]]
     nifty = [float(v) for v in yf.Ticker("^NSEI").history(period="1y", interval="1d")["Close"].dropna()]

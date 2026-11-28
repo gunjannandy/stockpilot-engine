@@ -116,7 +116,11 @@ def collect(universe: list[dict], gather: Callable[[str], list], prices: dict[st
             h = history(s) if history else []
         except Exception:  # noqa: BLE001 - no history only drops the price sentences
             h = []
-        out.append(row(d, recs[s], day, h, similar(d, docs)))
+        r = row(d, recs[s], day, h, similar(d, docs))
+        if r["figures_json"] == "[]":  # the door holds back a row with no raw figure; too many fail the whole run
+            continue
+        out.append(r)
+    progress(f"{len(out)} stocks with at least one figure")
     return out
 
 

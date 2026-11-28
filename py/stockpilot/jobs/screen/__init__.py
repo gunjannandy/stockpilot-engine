@@ -89,7 +89,7 @@ def _live(ctx) -> list[dict]:
     industry is the facts dataset's sector."""
     from stockpilot.jobs.forecast import _live_mechanical
     results, _ = _live_mechanical()
-    facts = ctx.client._ok("/api/data/facts", None, "GET").get("rows", [])
+    facts = ctx.client._ok("/api/job-data/facts", None, "GET").get("rows", [])
     sector = {r["symbol"]: r.get("sector") or "" for r in facts}
     out = []
     for r in results:
