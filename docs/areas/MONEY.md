@@ -42,4 +42,3 @@ Status: building
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
 
 
-Chapter end: 4
