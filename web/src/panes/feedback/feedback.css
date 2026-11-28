@@ -1,0 +1,177 @@
+/* Feedback: one box, then each ask as a card with where it stands. Tokens only. */
+.fb {
+  display: grid;
+  gap: var(--sp-4);
+  max-width: 980px;
+}
+.fb .k-head {
+  margin: 0;
+}
+.fb-box {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+}
+.fb-box textarea {
+  width: 100%;
+  min-height: 6.5rem;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--c1);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-section);
+  resize: vertical;
+  transition:
+    border-color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+.fb-box textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+.fb-send {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.fb-send .k-note:first-child {
+  flex: 1;
+}
+.fb-box .sk-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.fb-ok {
+  color: var(--gain);
+  font-weight: 700;
+}
+.fb-bar {
+  justify-content: space-between;
+  margin: 0;
+}
+.fb-bar h2 {
+  margin: 0;
+  font-size: var(--fs-section);
+  font-weight: 800;
+}
+.fb-bar h2 .num {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.fb-list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fb-ask {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+}
+.fb-ask p {
+  margin: 0;
+}
+.fb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.fb-job {
+  margin-left: auto;
+}
+.fb-said {
+  font-size: var(--fs-section);
+  font-weight: 600;
+}
+.fb-und {
+  color: var(--text-2);
+  font-size: var(--fs-cell);
+}
+.fb-np {
+  color: var(--text-2);
+  font-weight: 700;
+}
+/* the five steps: dots on a line, the reached part filled, the current step softly pulsing */
+.fb-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.fb-track li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-note);
+  color: var(--text-2);
+  text-align: center;
+}
+.fb-track li::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  background: var(--line-2);
+}
+.fb-track li:first-child::before {
+  display: none;
+}
+.fb-track li.on::before {
+  background: var(--gain);
+}
+.fb-track i {
+  position: relative;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface);
+}
+.fb-track li.on i {
+  border-color: var(--gain);
+  background: var(--gain);
+}
+.fb-track li[aria-current="step"] {
+  color: var(--text);
+  font-weight: 700;
+}
+.fb-track li[aria-current="step"] i {
+  border-color: var(--primary);
+  background: var(--primary);
+  animation: fb-pulse 1.8s var(--ease) 0.4s 3;
+}
+@keyframes fb-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+@media (max-width: 720px) {
+  .fb-ask {
+    padding: var(--sp-4);
+  }
+  .fb-send .k-note:first-child {
+    display: none;
+  }
+  .fb-send {
+    justify-content: flex-end;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fb-track li[aria-current="step"] i {
+    animation: none;
+  }
+}

@@ -1,0 +1,478 @@
+// The stock chart, v2's behaviour in the new theme: price line with fill, volume, 2- and 10-month
+// averages, levels, forecast bands, our buys and sells. Drag moves it; Ctrl or Cmd + scroll zooms; plain scroll never does.
+import {
+  AreaSeries,
+  ColorType,
+  CrosshairMode,
+  createChart,
+  createSeriesMarkers,
+  HistogramSeries,
+  type IChartApi,
+  type ISeriesApi,
+  LineSeries,
+  LineStyle,
+  type MouseEventParams,
+  type SeriesMarker,
+  type Time,
+} from "lightweight-charts";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useWords } from "../words";
+import { bandPrimitive } from "./bandPrimitive";
+import {
+  addDays,
+  bandsOf,
+  type Call,
+  monthLabel,
+  type Ohlc,
+  RANGES,
+  type RangeId,
+  rangeStart,
+  sma,
+  wheelZoom,
+} from "./series";
+
+export type Layer = "vol" | "avg" | "band" | "levels" | "trades";
+const SWATCH: Record<Layer, [string, string][]> = {
+  vol: [["bx", "var(--c3)"]],
+  avg: [
+    ["ln", "var(--warn)"],
+    ["ln dash", "var(--text-2)"],
+  ],
+  band: [["bx", "color-mix(in srgb, var(--primary) 30%, transparent)"]],
+  levels: [["ln dash", "var(--loss)"]],
+  trades: [
+    ["dot", "var(--gain)"],
+    ["dot", "var(--loss)"],
+  ],
+};
+export const LAYERS: Layer[] = ["vol", "avg", "band", "levels", "trades"];
+export type ChartTrade = { date: string; kind: "buy" | "sell"; qty: number };
+const css = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const inr = (v: number) => `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+
+function load<T>(k: string, d: T): T {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? ({ ...d, ...JSON.parse(v) } as T) : d;
+  } catch {
+    return d;
+  }
+}
+function save(k: string, v: unknown) {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch {}
+}
+
+export function StockChart(props: {
+  bars: Ohlc[];
+  call: Call | null;
+  trades: ChartTrade[];
+  extra?: React.ReactNode;
+}) {
+  const { bars, call, trades, extra } = props;
+  const words = useWords();
+  const wordsRef = useRef(words);
+  wordsRef.current = words;
+  // A stable translate function: the chart is built once per data change, not on every render.
+  const t = useCallback((k: string) => wordsRef.current(k), []);
+  const langKey = words("stock.up");
+  const host = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const [range, setRange] = useState<RangeId | null>(() => {
+    const r = load<{ r: RangeId }>("sk-range", { r: "1Y" }).r;
+    return RANGES.includes(r) ? r : "1Y";
+  });
+  const [menu, setMenu] = useState(false);
+  const lastIdx = useRef(0);
+  const [layers, setLayers] = useState<Record<Layer, boolean>>(() =>
+    load("sk-layers", { vol: true, avg: true, band: true, levels: true, trades: true }),
+  );
+  const [theme, setTheme] = useState(0);
+  const [readout, setReadout] = useState("");
+  const [trade, setTrade] = useState<{ kind: string; text: string }[]>([]);
+  const apiRef = useRef<{
+    apply: (l: Record<Layer, boolean>) => void;
+    setRange: (r: RangeId | null) => void;
+  } | null>(null);
+
+  useEffect(() => {
+    const mo = new MutationObserver(() => setTheme((n) => n + 1));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: theme re-colours; layers and range are applied through apiRef
+  useEffect(() => {
+    const el = host.current;
+    const lastBar = bars[bars.length - 1];
+    if (!el || !lastBar) return;
+    const c = {
+      surface: css("--surface"),
+      text: css("--text"),
+      text2: css("--text-2"),
+      line: css("--line-2"),
+      primary: css("--primary"),
+      avg2: css("--warn"),
+      avg10: css("--text-2"),
+      gain: css("--gain"),
+      loss: css("--loss"),
+    };
+    const chart = createChart(el, {
+      autoSize: true,
+      layout: {
+        background: { type: ColorType.Solid, color: c.surface },
+        textColor: c.text2,
+        fontFamily: css("--font"),
+        fontSize: 13,
+        attributionLogo: false,
+      },
+      grid: { vertLines: { visible: false }, horzLines: { color: c.line } },
+      rightPriceScale: { visible: false },
+      leftPriceScale: {
+        visible: true,
+        borderVisible: false,
+        scaleMargins: { top: 0.06, bottom: 0.22 },
+      },
+      timeScale: {
+        borderVisible: false,
+        rightOffset: 1,
+        minBarSpacing: 0.02,
+        timeVisible: false,
+        tickMarkFormatter: (time: Time) => monthLabel(String(time)),
+      },
+      crosshair: { mode: CrosshairMode.Normal },
+      handleScale: {
+        mouseWheel: false,
+        pinch: true,
+        axisPressedMouseMove: true,
+        axisDoubleClickReset: false,
+      },
+      handleScroll: {
+        mouseWheel: false,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      localization: {
+        priceFormatter: (p: number) => p.toLocaleString("en-IN", { maximumFractionDigits: 0 }),
+      },
+    });
+    chartRef.current = chart;
+    const none = {
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    };
+    const price = chart.addSeries(AreaSeries, {
+      priceScaleId: "left",
+      lineColor: c.primary,
+      lineWidth: 2,
+      topColor: `${c.primary}33`,
+      bottomColor: `${c.primary}00`,
+      priceLineVisible: false,
+      lastValueVisible: true,
+    });
+    const vol = chart.addSeries(HistogramSeries, {
+      priceScaleId: "vol",
+      priceFormat: { type: "volume" },
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    const a2 = chart.addSeries(LineSeries, {
+      priceScaleId: "left",
+      lineWidth: 2,
+      color: c.avg2,
+      ...none,
+    });
+    const a10 = chart.addSeries(LineSeries, {
+      priceScaleId: "left",
+      lineWidth: 2,
+      lineStyle: LineStyle.Dashed,
+      color: c.avg10,
+      ...none,
+    });
+    vol.setData(
+      bars.map((b) => ({
+        time: b.time,
+        value: b.volume,
+        color: b.close >= b.open ? `${c.gain}73` : `${c.loss}73`,
+      })) as never,
+    );
+    a2.setData(sma(bars, 42) as never);
+    a10.setData(sma(bars, 210) as never);
+    const bands = bandsOf(call, lastBar.time, lastBar.close);
+    price.setData([
+      ...bars.map((b) => ({ time: b.time, value: b.close })),
+      ...(bands ? bands.points.slice(1).map((p) => ({ time: p.time })) : []),
+    ] as never);
+    const state = bands
+      ? {
+          points: bands.points,
+          nodes: bands.nodes,
+          show: true,
+          c: {
+            band80: `color-mix(in srgb, ${c.primary} 13%, transparent)`,
+            band50: `color-mix(in srgb, ${c.primary} 30%, transparent)`,
+            primary: c.primary,
+            text2: c.text2,
+          },
+        }
+      : null;
+    const prim = bandPrimitive(() => state);
+    price.attachPrimitive(prim);
+    const dates = bars.map((b) => b.time);
+    const markers = createSeriesMarkers(price, []);
+    let lines: ReturnType<ISeriesApi<"Area">["createPriceLine"]>[] = [];
+
+    const apply = (L: Record<Layer, boolean>) => {
+      vol.applyOptions({ visible: L.vol });
+      a2.applyOptions({ visible: L.avg });
+      a10.applyOptions({ visible: L.avg });
+      if (state) state.show = L.band;
+      prim.redraw();
+      for (const l of lines) price.removePriceLine(l);
+      lines = [];
+      if (L.levels && call) {
+        lines.push(
+          price.createPriceLine({
+            price: call.high[1] as number,
+            color: c.gain,
+            lineWidth: 1,
+            lineStyle: LineStyle.Dotted,
+            axisLabelVisible: true,
+            title: t("stock.up"),
+          }),
+        );
+        lines.push(
+          price.createPriceLine({
+            price: call.low[0] as number,
+            color: c.loss,
+            lineWidth: 1,
+            lineStyle: LineStyle.Dotted,
+            axisLabelVisible: true,
+            title: t("stock.down"),
+          }),
+        );
+      }
+      const mk: SeriesMarker<Time>[] = L.trades
+        ? trades.flatMap((tr): SeriesMarker<Time>[] => {
+            const time = dates.find((d) => d >= tr.date);
+            if (!time) return [];
+            return tr.kind === "buy"
+              ? [
+                  {
+                    time,
+                    position: "belowBar" as const,
+                    shape: "arrowUp" as const,
+                    color: c.gain,
+                    text: `+${tr.qty}`,
+                    size: 1.5,
+                  },
+                ]
+              : [
+                  {
+                    time,
+                    position: "aboveBar" as const,
+                    shape: "arrowDown" as const,
+                    color: c.loss,
+                    text: `−${tr.qty}`,
+                    size: 1.5,
+                  },
+                ];
+          })
+        : [];
+      markers.setMarkers(mk);
+    };
+    const setR = (r: RangeId | null) => {
+      if (!r) return;
+      const li = dates.length - 1;
+      const from = Math.max(0, dates.indexOf(rangeStart(r, dates)));
+      showWithForecast(chart, li, from);
+    };
+    lastIdx.current = dates.length - 1;
+    apiRef.current = { apply, setRange: setR };
+    apply(layers);
+    setR(range);
+
+    chart.subscribeCrosshairMove((p: MouseEventParams<Time>) => {
+      const tm = p.time ? String(p.time) : null;
+      const b = tm ? bars.find((x) => x.time === tm) : undefined;
+      if (b) {
+        const mine = trades.filter((x) => dates.find((d) => d >= x.date) === b.time);
+        setTrade(
+          mine.map((x) => ({
+            kind: x.kind,
+            text: `${x.kind === "buy" ? t("stock.bought") : t("stock.sold")} ${x.qty} × ${inr(b.close)} = ${inr(x.qty * b.close)}`,
+          })),
+        );
+        setReadout(
+          `${b.time}  ${t("stock.open")} ${inr(b.open)} · ${t("stock.high")} ${inr(b.high)} · ${t("stock.low")} ${inr(b.low)} · ${t("stock.close")} ${inr(b.close)}`,
+        );
+      } else if (tm && bands) {
+        const f = bands.points.find((x) => x.time === tm);
+        setReadout(
+          f
+            ? `${tm}  ${t("stock.ahead")}: ${t("stock.likely")} ${inr(f.mid)} · ${t("stock.range50")} ${inr(f.lo50)}–${inr(f.hi50)} · ${t("stock.range80")} ${inr(f.lo80)}–${inr(f.hi80)}`
+            : "",
+        );
+      } else setReadout("");
+    });
+    const onWheel = (e: WheelEvent) => {
+      const f = wheelZoom(e);
+      if (f === null) return; // plain scroll: the page scrolls, the chart stays
+      e.preventDefault();
+      zoom(chart, f, dates.length - 1);
+      setRange(null);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      chart.remove();
+      chartRef.current = null;
+      apiRef.current = null;
+    };
+  }, [bars, call, trades, theme, t, langKey]);
+
+  useEffect(() => {
+    apiRef.current?.apply(layers);
+    save("sk-layers", layers);
+  }, [layers]);
+  useEffect(() => {
+    if (range) {
+      apiRef.current?.setRange(range);
+      save("sk-range", { r: range });
+    }
+  }, [range]);
+
+  const step = useCallback((f: number) => {
+    if (chartRef.current) zoom(chartRef.current, f, lastIdx.current);
+    setRange(null);
+  }, []);
+  const last = bars[bars.length - 1];
+  return (
+    <div className="sk-chart">
+      <div className="sk-tools">
+        <fieldset className="sk-seg" aria-label={t("stock.chart")}>
+          {RANGES.map((r) => (
+            <button
+              key={r}
+              type="button"
+              className="sk-sg"
+              aria-pressed={range === r}
+              onClick={() => setRange(r)}
+            >
+              {r === "All" ? t("stock.rall") : r}
+            </button>
+          ))}
+        </fieldset>
+        <span className="sk-zm">
+          <button
+            type="button"
+            className="sk-ib"
+            aria-label={t("stock.zoomIn")}
+            onClick={() => step(0.7)}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="sk-ib"
+            aria-label={t("stock.zoomOut")}
+            onClick={() => step(1.4)}
+          >
+            −
+          </button>
+        </span>
+        <span className="sk-tr">
+          <span className="sk-lyr">
+            <button
+              type="button"
+              className="sk-ib"
+              aria-label={t("stock.layers")}
+              title={t("stock.layers")}
+              aria-expanded={menu}
+              onClick={() => setMenu((m) => !m)}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  d="M12 3 2 8l10 5 10-5-10-5Zm0 12L4.6 11.3 2 12.6l10 5 10-5-2.6-1.3L12 15Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            {menu && (
+              <div className="sk-menu">
+                {LAYERS.map((k) => (
+                  <label key={k} className="sk-mi">
+                    <input
+                      type="checkbox"
+                      checked={layers[k]}
+                      onChange={(e) => setLayers((l) => ({ ...l, [k]: e.target.checked }))}
+                    />
+                    <span>{t(`stock.layer.${k}`)}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </span>
+          {extra}
+        </span>
+      </div>
+      <div className="sk-cvw">
+        <div className="sk-cv" ref={host} data-testid="chart" />
+        <div className="sk-readout" aria-live="off">
+          {readout}
+          {readout &&
+            trade.map((x) => (
+              <b key={x.text} className={x.kind === "buy" ? "up" : "dn"}>
+                {" · "}
+                {x.text}
+              </b>
+            ))}
+        </div>
+      </div>
+      <div className="sk-legend">
+        <span>
+          <i className="ln" style={{ borderColor: "var(--primary)" }} />
+          {t("stock.price")}
+        </span>
+        {LAYERS.filter((k) => layers[k] && (k !== "band" || call)).map((k) => (
+          <span key={k}>
+            {SWATCH[k].map(([cls, color]) => (
+              <i
+                key={color}
+                className={cls}
+                style={{ borderColor: color, background: cls.includes("ln") ? undefined : color }}
+              />
+            ))}
+            {t(`stock.layer.${k}`)}
+          </span>
+        ))}
+      </div>
+      <p className="note">
+        {t("stock.hint")} · Lightweight Charts™ · TradingView
+        {last ? "" : ""}
+      </p>
+    </div>
+  );
+}
+
+/** History takes 70% of the width and the forecast 30%, whatever the zoom. */
+const FORECAST_SHARE = 0.3;
+function showWithForecast(chart: IChartApi, last: number, from: number) {
+  const hist = Math.max(4, last - from);
+  chart.timeScale().setVisibleLogicalRange({
+    from: last - hist,
+    to: last + (hist * FORECAST_SHARE) / (1 - FORECAST_SHARE),
+  });
+}
+function zoom(chart: IChartApi, k: number, last: number) {
+  const r = chart.timeScale().getVisibleLogicalRange();
+  if (!r) return;
+  const hist = (last - r.from) * k;
+  if (hist < 4 || hist > last + 1) return;
+  showWithForecast(chart, last, last - hist);
+}
+export { addDays };

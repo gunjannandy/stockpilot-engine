@@ -46,7 +46,7 @@ const overview = {
 async function mount(fetchMock: ReturnType<typeof vi.fn>) {
   vi.stubGlobal("fetch", fetchMock);
   const words = discoverWords(
-    { "./words/admin.en.json": (await import("../../words/admin.en.json")) as never },
+    import.meta.glob("../../words/*.en.json", { eager: true }) as never,
     "en",
   );
   const C = pane.Component;
@@ -61,6 +61,20 @@ async function mount(fetchMock: ReturnType<typeof vi.fn>) {
   );
 }
 
+it("details list problems and usage", async () => {
+  const fetchMock = vi.fn(async (url: string) => {
+    if (url === "/api/admin") return Response.json(overview);
+    if (url === "/api/admin/state")
+      return Response.json({ release_paused: false, paused_kinds: [], flags: {}, layout: null });
+    return Response.json({ ok: true });
+  });
+  await mount(fetchMock);
+  await screen.findByText("Kite login");
+  fireEvent.click(screen.getByRole("tab", { name: "Details" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Page errors/ }));
+  expect((await screen.findByTestId("admin-problems")).textContent).toContain("it broke");
+});
+
 it("renders the sections and Try again posts the failed Job's key", async () => {
   const fetchMock = vi.fn(async (url: string) => {
     if (url === "/api/admin") return Response.json(overview);
@@ -70,9 +84,7 @@ it("renders the sections and Try again posts the failed Job's key", async () => 
   });
   await mount(fetchMock);
   await screen.findByText("Kite login");
-  expect(screen.getByTestId("problems").textContent).toContain("it broke");
-  expect(screen.getByTestId("usage").textContent).toContain("sync / press: 3");
-  expect(screen.getByTestId("freshness").textContent).toContain("Never run");
+  expect(screen.getByTestId("admin-needs").textContent).toContain("Kite login");
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   await waitFor(() =>
     expect(fetchMock).toHaveBeenCalledWith(

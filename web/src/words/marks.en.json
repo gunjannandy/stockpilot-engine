@@ -1,0 +1,20 @@
+{
+  "title": "What changed",
+  "strip.title": "What changed since you last looked",
+  "strip.none": "Nothing has changed since you last looked.",
+  "strip.count": "{n} changed",
+  "strip.new": "New on the list",
+  "strip.call": "The call changed",
+  "strip.chance": "The chance changed",
+  "strip.other": "Numbers changed",
+  "markAll": "Mark all seen",
+  "mark.label": "Changed since you last looked",
+  "news.label": "In the news, no change to our call",
+  "tab": "{n} changed",
+  "reason.held": "You hold it",
+  "reason.buyzone": "Near a buy price",
+  "reason.results": "Results are due",
+  "reason.watch": "On your watchlist",
+  "reason.news": "In the news",
+  "sample": "Made-up sample rows, to judge the look."
+}
