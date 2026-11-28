@@ -896,3 +896,18 @@
 .k-lrowwrap .lrow {
   padding-right: 48px;
 }
+.k-analyse {
+  margin: var(--sp-3) 0;
+  display: grid;
+  gap: var(--sp-2);
+  max-width: 30rem;
+}
+.k-analyse .k-bar {
+  margin: 0;
+}
+.k-sec-days {
+  display: grid;
+  grid-template-columns: 8rem 3rem;
+  gap: var(--sp-2);
+  align-items: center;
+}

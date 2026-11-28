@@ -1,5 +1,6 @@
 // The stock page's v2 sections, rebuilt for v3: changed band, call card, numbers in plain words, holding, news, similar companies.
 import { useWords } from "../../words";
+import { Analyse } from "./Analyse";
 import {
   type CallCardData,
   callCard,
@@ -112,6 +113,7 @@ export function CallSec({ st }: { st: SampleStock }) {
       aside={<VChip v={st.verdict} />}
     >
       <ChanceBar c={c.chance} />
+      <Analyse what={st.name} />
       <p className="k-conf">
         {fill(t("v3.confidence"), { n: c.track.n, b: c.track.beat })}
         {c.limited ? (

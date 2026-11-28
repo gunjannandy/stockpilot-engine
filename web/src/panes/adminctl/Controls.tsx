@@ -4,6 +4,7 @@ import { useWords } from "../../words";
 import { Toast } from "../_kit/Toast";
 import { Tile } from "../_kit/ui";
 import { watch } from "../_kit/watch";
+import { Secrets } from "./Secrets";
 
 function Switch({
   on,
@@ -207,6 +208,7 @@ export function Controls() {
           )}
         </Tile>
       </div>
+      <Secrets />
       <Toast />
     </section>
   );

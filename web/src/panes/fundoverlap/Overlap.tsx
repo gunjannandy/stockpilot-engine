@@ -43,3 +43,17 @@ export function Overlap({ name }: { name: string }) {
     </Sec>
   );
 }
+
+/** This week's review of a fund, plus the nightly portfolio note's twin for funds. Made-up words. */
+export function FundNote({ name }: { name: string }) {
+  const t = useWords();
+  const h = [...name].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const call = (["keep", "add", "review"] as const)[h % 3] as string;
+  return (
+    <Sec icon="call" title={t("v2.fundCallT")} sub={t("v3.fundNoteP")}>
+      <p>
+        <span className="k-pill">{t(`v2.fxCall_${call}`)}</span> {t(`v3.fundNote.${call}`)}
+      </p>
+    </Sec>
+  );
+}

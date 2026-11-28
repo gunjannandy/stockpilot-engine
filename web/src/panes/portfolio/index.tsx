@@ -192,6 +192,10 @@ function PortfolioScreen() {
       <div className="k-in" key={tab}>
         {tab === "hold" && (
           <div className="k-grid">
+            <Tile title={t("v3.noteT")} wide>
+              <p>{t("v3.noteBody")}</p>
+              <p className="k-note">{t("v3.noteWhen")}</p>
+            </Tile>
             <Tile title={t("v2.pHold")} wide>
               <div className="k-scroll">
                 <table className="k-table">
