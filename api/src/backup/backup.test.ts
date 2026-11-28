@@ -1,5 +1,6 @@
+import { HealthResponse, JobKind } from "@stockpilot/contract";
 import { expect, it } from "vitest";
-import { makeApp } from "../testkit";
+import { HEALTH, makeApp } from "../testkit";
 
 it("Backup reports: signed writes only, the latest of each kind shows, bad bodies are refused", async () => {
   const { app, signed } = await makeApp();
@@ -42,4 +43,24 @@ it("Backup reports: nothing yet reads as null, and only the last 60 of a kind ar
     await signed("POST", "/api/backup", { kind: "backup", ok: true, detail: `n${i}`, tables: {} });
   const n = await db.prepare("select count(*) as n from backup_reports").first();
   expect((n as { n: number }).n).toBe(60);
+});
+
+it("Health shows the latest backup and drill, and the drill is a Job kind", async () => {
+  const { app, signed } = await makeApp();
+  const health = async () =>
+    HealthResponse.parse(
+      await (await app.request("/api/health", { headers: { "x-health-secret": HEALTH } })).json(),
+    );
+  expect((await health()).backup).toEqual({ backup: null, drill: null });
+  await signed("POST", "/api/backup", {
+    kind: "drill",
+    ok: true,
+    detail: "2 tables match",
+    tables: {},
+  });
+  const got = (await health()).backup;
+  expect(got.backup).toBeNull();
+  expect(got.drill?.ok).toBe(true);
+  expect(got.drill?.detail).toBe("2 tables match");
+  expect(JobKind.safeParse("drill").success).toBe(true);
 });
