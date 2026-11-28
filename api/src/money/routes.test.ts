@@ -63,3 +63,27 @@ describe("money xirr route", () => {
     expect(j.warnings.length).toBe(1);
   });
 });
+
+describe("money harvest and risk", () => {
+  it("harvests free long-term room and sizes a Nifty fall", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/risk");
+    await db.exec(
+      trade("b", "buy", "2020-01-01", 10, 100) +
+        "insert into stock_history (symbol,exchange,date,close) values ('AAA','NSE','2025-01-01',150);",
+    );
+    const t = (await (await app.request("/api/money/tax?fy=2025")).json()) as {
+      harvest: { gain_candidates: { symbol: string; gain: number }[] };
+    };
+    expect(t.harvest.gain_candidates).toEqual([
+      expect.objectContaining({ symbol: "AAA", gain: 500 }),
+    ]);
+    const r = (await (await app.request("/api/money/risk")).json()) as {
+      concentration: { total: number };
+      shock: { lossInr: number; assumedBeta: string[] };
+    };
+    expect(r.concentration.total).toBe(1500);
+    expect(r.shock.lossInr).toBeCloseTo(-150);
+    expect(r.shock.assumedBeta).toEqual(["AAA"]);
+  });
+});

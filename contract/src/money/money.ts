@@ -17,7 +17,7 @@ export const GainRow = z.object({
 export type GainRow = z.infer<typeof GainRow>;
 
 /** `GET /api/money/tax?fy=2026` (2026-27): gains booked in that tax year, netted by pool, with the tax they
- * come to. `harvest` is filled once prices are supplied by the US price Job (null until then). */
+ * come to. `harvest` is sized from the newest stored closes. */
 export const TaxResponse = z.object({
   fy: z.number().int(),
   label: z.string(),
@@ -32,6 +32,21 @@ export const TaxResponse = z.object({
   tax: z.object({ total: z.number(), surcharge: z.number(), cess: z.number() }),
   ltcg_equity_exempt: z.number(),
   ltcg_equity_room_left: z.number(),
+  harvest: z.object({
+    gain_room: z.number(),
+    gain_candidates: z.array(
+      z.object({
+        symbol: z.string(),
+        quantity: z.number(),
+        gain: z.number(),
+        future_tax_saved: z.number(),
+      }),
+    ),
+    gain_room_left: z.number(),
+    loss_candidates: z.array(
+      z.object({ symbol: z.string(), quantity: z.number(), loss: z.number() }),
+    ),
+  }),
   warnings: z.array(z.string()),
 });
 export type TaxResponse = z.infer<typeof TaxResponse>;
@@ -56,3 +71,28 @@ export const XirrResponse = z.object({
   warnings: z.array(z.string()),
 });
 export type XirrResponse = z.infer<typeof XirrResponse>;
+
+const Slice = z.object({ key: z.string(), value: z.number(), share: z.number() });
+
+/** `GET /api/money/risk`: how the held stocks split by stock and sector, which pass their limits, and what a
+ * Nifty fall would do. Sector and beta are not stored yet: sectors read "Unknown" and every beta counts as 1. */
+export const RiskResponse = z.object({
+  concentration: z.object({
+    total: z.number(),
+    byStock: z.array(Slice),
+    bySector: z.array(Slice),
+    flags: z.array(
+      z.object({ kind: z.enum(["stock", "sector"]), key: z.string(), share: z.number() }),
+    ),
+  }),
+  shock: z.object({
+    fall: z.number(),
+    total: z.number(),
+    lossInr: z.number(),
+    lossShare: z.number(),
+    perStock: z.array(z.object({ symbol: z.string(), move: z.number(), changeInr: z.number() })),
+    assumedBeta: z.array(z.string()),
+  }),
+  warnings: z.array(z.string()),
+});
+export type RiskResponse = z.infer<typeof RiskResponse>;
