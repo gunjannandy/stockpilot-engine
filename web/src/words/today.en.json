@@ -18,5 +18,22 @@
   "groupUnusual": "Unusual today",
   "empty": "None today.",
   "print": "Print this page",
-  "sample": "Made-up sample rows, to judge the look."
+  "moneyLeftSentence": "This is what is left of this month's budget for buying new shares.",
+  "moneyLeftHow": "The budget set for this month, minus what we have bought so far this month.",
+  "moneyLeftNone": "No budget is set for this month, so there is no figure to show.",
+  "breadthSentence": "Out of the biggest {n} shares, this many are above their own 200-day average price.",
+  "breadthHow": "We count the biggest shares trading above their average price of the last 200 days, and divide by how many we counted.",
+  "trendUp": "The Nifty is above its 200-day average: the market is in an upward trend.",
+  "trendDown": "The Nifty is below its 200-day average: the market is in a downward trend.",
+  "trendHow": "The Nifty's closing level compared with its average of the last 200 days.",
+  "valueSentence": "The middle share, by price against profit, looks {band} today.",
+  "valueHow": "We take the price-to-profit ratio (P/E) of every share that makes a profit and look at the middle one.",
+  "band.cheap": "cheap",
+  "band.fair": "fairly priced",
+  "band.dear": "dear",
+  "noFigure": "not given",
+  "groupsNote": "Only stocks we hold or watch are listed.",
+  "staleHeld": "No fresh call yet for: {list}.",
+  "open": "Open",
+  "callsAsOf": "Calls made on {day}."
 }
