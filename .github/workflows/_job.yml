@@ -1,0 +1,65 @@
+# The reusable workflow every Job uses (decisions §2 Schedules, §6 Jobs). It starts nothing by itself:
+# a dispatch-only workflow (calendar.yml, archive.yml, ...) calls it with the Job's kind and dates.
+# Public data only, so no model token and no private repo.
+name: _job
+on:
+  workflow_call:
+    inputs:
+      kind:
+        description: Job kind, the stockpilot.jobs module to run
+        type: string
+        required: true
+      subject:
+        description: Job subject
+        type: string
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        type: string
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        type: string
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        type: string
+        default: ""
+      timeout-minutes:
+        type: number
+        default: 15
+    secrets:
+      INGEST_HMAC_KEY:
+        required: true
+permissions:
+  contents: read
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    env:
+      STOCKPILOT_API_URL: https://stockpilot-app.stockpilotgn.workers.dev
+      STOCKPILOT_INGEST_KEY: ${{ secrets.INGEST_HMAC_KEY }}
+      JOB_DAY: ${{ inputs.day }}
+    steps:
+      # Jobs run the code that is live, not the branch the dispatch named.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: production
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: py/uv.lock
+      - run: uv sync --frozen --project py
+      - name: Run the Job
+        env:
+          KIND: ${{ inputs.kind }}
+          SUBJECT: ${{ inputs.subject }}
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+          STOCKPILOT_VERSION: ${{ github.sha }}
+        run: |
+          args=(--subject "${SUBJECT:-all}")
+          [ -n "$FROM" ] && args+=(--from "$FROM")
+          [ -n "$TO" ] && args+=(--to "$TO")
+          uv run --frozen --project py python -m stockpilot.runtime "$KIND" "${args[@]}"
