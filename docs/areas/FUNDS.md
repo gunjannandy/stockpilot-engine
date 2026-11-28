@@ -15,8 +15,13 @@ Status: building
 - [ ] Confirm `gate` is green on PR #69 and it merges.
 - [ ] Find a source each of the 10 houses serves to Actions (`config/fund_house_sources.json` has 5 of 10 unfound); until then they report 'cannot be fetched' in the run's lines.
 - [ ] Held-fund call (Keep/Add/Switch/Review, private on the VM): reuse `py/stockpilot/fundcall.py` and the `fund_calls` rate by quartile; then the scored-later track record of past published calls. Was: weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
-- [ ] Report on issue #283 which fund detail (free today: NAV, TER Direct/Regular, size, 1/3/5y returns, category middle, worst fall, rolling returns; not free: exit load, manager, benchmark, portfolio turnover, ratings) the data can and cannot support (free additions).
+- [x] Fund detail report: see section below.
 - [ ] Unit checks: overlap from fixtures, returns/rolling/falls/cost/size from fixtures.
+
+## Fund detail report (issue 283)
+Supported today from free data: weekly NAV chart up to 5 years, 1/3/5 year returns, category middle and count, worst fall, rolling 1-year spread and loss share, Direct and Regular yearly cost, size, top-holdings and overlap (fund_holdings, houses we can fetch), and now a buy/watch call with a measured chance.
+Free additions still open: SIP-style return over the NAV history, calendar-year returns, up/down capture against the category middle, and holdings-derived concentration (top 10 share, sector from holdings names) once more houses are fetchable.
+Not supportable free: exit load, fund manager and tenure, official benchmark and its returns, portfolio turnover, star ratings. Their sources are paid or scraped from pages that block Actions; a screen should leave them out rather than show blanks.
 
 ## Decisions
 - Kept both sides when main's `feedback` dataset and our `funds` dataset collided in `contract/src/datasets.ts`.
@@ -31,3 +36,5 @@ Status: building
 
 ## Blocked
 - Nothing yet.
+
+Chapter end: 2
