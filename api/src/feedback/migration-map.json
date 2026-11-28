@@ -1,0 +1,5 @@
+{
+  "area": "feedback",
+  "from_v2": ["feedback", "asks"],
+  "note": "copy: each v2 message becomes one ask in tools/migrate/feedback.ts; v2 read-backs and approvals are dropped, the owner reviews again."
+}

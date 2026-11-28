@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
+import { FeedbackRow } from "./feedback/feedback";
 import { RawTrade } from "./kite/kite";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
@@ -115,6 +116,19 @@ export const datasets = {
       (run.rows ?? []).filter((r) => r.exchange === "NSE" && r.status === "listed").length >= 1500
         ? null
         : "fewer than 1,500 NSE stocks listed",
+  },
+  feedback: {
+    name: "feedback",
+    // Written by the Worker's Feedback box; only the one-time v2 migration posts rows through the door.
+    job: "sync",
+    table: "feedback",
+    schedule: "on every ask in the Feedback box; the v2 asks come in once, by the migration",
+    freshnessHours: 24 * 365,
+    checks: { row: ["text is not empty", "status is known"], run: [] },
+    visibility: "private",
+    recomputable: false,
+    writeBudget: 500,
+    row: FeedbackRow,
   },
 } as const satisfies Record<string, Dataset>;
 export type DatasetName = keyof typeof datasets;

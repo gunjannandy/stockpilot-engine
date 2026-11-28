@@ -166,3 +166,37 @@ def test_prototypes_waiting_for_the_owner_do_not_fill_the_slots():
 def test_a_quiet_ui_builder_is_never_checked():
     x = t(1, "A", ui=True, claim=building("primary", minutes_ago=300, session="s9"), pushed_at=ago(240))
     assert events([x]) == []
+
+
+def test_collect_reads_the_branch_tip_with_the_unpaged_branch_endpoint():
+    import watch
+    seen = []
+
+    def api(path, *a):
+        seen.append(path)
+        if path.endswith("/issues"):
+            return [{"number": 7, "body": "", "labels": [{"name": "ready-for-agent"}]}]
+        if path.endswith("/issues/comments"):
+            return [{"issue_url": "x/issues/7", "created_at": "2026-11-28T01:00:00Z",
+                     "body": "Claimed by primary: s1 (lane/LO7)"}]
+        if path.endswith("/pulls"):
+            return []
+        assert "/branches/lane/LO7" in path
+        return {"commit": {"commit": {"committer": {"date": "2026-11-28T02:00:00Z"}}}}
+
+    x = watch.collect(api=api, now="2026-11-28T03:00:00+00:00")[0]
+    assert x["pushed_at"] == "2026-11-28T02:00:00Z"
+    assert not any("/commits/lane" in p for p in seen)
+
+
+def test_wait_reports_an_event_after_repeated_failed_reads(monkeypatch, capsys):
+    import json
+    import watch
+
+    def boom(account):
+        raise RuntimeError("Extra data")
+    monkeypatch.setattr(watch, "step", boom)
+    monkeypatch.setattr(watch.time, "sleep", lambda s: None)
+    assert watch.main(["wait", "--account", "primary", "--max-minutes", "5"]) == 0
+    ev = json.loads(capsys.readouterr().out.splitlines()[0])
+    assert ev["kind"] == "watch-error" and ev["failures"] == watch.MAX_FAILS
