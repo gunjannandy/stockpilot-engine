@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
+import { FeedbackRow } from "./feedback/feedback";
 import { RawTrade } from "./kite/kite";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -80,6 +81,19 @@ export const datasets = {
     run: { at: "07:00", on: "every" },
     runCheck: (run) =>
       (run.rows ?? []).some((r) => r.kind === "holiday") ? null : "no holiday listed",
+  },
+  feedback: {
+    name: "feedback",
+    // Written by the Worker's Feedback box; only the one-time v2 migration posts rows through the door.
+    job: "sync",
+    table: "feedback",
+    schedule: "on every ask in the Feedback box; the v2 asks come in once, by the migration",
+    freshnessHours: 24 * 365,
+    checks: { row: ["text is not empty", "status is known"], run: [] },
+    visibility: "private",
+    recomputable: false,
+    writeBudget: 500,
+    row: FeedbackRow,
   },
 } as const satisfies Record<string, Dataset>;
 export type DatasetName = keyof typeof datasets;
