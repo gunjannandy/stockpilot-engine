@@ -6,8 +6,21 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { discoverWords } from "../areas";
 import { WordsProvider } from "../words";
 
+// A canvas cannot run in jsdom: the chart is a stub here, the screens around it are what is checked.
+vi.mock("../charts/StockChart", async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  StockChart: () => null,
+}));
+
 const mm = (q: string) =>
-  ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }) as never;
+  ({
+    matches: false,
+    media: q,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+  }) as never;
 window.matchMedia ??= mm;
 
 afterEach(() => {

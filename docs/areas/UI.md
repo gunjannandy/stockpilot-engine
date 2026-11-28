@@ -11,6 +11,8 @@ Status: building
 - Screen checks without real data: `web/src/panes/screens.test.tsx` (eight screens, English and Bengali: heading shown, no missing word keys).
 - Portfolio budget and money left read `GET /api/portfolio/settings` and `/trades`, budget saves with `PUT /api/portfolio/budget` (`web/src/panes/portfolio/index.tsx`, helpers and tests in `web/src/panes/_kit/plan.ts`). Made-up numbers stay where a route does not answer (preview, father).
 
+- Chapter 3: merged `origin/main` again; `ts` job fixed: `web/src/panes/screens.test.tsx` stubs the canvas chart (jsdom has no canvas) and the media-query mock has the old listener methods, so no unhandled errors fail the run. Lint, typecheck, web and api tests green locally.
+
 ## Next
 - [ ] Push; confirm `gate` green on PR (privacy gate needs a secret list, cannot run here).
 - [ ] Target mix: route mix is by asset class (stocks, equity_funds, ...), screen's is by sector; wire without changing the look (needs a mapping decision).
@@ -26,4 +28,4 @@ Status: building
 ## Blocked
 - private run: privacy gate needs PRIVACY_DENY_LIST (CI secret), cannot be run in this container.
 
-Chapter end: 2
+Chapter end: 3
