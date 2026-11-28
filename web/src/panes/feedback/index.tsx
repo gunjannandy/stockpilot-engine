@@ -63,10 +63,31 @@ function Review({ ask }: { ask: FeedbackAsk }) {
   );
 }
 
+const STEPS: FeedbackAsk["status"][] = ["received", "reviewed", "planned", "being_built", "done"];
+const MAX = 2000;
+
+/** Where an ask stands: five steps, the reached ones filled. Not planned is its own end, shown plainly. */
+function Track({ status }: { status: FeedbackAsk["status"] }) {
+  const t = useWords();
+  const at = STEPS.indexOf(status);
+  if (at < 0) return <p className="fb-np">{t("feedback.status.not_planned")}</p>;
+  return (
+    <ol className="fb-track" aria-label={t(`feedback.status.${status}`)}>
+      {STEPS.map((x, i) => (
+        <li key={x} className={i <= at ? "on" : ""} aria-current={i === at ? "step" : undefined}>
+          <i />
+          <span>{t(`feedback.status.${x}`)}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function FeedbackPane() {
   const t = useWords();
   const qc = useQueryClient();
   const [text, setText] = useState("");
+  const [show, setShow] = useState<"all" | "open" | "done">("all");
   const list = useQuery({
     queryKey: ["feedback"],
     queryFn: async () => FeedbackList.parse(await send("/api/feedback", "GET")),
@@ -80,49 +101,107 @@ export function FeedbackPane() {
     },
   });
   const owner = list.data?.person === "owner";
+  const asks = list.data?.asks ?? [];
+  const closed = (a: FeedbackAsk) => a.status === "done" || a.status === "not_planned";
+  const vis = asks.filter((a) => show === "all" || (show === "done") === closed(a));
   return (
     <section className="pane fb" data-pane="feedback">
-      <h1>{t("feedback.title")}</h1>
-      <p className="note">{t("feedback.intro")}</p>
-      <form
-        className="card fb-box"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (text.trim()) post.mutate(text.trim());
-        }}
-      >
-        <label htmlFor="fb-text">{t("feedback.prompt")}</label>
-        <textarea id="fb-text" rows={3} value={text} onChange={(e) => setText(e.target.value)} />
-        <button type="submit" disabled={!text.trim() || post.isPending}>
-          {post.isPending ? t("feedback.sending") : t("feedback.send")}
-        </button>
-        {post.isSuccess && <output data-testid="received">{t("feedback.status.received")}</output>}
-        {post.isError && <p role="alert">{t("feedback.notSent")}</p>}
-      </form>
-      <h2>{t("feedback.asked")}</h2>
-      {list.isError && <p role="alert">{t("feedback.failed")}</p>}
-      {list.data && list.data.asks.length === 0 && <p>{t("feedback.none")}</p>}
-      <ul className="fb-list">
-        {list.data?.asks.map((a) => (
-          <li key={a.id} className="card fb-ask" data-status={a.status}>
-            <p className="fb-said">{a.text}</p>
-            {a.understanding && (
-              <p className="note">
-                {t("feedback.understood")}: {a.understanding}
-              </p>
-            )}
-            <p>
-              <span className={`badge ${TONE[a.status]}`} data-testid="status">
-                {t(`feedback.status.${a.status}`)}
-              </span>{" "}
-              <span className="note" data-testid="job">
-                {t("feedback.job")}: {a.job ? `#${a.job}` : t("feedback.noJob")}
-              </span>
-            </p>
-            {owner && a.status === "received" && <Review ask={a} />}
-          </li>
-        ))}
-      </ul>
+      <header className="k-head">
+        <p className="k-eyebrow">{t("feedback.title")}</p>
+        <h1>{t("feedback.headline")}</h1>
+        <p>{t("feedback.intro")}</p>
+      </header>
+      <div className="fb-cols">
+        <form
+          className="card fb-box"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (text.trim()) post.mutate(text.trim());
+          }}
+        >
+          <label htmlFor="fb-text">{t("feedback.prompt")}</label>
+          <textarea
+            id="fb-text"
+            rows={5}
+            maxLength={MAX}
+            value={text}
+            placeholder={t("feedback.hint")}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <div className="fb-foot">
+            <span className="k-note num">
+              {text.length}/{MAX}
+            </span>
+            <button
+              type="submit"
+              className="sk-btn sk-tonal"
+              disabled={!text.trim() || post.isPending}
+            >
+              {post.isPending ? t("feedback.sending") : t("feedback.send")}
+            </button>
+          </div>
+          {post.isSuccess && (
+            <output className="fb-ok" data-testid="received">
+              {t("feedback.status.received")}
+            </output>
+          )}
+          {post.isError && <p role="alert">{t("feedback.notSent")}</p>}
+        </form>
+        <div className="fb-asks">
+          <div className="k-bar">
+            <h2>{t("feedback.asked")}</h2>
+            <div className="k-chips">
+              {(["all", "open", "done"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className="k-chipbtn"
+                  aria-pressed={show === k}
+                  onClick={() => setShow(k)}
+                >
+                  {t(`feedback.f.${k}`)}
+                  <span className="num">
+                    {k === "all"
+                      ? asks.length
+                      : asks.filter((a) => (k === "done") === closed(a)).length}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {list.isError && <p role="alert">{t("feedback.failed")}</p>}
+          {list.isPending && <span className="k-skel" />}
+          {list.data && vis.length === 0 && <p className="k-note">{t("feedback.none")}</p>}
+          <ul className="fb-list">
+            {vis.map((a, i) => (
+              <li
+                key={a.id}
+                className="card fb-ask"
+                data-status={a.status}
+                style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+              >
+                <p className="fb-said">{a.text}</p>
+                {a.understanding && (
+                  <p className="fb-und">
+                    <b>{t("feedback.understood")}:</b> {a.understanding}
+                  </p>
+                )}
+                <Track status={a.status} />
+                <p className="fb-meta">
+                  <span className={`badge ${TONE[a.status]}`} data-testid="status">
+                    {t(`feedback.status.${a.status}`)}
+                  </span>
+                  <span className="k-note" data-testid="job">
+                    {t("feedback.job")}: {a.job ? `#${a.job}` : t("feedback.noJob")}
+                  </span>
+                  <span className="k-note num">{a.created_at.slice(0, 10)}</span>
+                </p>
+                {owner && a.status === "received" && <Review ask={a} />}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }

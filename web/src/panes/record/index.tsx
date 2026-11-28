@@ -1,12 +1,10 @@
 // Record: our forecasts against the Nifty, are we adding value, our own trading, Smallcase against our own trades.
-import { useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { money } from "../_kit/data";
 import { useCountUp } from "../_kit/hooks";
-import { Seg, Tile } from "../_kit/ui";
+import { Group, GroupNav, Tile } from "../_kit/ui";
 
-type Tab = "ours" | "mine" | "sc";
 const CAL = [
   { say: 30, real: 33 },
   { say: 40, real: 38 },
@@ -37,23 +35,58 @@ const MISSES = [
 const MONTHS = ["Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"];
 const BOOKED = [0, 18, 0, 42, 9, 0, 27, 0, 61, 0, 12, 33];
 
+function Ring({ v }: { v: number }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg viewBox="0 0 120 120" className="rc-ring" aria-hidden="true">
+      <circle cx="60" cy="60" r={r} className="rc-ring-bg" />
+      <circle
+        cx="60"
+        cy="60"
+        r={r}
+        className="rc-ring-fg"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - v / 100)}
+        transform="rotate(-90 60 60)"
+      />
+    </svg>
+  );
+}
+
 function Calibration() {
   const t = useWords();
+  const X = (v: number) => 30 + (v / 100) * 170;
+  const Y = (v: number) => 190 - (v / 100) * 170;
   return (
     <Tile title={t("v3.calibration")}>
-      <svg viewBox="0 0 220 220" className="rc-cal" role="img" aria-label={t("v3.calibration")}>
+      <svg viewBox="0 0 220 230" className="rc-cal" role="img" aria-label={t("v3.calibration")}>
         <title>{t("v3.calibration")}</title>
-        <line x1="20" y1="200" x2="200" y2="20" className="rc-diag" />
-        {CAL.map((c) => (
+        {[0, 25, 50, 75, 100].map((g) => (
+          <g key={g}>
+            <line x1="30" x2="200" y1={Y(g)} y2={Y(g)} className="rc-grid" />
+            <text x="24" y={Y(g) + 3} textAnchor="end" className="rc-ax">
+              {g}
+            </text>
+            <text x={X(g)} y="204" textAnchor="middle" className="rc-ax">
+              {g}
+            </text>
+          </g>
+        ))}
+        <line x1={X(0)} y1={Y(0)} x2={X(100)} y2={Y(100)} className="rc-diag" />
+        {CAL.map((c, i) => (
           <circle
             key={c.say}
-            cx={20 + (c.say / 100) * 180 * 1}
-            cy={200 - (c.real / 100) * 180}
+            cx={X(c.say)}
+            cy={Y(c.real)}
             r="6"
             className="rc-dot"
-          />
+            style={{ animationDelay: `${i * 90}ms` }}
+          >
+            <title>{`${c.say}% → ${c.real}%`}</title>
+          </circle>
         ))}
-        <text x="110" y="216" textAnchor="middle" className="rc-ax">
+        <text x="115" y="223" textAnchor="middle" className="rc-ax">
           {t("v3.calX")}
         </text>
       </svg>
@@ -76,7 +109,7 @@ function Compare() {
         <div key={r.k} className="k-barrow rc-row">
           <span>{t(`v3.cmp.${r.k}`)}</span>
           <span className={`k-bar-h ${r.c}`} aria-hidden="true">
-            <i style={{ width: `${r.v * 5}%` }} />
+            <i className="k-grow" style={{ width: `${r.v * 5}%` }} />
           </span>
           <b className="num">{r.v.toFixed(1)}%</b>
         </div>
@@ -97,7 +130,10 @@ function Ours() {
           <p className="k-note">{t("v2.rCallsS")}</p>
         </Tile>
         <Tile title={t("v2.rBeat")}>
-          <p className="k-big num up">{Math.round(n)}%</p>
+          <div className="rc-beat">
+            <Ring v={n} />
+            <p className="k-big num up">{Math.round(n)}%</p>
+          </div>
           <p className="k-note">{t("v3.beatP")}</p>
         </Tile>
         <Tile title={t("v3.avgGap")}>
@@ -147,6 +183,12 @@ function Mine() {
           <p className="k-big num dn">3</p>
         </Tile>
       </div>
+      <Tile title={t("v3.winLoss")} wide>
+        <div className="rc-wl" role="img" aria-label="13 of 19 closed trades made money">
+          <i className="k-grow" style={{ width: `${(13 / 19) * 100}%` }} />
+        </div>
+        <p className="k-note">{t("v3.winLossP")}</p>
+      </Tile>
       <Tile title={t("v2.rEarly")}>
         <p className="k-big num">4 {t("v3.of")} 11</p>
         <p className="k-note">{t("v2.rEarlyS")}</p>
@@ -190,7 +232,6 @@ function Sc() {
 
 function RecordScreen() {
   const t = useWords();
-  const [tab, setTab] = useState<Tab>("ours");
   return (
     <section className="rc">
       <header className="k-head">
@@ -198,23 +239,23 @@ function RecordScreen() {
         <h1>{t("v3.recordH")}</h1>
         <p>{t("v3.recordP")}</p>
       </header>
-      <div className="k-bar">
-        <Seg
-          label={t("v2.record")}
-          value={tab}
-          onChange={setTab}
-          options={[
-            { id: "ours", label: t("v2.tabOurs") },
-            { id: "mine", label: t("v2.tabMine") },
-            { id: "sc", label: t("v2.pSc") },
-          ]}
-        />
-      </div>
-      <div className="k-in" key={tab}>
-        {tab === "ours" && <Ours />}
-        {tab === "mine" && <Mine />}
-        {tab === "sc" && <Sc />}
-      </div>
+      <GroupNav
+        label={t("v3.groupsNav")}
+        items={[
+          { id: "ours", label: t("v2.tabOurs") },
+          { id: "mine", label: t("v2.tabMine") },
+          { id: "sc", label: t("v2.pSc") },
+        ]}
+      />
+      <Group id="ours" title={t("v2.tabOurs")} sub={t("v3.rcOursP")}>
+        <Ours />
+      </Group>
+      <Group id="mine" title={t("v2.tabMine")} sub={t("v3.rcMineP")}>
+        <Mine />
+      </Group>
+      <Group id="sc" title={t("v2.pSc")} sub={t("v3.rcScP")}>
+        <Sc />
+      </Group>
       <p className="k-sample">{t("v2.proto")}</p>
     </section>
   );

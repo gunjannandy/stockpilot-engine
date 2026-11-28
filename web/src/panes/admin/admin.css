@@ -8,21 +8,6 @@
   margin: 8px 0 0;
   font-size: var(--fs-section);
 }
-.admin ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.admin li {
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: var(--fs-body);
-  overflow-wrap: anywhere;
-}
 .admin li ol {
   margin: 6px 0 0;
   padding-left: 20px;
@@ -47,4 +32,116 @@
 }
 .admin .chip.ok {
   color: var(--gain);
+}
+
+/* Admin v3 */
+.admin {
+  max-width: none;
+}
+.ad-list,
+.ad-cards,
+.ad-usage {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: var(--sp-2);
+  list-style: none;
+}
+.ad-cards {
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+.ad-card,
+.ad-need,
+.ad-run,
+.ad-prob {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  font-size: var(--fs-body);
+  transition:
+    border-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+.ad-card:hover,
+.ad-run:hover {
+  border-color: var(--line);
+  transform: translateY(-1px);
+}
+.ad-card.st-stale,
+.ad-card.st-never {
+  border-left: 4px solid var(--warn);
+}
+.ad-need {
+  flex-direction: row;
+  align-items: center;
+  border-left: 4px solid var(--warn);
+}
+.ad-kind {
+  font-size: var(--fs-note);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+}
+.ad-run-h {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.ad-st {
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  background: var(--c2);
+  color: var(--text-2);
+}
+.ad-st.ok {
+  background: color-mix(in oklab, var(--gain) 18%, var(--surface));
+  color: var(--gain);
+}
+.ad-st.bad {
+  background: color-mix(in oklab, var(--loss) 18%, var(--surface));
+  color: var(--loss);
+}
+.ad-st.go {
+  background: var(--tonal);
+  color: var(--on-tonal);
+}
+.ad-err,
+.ad-ok {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+.ad-err {
+  color: var(--loss);
+}
+.ad-ok {
+  color: var(--gain);
+  font-weight: 700;
+}
+.ad-prob {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.ad-usage li {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) 1fr 3rem;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-body);
+}
+.ad-usage b {
+  text-align: right;
+}
+.ad-run details {
+  font-size: var(--fs-note);
+  color: var(--text-2);
 }

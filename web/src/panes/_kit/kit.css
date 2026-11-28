@@ -1140,3 +1140,61 @@
     transition: none;
   }
 }
+
+/* Record v3 */
+.rc-grid {
+  stroke: var(--line-2);
+}
+.rc-dot {
+  animation: k-pop 0.5s var(--ease) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes k-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+.rc-beat {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.rc-ring {
+  width: 5.5rem;
+  height: 5.5rem;
+  flex: none;
+}
+.rc-ring circle {
+  fill: none;
+  stroke-width: 10;
+}
+.rc-ring-bg {
+  stroke: var(--c3);
+}
+.rc-ring-fg {
+  stroke: var(--gain);
+  stroke-linecap: round;
+}
+.rc-wl {
+  height: var(--sp-4);
+  border-radius: var(--r-chip);
+  background: color-mix(in oklab, var(--loss) 35%, var(--c3));
+  overflow: hidden;
+  margin: var(--sp-2) 0;
+}
+.rc-wl i {
+  display: block;
+  height: 100%;
+  background: var(--gain);
+}
+.rc-bar:hover {
+  filter: brightness(1.15);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-dot,
+  .rc-bar {
+    animation: none;
+  }
+}

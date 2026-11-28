@@ -69,3 +69,126 @@
   min-height: var(--row);
   font: inherit;
 }
+
+/* Feedback v3 */
+.fb {
+  max-width: none;
+}
+.fb-cols {
+  display: grid;
+  grid-template-columns: minmax(18rem, 26rem) 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+.fb-box {
+  position: sticky;
+  top: var(--sp-4);
+}
+.fb-box label {
+  font-weight: 700;
+}
+.fb-box textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.fb-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.fb-ok {
+  color: var(--gain);
+  font-weight: 700;
+  animation: k-fade 0.3s var(--ease) both;
+}
+.fb-asks h2 {
+  margin: 0;
+  font-size: var(--fs-section);
+}
+.fb-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.fb-ask {
+  padding: var(--sp-4);
+  display: grid;
+  gap: var(--sp-3);
+  animation: k-fade 0.4s var(--ease) both;
+  transition: border-color 0.18s var(--ease);
+}
+.fb-ask:hover {
+  border-color: var(--line);
+}
+.fb-said {
+  margin: 0;
+  font-size: var(--fs-section);
+  font-weight: 600;
+}
+.fb-und {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c1);
+  border-radius: var(--r-control);
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+.fb-meta {
+  margin: 0;
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.fb-track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-1);
+}
+.fb-track li {
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-note);
+  color: var(--text-2);
+}
+.fb-track i {
+  display: block;
+  height: 6px;
+  border-radius: var(--r-chip);
+  background: var(--c3);
+}
+.fb-track li.on i {
+  background: var(--primary);
+  transform-origin: left;
+  animation: k-barin 0.6s var(--ease) both;
+}
+.fb-track li[aria-current="step"] {
+  color: var(--text);
+  font-weight: 700;
+}
+.fb-np {
+  margin: 0;
+  color: var(--loss);
+  font-weight: 700;
+}
+@media (max-width: 900px) {
+  .fb-cols {
+    grid-template-columns: 1fr;
+  }
+  .fb-box {
+    position: static;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fb-ask,
+  .fb-ok,
+  .fb-track li.on i {
+    animation: none;
+  }
+}
