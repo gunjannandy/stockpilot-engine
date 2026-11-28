@@ -14,5 +14,6 @@
   "refresh.press": "Refresh documents",
   "refresh.pressing": "Starting…",
   "refresh.started": "Started. New statements show up in a few minutes.",
-  "refresh.failed": "Could not start it. Try again in a minute."
+  "refresh.failed": "Could not start it. Try again in a minute.",
+  "dot": "Not synced since today's open. Press Sync."
 }

@@ -5,19 +5,22 @@ import type { SettingsResponse, TradesResponse } from "@stockpilot/contract";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { Pane } from "../../areas";
-import { lakh, money, pct } from "../../format";
+import { lakh, money } from "../../format";
+import { Bannered } from "../../panekit/Banner";
 import { useWords } from "../../words";
 import { useCountUp } from "../_kit/hooks";
-import { callCard, HOLDINGS } from "../_kit/pending";
 import { BUDGET, budgetFor, istMonth, MONEY_LEFT, spentIn, TARGET } from "../_kit/plan";
 import { Toast } from "../_kit/Toast";
-import { Seg, VChip } from "../_kit/ui";
 import { watch } from "../_kit/watch";
+import { SyncDot } from "../sync/SyncDot";
 import { shortTime, syncQuery } from "../sync/useSynced";
+import { Holdings } from "./Holdings";
 import "./portfolio.css";
 
-type Scope = "all" | "kite" | "sc";
-type Rows = typeof HOLDINGS;
+type Rows = {
+  st: { id: string; name: string; sector: string };
+  h: { value: number; gain: number; qty: number };
+}[];
 const fill = (s: string, v: Record<string, string | number>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
@@ -89,6 +92,7 @@ function Month({ rows }: { rows: Rows }) {
         </span>
         <a className="sk-btn" href="/kite/login" data-testid="sync-button">
           {t("sync.press")}
+          <SyncDot />
         </a>
       </header>
       <div className="pf-money">
@@ -143,64 +147,66 @@ function Month({ rows }: { rows: Rows }) {
           <span className="k-note">{t("pf.budgetP")}</span>
         </div>
       </div>
-      <div className="pf-mixh">
-        <span className="k-eyebrow">{t("v2.pMix")}</span>
-        <button type="button" className="k-link" onClick={() => setEditM(!editM)}>
-          {editM ? t("pf.done") : t("pf.editMix")}
-        </button>
-      </div>
-      {editM ? (
-        <div className="pf-mixedit k-in">
-          {Object.entries(target).map(([s, g]) => (
-            <label key={s} className="pf-slider">
-              <span>{s}</span>
-              <input
-                type="range"
-                min={0}
-                max={40}
-                value={g}
-                aria-label={`${s} ${t("v2.mixTarget")}`}
-                onChange={(e) => setTarget({ ...target, [s]: Number(e.target.value) })}
-              />
-              <b className="num">{g}%</b>
-            </label>
-          ))}
-          <div className="k-bar">
-            <span className={`k-note num ${sum === 100 ? "up" : "dn"}`}>
-              {t("v3.mixSum").replace("{n}", String(sum))}
-            </span>
-            <button
-              type="button"
-              className="sk-btn sk-tonal"
-              disabled={sum !== 100}
-              onClick={() => {
-                setEditM(false);
-                watch.say(t("v2.approvedT"));
-              }}
-            >
-              {t("v2.approveT")}
-            </button>
-            <button type="button" className="sk-btn" onClick={() => setTarget(TARGET)}>
-              {t("v3.mixReset")}
-            </button>
-          </div>
+      <Bannered screen="portfolio" section="analysis">
+        <div className="pf-mixh">
+          <span className="k-eyebrow">{t("v2.pMix")}</span>
+          <button type="button" className="k-link" onClick={() => setEditM(!editM)}>
+            {editM ? t("pf.done") : t("pf.editMix")}
+          </button>
         </div>
-      ) : (
-        <div className="pf-mix">
-          {gaps.slice(0, 6).map(({ s, g, v }) => (
-            <div key={s} className="pf-mixrow">
-              <span className="trunc">{s}</span>
-              <span className="pf-mixbar" aria-hidden="true">
-                <i className="k-grow" style={{ width: `${Math.min(100, v * 2)}%` }} />
-                <em style={{ left: `${Math.min(100, g * 2)}%` }} />
+        {editM ? (
+          <div className="pf-mixedit k-in">
+            {Object.entries(target).map(([s, g]) => (
+              <label key={s} className="pf-slider">
+                <span>{s}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  value={g}
+                  aria-label={`${s} ${t("v2.mixTarget")}`}
+                  onChange={(e) => setTarget({ ...target, [s]: Number(e.target.value) })}
+                />
+                <b className="num">{g}%</b>
+              </label>
+            ))}
+            <div className="k-bar">
+              <span className={`k-note num ${sum === 100 ? "up" : "dn"}`}>
+                {t("v3.mixSum").replace("{n}", String(sum))}
               </span>
-              <b className={`num ${v - g > 3 ? "dn" : v - g < -3 ? "up" : ""}`}>
-                {v.toFixed(0)}% / {g}%
-              </b>
+              <button
+                type="button"
+                className="sk-btn sk-tonal"
+                disabled={sum !== 100}
+                onClick={() => {
+                  setEditM(false);
+                  watch.say(t("v2.approvedT"));
+                }}
+              >
+                {t("v2.approveT")}
+              </button>
+              <button type="button" className="sk-btn" onClick={() => setTarget(TARGET)}>
+                {t("v3.mixReset")}
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="pf-mix">
+            {gaps.slice(0, 6).map(({ s, g, v }) => (
+              <div key={s} className="pf-mixrow">
+                <span className="trunc">{s}</span>
+                <span className="pf-mixbar" aria-hidden="true">
+                  <i className="k-grow" style={{ width: `${Math.min(100, v * 2)}%` }} />
+                  <em style={{ left: `${Math.min(100, g * 2)}%` }} />
+                </span>
+                <b className={`num ${v - g > 3 ? "dn" : v - g < -3 ? "up" : ""}`}>
+                  {v.toFixed(0)}% / {g}%
+                </b>
+              </div>
+            ))}
+          </div>
+        )}
+      </Bannered>
     </section>
   );
 }
@@ -289,102 +295,28 @@ function Coming({ rows }: { rows: Rows }) {
   );
 }
 
-function Holdings({ rows }: { rows: Rows }) {
-  const t = useWords();
-  const total = rows.reduce((a, r) => a + r.h.value, 0) || 1;
-  const sorted = [...rows].sort((a, b) => b.h.value - a.h.value);
-  return (
-    <div className="k-scroll card pf-tablewrap">
-      <table className="k-table pf-table">
-        <thead>
-          <tr>
-            <th>{t("v2.hHolding")}</th>
-            <th className="r">{t("v2.hValue")}</th>
-            <th className="r">{t("v2.hGain")}</th>
-            <th>{t("v2.hShare")}</th>
-            <th className="r">{t("pf.chance")}</th>
-            <th className="r">{t("v2.lotQ")}</th>
-            <th>{t("v2.hHeld")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((r, i) => (
-            <tr key={r.st.id} className="k-up" style={{ "--i": i } as React.CSSProperties}>
-              <td>
-                <span className="pf-name">
-                  <VChip v={r.st.verdict} />
-                  <b>{r.st.name}</b>
-                  <span className="k-note">{r.h.account}</span>
-                </span>
-              </td>
-              <td className="r num">{money(r.h.value, 0)}</td>
-              <td className={`r num ${r.h.gain >= 0 ? "up" : "dn"}`}>
-                {money(r.h.gain, 0)} <span className="k-note">{pct(r.h.gainPct)}</span>
-              </td>
-              <td className="pf-share num">
-                <span className="k-bar-h">
-                  <i className="k-grow" style={{ width: `${(r.h.value / total) * 220}%` }} />
-                </span>
-                {((r.h.value / total) * 100).toFixed(1)}%
-              </td>
-              <td className="r num">{callCard(r.st).chance}%</td>
-              <td className="r num">{r.h.qty}</td>
-              <td>
-                <span className={`k-pill ${r.h.longTerm ? "better" : ""}`}>
-                  {r.h.longTerm ? t("v2.rsuLong") : `${t("v3.shortTerm")} · ${r.h.ltFrom}`}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 function PortfolioScreen() {
   const t = useWords();
-  const [scope, setScope] = useState<Scope>("all");
-  const rows = HOLDINGS.filter(
-    (r) => scope === "all" || (scope === "kite") === (r.h.account === "Kite"),
-  );
-  const value = rows.reduce((a, r) => a + r.h.value, 0);
-  const cost = rows.reduce((a, r) => a + r.h.cost, 0);
-  const shown = useCountUp(value);
   return (
     <section className="pf">
       <header className="pf-head">
         <div>
           <p className="k-eyebrow">{t("v2.portfolio")}</p>
-          <h1 className="num">{lakh(Math.round(shown))}</h1>
-          <p className="k-note">
-            {t("v2.pGain")}:{" "}
-            <b className={`num ${value >= cost ? "up" : "dn"}`}>
-              {money(value - cost, 0)} ({pct((value / (cost || 1) - 1) * 100)})
-            </b>{" "}
-            · {rows.length} {t("pf.holdings")}
-          </p>
+          <h1>{t("shell.nav.portfolio")}</h1>
         </div>
-        <Seg
-          label={t("v2.srcT")}
-          value={scope}
-          onChange={setScope}
-          options={[
-            { id: "all", label: t("v2.srcAll") },
-            { id: "kite", label: t("v2.srcKite") },
-            { id: "sc", label: t("v2.srcSc") },
-          ]}
-        />
       </header>
+      <Holdings />
       <div className="pf-top">
-        <Month rows={HOLDINGS} />
-        <Tax rows={rows} />
-        <Rsu />
-        <Coming rows={rows} />
+        <Month rows={[]} />
+        <Bannered screen="portfolio" section="tax">
+          <Tax rows={[]} />
+        </Bannered>
+        <Bannered screen="portfolio" section="analysis">
+          <Rsu />
+          <Coming rows={[]} />
+        </Bannered>
       </div>
-      <Holdings rows={rows} />
       <Toast />
-      <p className="k-sample">{t("v2.proto")}</p>
     </section>
   );
 }

@@ -21,4 +21,10 @@ describe("banner flags", () => {
   it("a bannered screen bannered whole hides its sections too", () => {
     expect(isBannered({}, "funds", "overlap")).toBe(true);
   });
+  it("Portfolio's analysis and tax start bannered; an explicit row opens them", () => {
+    expect(isBannered({}, "portfolio", "analysis")).toBe(true);
+    expect(isBannered({}, "portfolio", "tax")).toBe(true);
+    expect(isBannered({}, "portfolio", "holdings")).toBe(false);
+    expect(isBannered({ [bannerKey("portfolio", "tax")]: false }, "portfolio", "tax")).toBe(false);
+  });
 });
