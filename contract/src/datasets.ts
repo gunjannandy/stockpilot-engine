@@ -13,6 +13,7 @@ import {
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
 import { DividendsRun, UsPricesRun } from "./money/money";
+import { NewsItemRow } from "./news/news";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -184,6 +185,18 @@ export const datasets = {
     writeBudget: 300,
     row: UsPricesRun,
     run: { at: "06:30", on: "every" },
+  },
+  news_items: {
+    name: "news_items",
+    job: "news",
+    table: "news_items",
+    schedule: "every 15 minutes, all day",
+    freshnessHours: 2,
+    checks: { row: ["id, link and title are present"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 4000,
+    row: NewsItemRow,
   },
   history: {
     name: "history",

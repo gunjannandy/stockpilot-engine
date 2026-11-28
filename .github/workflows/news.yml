@@ -1,0 +1,39 @@
+# The news Job: started only by the Worker's 5-minute tick through workflow_dispatch (every 15 minutes). Public data only
+# (NSE filings, yfinance), so no model token and no private repo. Publishes the `news` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: news
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always news)
+        default: news
+      subject:
+        description: Job subject
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-news
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  news:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: news
+      subject: ${{ inputs.subject || 'all' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 14
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
