@@ -57,6 +57,13 @@ export type NewsCard = z.infer<typeof NewsCard>;
 export const NewsResponse = z.object({ items: z.array(NewsCard) });
 export type NewsResponse = z.infer<typeof NewsResponse>;
 
+/** One item for one stock, with that stock's impact row: what `GET /api/news/stock/:symbol` answers. */
+export const StockNewsResponse = z.object({
+  symbol: z.string(),
+  news: z.array(NewsItemRow.extend({ impact: NewsImpactRow })),
+});
+export type StockNewsResponse = z.infer<typeof StockNewsResponse>;
+
 /** The seven consumers that read only the impact table (decisions §7). */
 export const NEWS_CONSUMERS = [
   "refresh triggers",

@@ -1,304 +1,39 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+// The Stock pane: one stock, chosen by `?s=SYMBOL` (every row on Today, Holdings and Watchlist, and the search box,
+// open it that way). Its sections read the API; see StockDetail.
+import { useEffect, useState } from "react";
 import type { Pane } from "../../areas";
-import { StockChart } from "../../charts/StockChart";
 import { useWords } from "../../words";
+import type { StockView } from "../_kit/pending";
+import { StockDetail } from "./StockDetail";
 import "./stock.css";
-import { callCard, callFor, history, STOCKS, type StockView, type Verdict } from "../_kit/pending";
-import {
-  Actions,
-  CallSec,
-  ChangedBand,
-  FactsSec,
-  HoldingSec,
-  KeyNumbers,
-  NewsSec,
-  PeersSec,
-} from "../_kit/StockSections";
-import { openLinks, sparkPath } from "../_kit/stockbits";
-import { Toast } from "../_kit/Toast";
-import { StockRow } from "../_kit/ui";
-import { useWatch, watch } from "../_kit/watch";
 
-const ORDER: Verdict[] = ["sell", "weak", "buy", "keep", "watch"];
-const money = (v: number) =>
-  `₹${v.toLocaleString("en-IN", { maximumFractionDigits: v < 1000 ? 1 : 0 })}`;
+const symbolFromUrl = () => new URLSearchParams(window.location.search).get("s")?.trim() ?? "";
 
-function _Spark({ closes }: { closes: number[] }) {
-  const s = sparkPath(closes);
-  return (
-    <svg
-      className={`sp ${s.up ? "up" : "dn"}`}
-      viewBox="0 0 100 30"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path className="a" d={s.area} />
-      <path className="l" d={s.line} vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
-function _Meter({ v }: { v: number }) {
-  const t = useWords();
-  const tone = v >= 62 ? "strong" : v >= 40 ? "fair" : "weak";
-  return (
-    <span className="sk-mt">
-      <span className="sk-mtr">
-        <i style={{ left: `${Math.min(96, Math.max(4, v))}%` }} />
-      </span>
-      <span className={`sk-mw t-${tone}`}>{t(`stock.meter.${tone}`)}</span>
-    </span>
-  );
-}
-
-function OpenIn({ st }: { st: StockView }) {
-  const t = useWords();
-  const l = openLinks(st);
-  return (
-    <span className="sk-open">
-      <a
-        className="sk-ib"
-        href={l.kite}
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label={t("stock.kite")}
-        title={t("stock.kite")}
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <path
-            d="M12 2 4 10l8 12 8-12-8-8Zm0 4.4 3.6 3.6L12 15.4 8.4 10 12 6.4Z"
-            fill="currentColor"
-          />
-        </svg>
-        <span className="sr">{t("stock.kite")}</span>
-      </a>
-      <a
-        className="sk-ib"
-        href={l.screener}
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label={t("stock.screener")}
-        title={t("stock.screener")}
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <path
-            d="M4 20V4h2v14h14v2H4Zm4-4 3-5 3 3 5-7 1.6 1.2-6.2 8.600-3-3-2.600 4.400L8 16Z"
-            fill="currentColor"
-          />
-        </svg>
-        <span className="sr">{t("stock.screener")}</span>
-      </a>
-    </span>
-  );
-}
-
-export function Detail({
-  st,
-  bars,
-  onPick,
-}: {
-  st: StockView;
-  bars: ReturnType<typeof history>;
-  onPick?: (id: string) => void;
-}) {
-  const t = useWords();
-  const last = bars[bars.length - 1]?.close ?? 0;
-  const prev = bars[bars.length - 2]?.close ?? last;
-  const day = (last / prev - 1) * 100;
-  const call = useMemo(() => callFor(last, st.verdict), [last, st.verdict]);
-  const age =
-    st.ageSeconds < 90
-      ? t("stock.live").replace("{n}", String(st.ageSeconds))
-      : t("stock.liveMin").replace("{n}", String(Math.round(st.ageSeconds / 60)));
-  return (
-    <article className="sk">
-      <div className="sk-top">
-        <header className="sk-head">
-          <div className="sk-hl">
-            <span className={`chip v-${st.verdict}`}>{t(`stock.verdict.${st.verdict}`)}</span>
-            <h2>{st.name}</h2>
-            <p className="note">
-              {st.symbol} · {st.sector} · {st.exchange}
-            </p>
-          </div>
-          <div className="sk-hr">
-            <p className="px num">{money(last)}</p>
-            <p className="sk-pl">
-              <span className={day >= 0 ? "up" : "dn"}>
-                {day >= 0 ? "+" : "−"}
-                {Math.abs(day).toFixed(1)}% {t("stock.today")}
-              </span>{" "}
-              · {age}
-            </p>
-          </div>
-        </header>
-        <Actions st={st} />
-        <ChangedBand st={st} />
-      </div>
-      <section className="sk-sec">
-        <div className="sk-sh">
-          <span className="sk-ic" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22">
-              <title>chart</title>
-              <path d="m3 17 6-6 4 4 7-8-1.4-1.4L13 12.2l-4-4-7 7L3 17Z" fill="currentColor" />
-            </svg>
-          </span>
-          <div className="sk-stt">
-            <h3>{t("stock.chartH")}</h3>
-            <p>{t("stock.chartP")}</p>
-          </div>
-        </div>
-        <StockChart bars={bars} call={call} trades={st.trades} extra={<OpenIn st={st} />} />
-      </section>
-      <CallSec st={st} />
-      <KeyNumbers st={st} />
-      <FactsSec st={st} />
-      <HoldingSec st={st} />
-      <NewsSec st={st} />
-      <PeersSec st={st} onPick={(id) => onPick?.(id)} />
-    </article>
-  );
+/** The page body for a row picked on Today, Holdings or Watchlist: the same sections, from the API. */
+export function Detail({ st }: { st: StockView; bars?: unknown; onPick?: (id: string) => void }) {
+  return <StockDetail symbol={st.symbol} />;
 }
 
 export function StockPane() {
   const t = useWords();
-  const [sel, setSel] = useState(
-    () => new URLSearchParams(window.location.search).get("s") ?? STOCKS[0]?.id,
-  );
-  const [q, setQ] = useState("");
-  const [full, setFull] = useState(
-    () => new URLSearchParams(window.location.search).has("s") && window.innerWidth < 700,
-  );
-  const data = useMemo(() => new Map(STOCKS.map((s) => [s.id, history(s)])), []);
-  const listRef = useRef<HTMLDivElement>(null);
-  const w = useWatch();
-  const [vf, setVf] = useState<"all" | Verdict>("all");
-  const base = STOCKS.filter((s) => !w.snooze.has(s.id) && !w.never.has(s.id));
-  const items = base
-    .filter(
-      (s) =>
-        (vf === "all" || s.verdict === vf) &&
-        (s.name + s.symbol).toLowerCase().includes(q.toLowerCase()),
-    )
-    .sort((a, b) => ORDER.indexOf(a.verdict) - ORDER.indexOf(b.verdict));
-  const cur = STOCKS.find((s) => s.id === sel) ?? STOCKS[0];
-
-  const choose = (id: string, open = false) => {
-    setSel(id);
-    if (open) setFull(true);
-    const u = new URL(window.location.href);
-    u.searchParams.set("s", id);
-    window.history.replaceState({}, "", u);
-  };
+  const [symbol, setSymbol] = useState(symbolFromUrl);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
-      if (e.key === "Escape") setFull(false);
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-      const i = items.findIndex((x) => x.id === cur?.id);
-      const n =
-        items[Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
-      if (n) {
-        e.preventDefault();
-        choose(n.id);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
-
-  let lastV: Verdict | null = null;
+    const on = () => setSymbol(symbolFromUrl());
+    window.addEventListener("popstate", on);
+    return () => window.removeEventListener("popstate", on);
+  }, []);
   return (
-    <div className="sk-lp" data-full={full ? "pane" : "list"}>
-      <nav className="sk-list" ref={listRef} aria-label={t("stock.list")}>
-        <label className="sk-qf">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path
-              d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 14 15.5l.3.3v.8l5 5 1.5-1.5-5-5Zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Z"
-              fill="currentColor"
-            />
-          </svg>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t("stock.filter")}
-            autoComplete="off"
-          />
-        </label>
-        <div className="k-chips sk-chips">
-          {(["all", ...ORDER] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              className="k-chipbtn"
-              aria-pressed={vf === v}
-              onClick={() => setVf(v)}
-            >
-              {v === "all" ? t("v2.all") : t(`stock.verdict.${v}`)}
-              <span className="num">
-                {v === "all" ? base.length : base.filter((x) => x.verdict === v).length}
-              </span>
-            </button>
-          ))}
-        </div>
-        {items.some((s) => callCard(s).changed && !w.seen.has(s.id)) && (
-          <div className="k-band">
-            <i className="k-dot" />
-            <b>
-              {items.filter((s) => callCard(s).changed && !w.seen.has(s.id)).length}{" "}
-              {t("v3.changedN")}
-            </b>
-            <button
-              type="button"
-              className="k-link"
-              onClick={() => watch.markSeen(items.map((s) => s.id))}
-            >
-              {t("marks.markAll")}
-            </button>
-          </div>
-        )}
-        {items.map((s) => {
-          const head = s.verdict !== lastV;
-          lastV = s.verdict;
-          return (
-            <div key={s.id}>
-              {head && (
-                <div className={`lgh r-${s.verdict}`}>
-                  <b>{t(`stock.group.${s.verdict}`)}</b>
-                  <span className="n num">
-                    {items.filter((x) => x.verdict === s.verdict).length}
-                  </span>
-                </div>
-              )}
-              <StockRow
-                st={s}
-                active={cur?.id === s.id}
-                onClick={() => choose(s.id, true)}
-                mark={!!callCard(s).changed && !w.seen.has(s.id)}
-                star={
-                  <button
-                    type="button"
-                    className="k-star"
-                    aria-pressed={w.star.has(s.id)}
-                    aria-label={t("v2.watchStar")}
-                    onClick={() => watch.toggleStar(s.id, t("v2.added"), t("v2.removed"))}
-                  >
-                    {w.star.has(s.id) ? "★" : "☆"}
-                  </button>
-                }
-              />
-            </div>
-          );
-        })}
-      </nav>
-      <aside className="sk-pane">
-        <button type="button" className="sk-back" onClick={() => setFull(false)}>
-          ← {t("stock.back")}
-        </button>
-        {cur && <Detail st={cur} bars={data.get(cur.id) ?? []} onPick={(id) => choose(id, true)} />}
-        <Toast />
-      </aside>
+    <div className="sk-solo">
+      {symbol ? (
+        <StockDetail key={symbol} symbol={symbol} />
+      ) : (
+        <section className="pane" data-pane="stock">
+          <h2>{t("stock.title")}</h2>
+          <p className="pane-state empty" data-testid="stock-none">
+            {t("stock.d.none")}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { CallHistoryResponse } from "../calls/calls";
 import { IstTime } from "../core/time";
+import { FactsResponse } from "../facts/facts";
 import { WatchlistResponse } from "../lists/lists";
-import { NewsResponse } from "../news/news";
+import { NewsResponse, StockNewsResponse } from "../news/news";
 import { HoldingsResponse } from "../portfolio/portfolio";
-import { StockResponse } from "../stocks/stocks";
+import { ChartResponse, StockResponse } from "../stocks/stocks";
 import { TodayResponse } from "../today/today";
 
 /** One market index (the broad ones Market and news shows at the top). A figure the source did not give is null. */
@@ -27,6 +29,10 @@ export const screenRoutes = {
   holdings: { path: "/api/portfolio/holdings", response: HoldingsResponse },
   watchlist: { path: "/api/watchlist", response: WatchlistResponse },
   stock: { path: "/api/stocks/:symbol", response: StockResponse },
+  stockChart: { path: "/api/stocks/:symbol/chart", response: ChartResponse },
+  stockCalls: { path: "/api/calls/:symbol", response: CallHistoryResponse },
+  stockFacts: { path: "/api/facts/:symbol", response: FactsResponse },
+  stockNews: { path: "/api/news/stock/:symbol", response: StockNewsResponse },
   news: { path: "/api/news", response: NewsResponse },
   indices: { path: "/api/market/indices", response: IndicesResponse },
 } as const;

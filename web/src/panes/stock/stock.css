@@ -578,3 +578,12 @@ svg.sp.dn path.a {
   color: var(--text);
   text-decoration: none;
 }
+
+/* One stock, full width: the sections stack. */
+.sk-solo {
+  max-width: 62rem;
+  margin-inline: auto;
+}
+.sk-solo .pane {
+  margin-block-end: var(--sp-4);
+}

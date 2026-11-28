@@ -214,5 +214,18 @@
   "range80": "Wide range (80%)",
   "watchAdd": "Add to watchlist",
   "avg10": "10-month average",
-  "back": "Back"
+  "back": "Back",
+  "d.noPrice": "No price yet.",
+  "d.noChartP": "It will fill in once the daily prices have loaded.",
+  "d.noCall": "We have no call on this stock yet. It will appear after our next run.",
+  "d.base": "Based on {n} past cases: {p} in 100 beat the Nifty over {d} trading days.",
+  "d.madeOn": "Call made on {day}.",
+  "d.pb": "Price to book",
+  "d.dy": "Dividend yield",
+  "d.cap": "Market value",
+  "d.sales": "Sales growth, year on year",
+  "d.profit": "Profit growth, year on year",
+  "d.roce": "Return on capital employed",
+  "d.mixed": "Mixed",
+  "d.none": "Pick a stock from Today, Holdings or Watchlist, or search for one above."
 }
