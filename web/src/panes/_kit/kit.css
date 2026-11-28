@@ -841,7 +841,7 @@
 }
 .rc-ax {
   fill: var(--text-2);
-  font-size: 9px;
+  font-size: 0.6rem;
 }
 .rc-row {
   grid-template-columns: 10rem minmax(0, 1fr) 4rem;

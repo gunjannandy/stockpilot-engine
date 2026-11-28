@@ -69,7 +69,7 @@ function Card({ n }: { n: NewsItem }) {
       <div
         className="mk-img"
         style={{
-          background: `linear-gradient(135deg, hsl(${hue} 55% 78%), hsl(${(hue + 60) % 360} 50% 66%))`,
+          background: `linear-gradient(135deg, color-mix(in oklab, var(--primary) ${20 + (hue % 40)}%, var(--surface)), color-mix(in oklab, var(--gain) ${15 + (hue % 30)}%, var(--surface)))`,
         }}
         role="img"
         aria-label={t("v3.preview")}
