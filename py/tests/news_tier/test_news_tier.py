@@ -61,16 +61,17 @@ def test_tagging_prompt_has_public_news_only_and_clamps_bad_impact():
     assert "holding" not in src.lower() and "watchlist" not in src.lower()
 
 
-# --- spreading is private ---------------------------------------------------------------------------------
-def test_spread_matches_holdings_watchlist_then_sector_then_other():
+# --- reach is private ------------------------------------------------------------------------------------
+def test_rank_reaches_holdings_watchlist_then_sector_then_other():
     sector_map = {"AAA": "Banks", "BBB": "Banks", "CCC": "IT", "DDD": "Banks"}
-    rows = news_rank.spread([item(1, touches=(("AAA", "self"),)), item(2, touches=(("ZZZ", "self"),), sector="Banks"),
-                             item(3, touches=(("YYY", "self"),), sector="Metals")],
-                            holdings={"AAA"}, watchlist={"CCC"}, sector_map=sector_map)
-    by = {(r["item_id"], r["symbol"]): r["closeness"] for r in rows}
-    assert by[("n1", "AAA")] == "holding"
-    assert by[("n2", "AAA")] == "sector"      # touches no list stock, but a holding shares its sector
-    assert not any(r["item_id"] == "n3" for r in rows)
+    rows = news_rank.rank([item(1, touches=(("AAA", "self"),)), item(2, touches=(("ZZZ", "self"),), sector="Banks"),
+                           item(3, touches=(("YYY", "self"),), sector="Metals")],
+                          {"AAA"}, {"CCC"}, sector_map, NOW)
+    by = {r["item_id"]: r["closeness"] for r in rows}
+    assert by["n1"] == "holding"
+    assert by["n2"] == "sector"      # touches no list stock, but a holding shares its sector
+    assert "n3" not in by
+    assert not hasattr(news_rank, "spread")
 
 
 def test_rank_is_impact_x_closeness_x_freshness_x_sources():

@@ -45,13 +45,15 @@ class Table:
     def delete(self, table: str, rows: list[dict]) -> None: ...
 
 
-# Tables that archive. None yet: a table joins here when it has a `day` and a body to keep (see archive()).
+# Tables that archive without D1 (none). D1 tables register in d1table.from_env, live once its credentials exist.
 TABLES: dict[str, Table] = {}
 
 
 def run(ctx, tables: dict[str, Table] | None = None, out_dir: Path | str = "archive-out") -> str:
     """The runtime handler: archive every registered table; a failure raises and the Job ends failed."""
-    tables = TABLES if tables is None else tables
+    if tables is None:
+        from stockpilot.jobs.archive.d1table import from_env
+        tables = {**TABLES, **from_env()}
     today = ctx.range.end
     moved = touched = 0
     for name, src in tables.items():

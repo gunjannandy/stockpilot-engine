@@ -1,0 +1,120 @@
+import { describe, expect, it } from "vitest";
+import { makeApp } from "../testkit";
+
+const trade = (key: string, side: string, date: string, qty: number, price: number) =>
+  `insert into trades (trade_key,account,source,source_ref,kind,symbol,isin,side,trade_date,quantity,price,currency,status)
+   values ('${key}','main','tradebook','r','stock','AAA','TESTID0001','${side}','${date}',${qty},${price},'INR','confirmed');`;
+
+describe("money tax route", () => {
+  it("books a long-term gain in the year it was sold, with its exempt room", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/tax?fy=2026"); // first request applies the migrations
+    await db.exec(
+      trade("b", "buy", "2024-01-10", 10, 100) + trade("s", "sell", "2025-08-01", 10, 150),
+    );
+    const r = await app.request("/api/money/tax?fy=2025");
+    const j = (await r.json()) as {
+      rows: { gain: number; term: string }[];
+      net: { ltcg_equity: number };
+      ltcg_equity_room_left: number;
+      label: string;
+    };
+    expect(j.label).toBe("2025-26");
+    expect(j.rows.map((x) => [x.gain, x.term])).toEqual([[500, "long"]]);
+    expect(j.net.ltcg_equity).toBe(500);
+    const other = (await (await app.request("/api/money/tax?fy=2026")).json()) as {
+      rows: unknown[];
+    };
+    expect(other.rows).toEqual([]);
+  });
+  it("refuses a nonsense year", async () => {
+    const { app } = await makeApp();
+    expect((await app.request("/api/money/tax?fy=abc")).status).toBe(400);
+  });
+});
+
+describe("money xirr route", () => {
+  it("works out a return from trades and the newest close, null without a price", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/xirr");
+    await db.exec(
+      trade("b", "buy", "2024-01-01", 10, 100) +
+        "insert into stock_history (symbol,exchange,date,close) values ('AAA','NSE','2025-01-01',110);",
+    );
+    const j = (await (await app.request("/api/money/xirr")).json()) as {
+      as_of: string;
+      portfolio: { xirr: number; nifty: null };
+      holdings: { value: number }[];
+    };
+    expect(j.as_of).toBe("2025-01-01");
+    expect(j.holdings[0]?.value).toBe(1100);
+    expect(j.portfolio.xirr).toBeCloseTo(0.1, 1);
+    expect(j.portfolio.nifty).toBeNull();
+  });
+  it("says so when a held stock has no price", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/xirr");
+    await db.exec(trade("b", "buy", "2024-01-01", 10, 100));
+    const j = (await (await app.request("/api/money/xirr")).json()) as {
+      portfolio: { xirr: null };
+      warnings: string[];
+    };
+    expect(j.portfolio.xirr).toBeNull();
+    expect(j.warnings.length).toBe(1);
+  });
+});
+
+describe("money harvest and risk", () => {
+  it("harvests free long-term room and sizes a Nifty fall", async () => {
+    const { app, db } = await makeApp();
+    await app.request("/api/money/risk");
+    await db.exec(
+      trade("b", "buy", "2020-01-01", 10, 100) +
+        "insert into stock_history (symbol,exchange,date,close) values ('AAA','NSE','2025-01-01',150);",
+    );
+    const t = (await (await app.request("/api/money/tax?fy=2025")).json()) as {
+      harvest: { gain_candidates: { symbol: string; gain: number }[] };
+    };
+    expect(t.harvest.gain_candidates).toEqual([
+      expect.objectContaining({ symbol: "AAA", gain: 500 }),
+    ]);
+    const r = (await (await app.request("/api/money/risk")).json()) as {
+      concentration: { total: number };
+      shock: { lossInr: number; assumedBeta: string[] };
+    };
+    expect(r.concentration.total).toBe(1500);
+    expect(r.shock.lossInr).toBeCloseTo(-150);
+    expect(r.shock.assumedBeta).toEqual(["AAA"]);
+  });
+});
+
+describe("money rsu route", () => {
+  it("values a dollar lot at the newest stored close and rate, null without a price", async () => {
+    const { app, db, signed } = await makeApp({ now: () => new Date("2026-06-01T00:00:00Z") });
+    await app.request("/api/money/rsu");
+    await db.exec(
+      `insert into trades (trade_key,account,source,source_ref,kind,symbol,isin,side,trade_date,quantity,price,currency,status)
+       values ('u','main','tradebook','r','stock','USX','US0000000001','buy','2025-01-01',10,50,'USD','confirmed');
+       insert into fx_rates (day, usd_inr) values ('2025-01-01', 80), ('2026-05-29', 90);`,
+    );
+    const none = (await (await app.request("/api/money/rsu")).json()) as {
+      symbols: { view: unknown }[];
+      warnings: string[];
+    };
+    expect(none.symbols[0]?.view).toBeNull();
+    expect(none.warnings).toContain("No price for USX.");
+    const post = await signed("POST", "/api/money/us-prices", {
+      symbol: "usx",
+      rows: [{ date: "2026-05-29", close: 100 }],
+    });
+    expect(((await post.json()) as { stored: number }).stored).toBe(1);
+    const j = (await (await app.request("/api/money/rsu")).json()) as {
+      usdInr: number;
+      symbols: { view: { shares: number; valueInr: number; gainInr: number } }[];
+    };
+    expect(j.usdInr).toBe(90);
+    expect(j.symbols[0]?.view.shares).toBe(10);
+    expect(j.symbols[0]?.view.valueInr).toBe(90000);
+    expect(j.symbols[0]?.view.gainInr).toBe(90000 - 10 * 50 * 80);
+  });
+});

@@ -6,6 +6,8 @@ import { githubFromEnv } from "../../../adapters/src/github";
 import { istText } from "../app";
 import { feedbackDuty } from "../feedback/duty";
 import type { Core } from "../jobs/runtime";
+import { newsDuty } from "../news/duty";
+import { quotesDuty } from "../quotes/duty";
 import { runSecretsDuty } from "../secrets/duty";
 import { watcherDuty } from "../watcher/duties";
 import { tick } from "./tick";
@@ -34,18 +36,17 @@ export const DUTIES: Duty[] = [
       return `dispatched ${r.dispatched.length}, again ${r.redispatched.length}, retried ${r.retried.length}, refused ${r.failed.length}`;
     },
   },
-  { id: "quotes", everyMinutes: 5, run: notYet("the quotes duty") },
+  quotesDuty,
+  newsDuty,
   watcherDuty,
   {
     id: "secrets",
     everyMinutes: 60,
-    // The hourly slot also lets Feedback follow its tickets; the duty set is fixed by C-116-3, so it rides here.
     async run(core) {
-      const secrets = await runSecretsDuty(core);
-      const feedback = await feedbackDuty.run(core).catch(() => "feedback pass failed");
-      return `${secrets}; feedback: ${feedback}`;
+      return runSecretsDuty(core);
     },
   },
+  feedbackDuty,
   { id: "digest", everyMinutes: 60, run: notYet("the digest") },
 ];
 
