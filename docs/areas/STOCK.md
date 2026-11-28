@@ -14,7 +14,7 @@ Status: building
 ## Next
 - [x] Check C-047-1 (`checks/C-047-1.py`): universe keeps delisted and renamed stocks (old name kept as alias).
 - [x] Check C-040-4 (`checks/C-040-4.py`): `backfill_all` in the history Job (subject `backfill`), unexplained jumps held back, 2% threshold.
-- [ ] Chart files and search index output in the universe/history Jobs.
+- [x] Chart file: `GET /api/stocks/:symbol/chart` (`api/src/stocks/chart.ts`, shape `ChartResponse`): split-adjusted prices, 2- and 10-month averages. Search index is the universe dataset behind `/api/stocks/search`.
 - [x] Facts Job and checks C-048-1, C-171-2.
 - [ ] Facts: feed `price_sentences` (biggest fall, swings, trading) from history rows in the Job (written and tested, not yet fed); similar companies list.
 - [ ] Production check C-040-3 (last close vs bhavcopy for 5 samples) once data runs.
@@ -26,6 +26,8 @@ Status: building
 
 - Facts rows use flat columns plus JSON text for sentences and figures (a row's fields are table columns), like funds; no drizzle file needed (dataset_rows holds the rows).
 - Added `facts.yml` to the allowed list in `checks/MOVE-2.py` and `facts` to the job kinds in `contract/src/core/jobs.ts` (shared files, one line each).
+
+- Chart files are built by the Worker from stored days on request, not as static files, so they need no extra Job output or release.
 
 ## Blocked
 - none

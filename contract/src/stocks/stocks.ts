@@ -115,6 +115,22 @@ export const StockResponse = z.object({
 export type StockResponse = z.infer<typeof StockResponse>;
 export const HistoryResponse = z.object({ symbol: z.string(), rows: z.array(CloseRow) });
 
+/** The chart file of one stock: split- and bonus-adjusted prices (no cliff on the ex-date; the latest candle is the real
+ * price), volume as traded, and the 2- and 10-month averages of the adjusted close. Columns, oldest first, one row a day. */
+export const CHART_MA_DAYS = { ma2: 42, ma10: 210 } as const;
+export const ChartResponse = z.object({
+  symbol: z.string(),
+  d: z.array(IsoDate),
+  o: z.array(z.number().nullable()),
+  h: z.array(z.number().nullable()),
+  l: z.array(z.number().nullable()),
+  c: z.array(z.number()),
+  v: z.array(z.number().nullable()),
+  ma2: z.array(z.number().nullable()),
+  ma10: z.array(z.number().nullable()),
+});
+export type ChartResponse = z.infer<typeof ChartResponse>;
+
 /** The stock routes. The web client and the Python Jobs read this table. */
 export const stockRoutes = {
   stock_search: {
@@ -134,6 +150,12 @@ export const stockRoutes = {
     path: "/api/stocks/:symbol/history?from=",
     auth: "person",
     response: HistoryResponse,
+  },
+  stock_chart: {
+    method: "GET",
+    path: "/api/stocks/:symbol/chart",
+    auth: "person",
+    response: ChartResponse,
   },
   stock_load: {
     method: "POST",

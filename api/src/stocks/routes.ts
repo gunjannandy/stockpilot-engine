@@ -1,4 +1,5 @@
 // Stock routes: search, one stock, its history, and load-on-demand for a symbol we hold nothing for.
+
 import { HistoryPost, type LoadJob, QUOTE_MAX_AGE_SECONDS } from "@stockpilot/contract";
 import { Hono } from "hono";
 import { type GithubBot, githubFromEnv } from "../../../adapters/src/github";
@@ -6,6 +7,7 @@ import { type Ctx, istDay, istText, rawBody } from "../app";
 import { getJob, isPaused, jobKey } from "../jobs/runtime";
 import { readQuote, watch } from "../quotes/quotes";
 import { dispatchJob, queueJob } from "../schedule/tick";
+import { buildChart } from "./chart";
 import { findStock, loadUniverse, readHistory, searchUniverse, storeHistory } from "./stocks";
 
 const SYMBOL = /^[A-Z0-9][A-Z0-9&-]{0,19}$/;
@@ -94,6 +96,13 @@ export function stocksRoutes(ctx: Ctx, opts: { github?: GithubBot } = {}) {
       symbol,
       rows: await readHistory(ctx.d1, symbol, entry?.exchange ?? "NSE", from),
     });
+  });
+
+  // The chart file: all-time adjusted prices and the 2- and 10-month averages, built from the stored days.
+  app.get("/api/stocks/:symbol/chart", ctx.guard.person, async (c) => {
+    const symbol = c.req.param("symbol").toUpperCase();
+    const entry = await findStock(ctx.d1, symbol);
+    return c.json(buildChart(symbol, await readHistory(ctx.d1, symbol, entry?.exchange ?? "NSE")));
   });
 
   // An unknown (or empty) symbol starts one load Job. Pressing again while it runs shows the same Job.
