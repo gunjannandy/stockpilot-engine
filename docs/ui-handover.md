@@ -78,7 +78,12 @@ Owner's intent (paraphrased):
 - No summary block at the top of the stock pane: prediction first, summary lower down.
 - Worth following: top 10 in two groups (closest to a buy, worth watching), funnel line on top, no chips, table or screener.
 - Grilling is done in written rounds in chat, not pop-up questions.
-Next: owner answers grilling round 1 (forecast strip, reasons as signed moves, Today top line, row numbers, change mark, verdict word, news as numbers, Watchlist, chart, Portfolio, Record, Admin). Then build.
+Owner's scope after round 1 (round 1 questions withdrawn):
+- Tier 1, keep as is: Today, Watchlist, Worth following (only add things that make life easier).
+- Tier 2, brush layout: Market and news, Portfolio, Funds.
+- Tier 3, complete overhaul as working screens, not charts: Feedback, Admin, Settings, Record. Most of the running of the app (asks, jobs) is done from here.
+Backend these screens can drive (already exists): GET /api/admin (needs, freshness, runs, problems, usage), POST /api/admin/retry, GET /api/admin/state + PUT release-pause, job-pause, flags, layout, POST /api/admin/recompute, POST /api/job/press (kind, subject, range, rerun), GET /api/job/run, GET /api/publish/runs and /api/publish/held/:dataset (rows held back with reasons), GET /api/secrets, GET /api/monitor (usage today), GET /api/model/status, GET/POST /api/feedback + POST /api/feedback/:id/review (owner only), GET /api/sync + POST /api/refresh (Kite), GET /api/itr/pack, GET /api/me (owner or father), GET /api/calendar/status.
+Next: grilling round 2 (tier 3 layouts), then build.
 
 ## Brief for the next (Opus) session
 Read all of `web/src`, `DESIGN.md`, `docs/prototypes/v2` and `docs/prototypes/ui/r10`, `legacy/web/public` and this file first. Then grill the owner about what each screen is for BEFORE designing. It may change, merge or drop anything, including layouts, keeping the existing theme (tokens, type, azure primary, graphite surfaces) and the DESIGN.md rules. Owner's direction: Portfolio, Admin and Record should be very simple. The design has hit a roadblock: aim for screens whose purpose is clear at a glance, dense and calm, cards that separate meanings, no hero blocks, one search (the top bar). Decide per screen only after reading the code and understanding the intent.
