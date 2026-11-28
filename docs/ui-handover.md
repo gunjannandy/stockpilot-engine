@@ -68,5 +68,17 @@ Older lane branches compared with preview/V3: MARKS identical; STOCK, FUNDS, ADM
 - Logo: yellow rounded square with a trend arrow (`web/public/logo.svg`), used in the rail, the tab icon, the app icons and the theme colour.
 - Rail order: Today, Watchlist, Market and news, Worth following, Portfolio, Funds; then Record, Feedback, Admin, Settings.
 
+## Round 4 (Opus session): intent, grilling in progress
+Read: this file, DESIGN.md, v2 shots, r10, legacy headers, all of `web/src` TS; current build shot at 1440 for every screen.
+Owner's intent (paraphrased):
+- The app is a custom market and news screener with model-made forecasts. Forecast and prediction are the most important part; Today, Watchlist and Worth following carry it.
+- The current list-and-pane look is fine. The aim is to say less and show more.
+- Model output (small, fast models) should be short points that move a number, a percentage or the chart, never essays.
+- It must never look like an "AI dashboard"; it is an app driven by AI.
+- No summary block at the top of the stock pane: prediction first, summary lower down.
+- Worth following: top 10 in two groups (closest to a buy, worth watching), funnel line on top, no chips, table or screener.
+- Grilling is done in written rounds in chat, not pop-up questions.
+Next: owner answers grilling round 1 (forecast strip, reasons as signed moves, Today top line, row numbers, change mark, verdict word, news as numbers, Watchlist, chart, Portfolio, Record, Admin). Then build.
+
 ## Brief for the next (Opus) session
 Read all of `web/src`, `DESIGN.md`, `docs/prototypes/v2` and `docs/prototypes/ui/r10`, `legacy/web/public` and this file first. Then grill the owner about what each screen is for BEFORE designing. It may change, merge or drop anything, including layouts, keeping the existing theme (tokens, type, azure primary, graphite surfaces) and the DESIGN.md rules. Owner's direction: Portfolio, Admin and Record should be very simple. The design has hit a roadblock: aim for screens whose purpose is clear at a glance, dense and calm, cards that separate meanings, no hero blocks, one search (the top bar). Decide per screen only after reading the code and understanding the intent.
