@@ -1,0 +1,1724 @@
+[
+ {
+  "id": "case-00",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC00",
+   "name": "Bench Company 00",
+   "sector": "Metals",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 70
+   },
+   "facts": {
+    "pe": 21.5,
+    "pe_sector": 20.0,
+    "pb": 3.0,
+    "market_cap_cr": 9769,
+    "profit_growth_yoy_pct": 16.5,
+    "roe_pct": 15.5,
+    "debt_to_equity": 0.27,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 911.64,
+    "ret_3m_pct": 17.4,
+    "high_52w": 911.64,
+    "low_52w": 776.79
+   },
+   "news": [
+    {
+     "id": "news:b0",
+     "title": "Order win",
+     "direction": "good",
+     "size": "large",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b0"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 1.8
+  }
+ },
+ {
+  "id": "case-01",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC01",
+   "name": "Bench Company 01",
+   "sector": "Banks",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 70
+   },
+   "facts": {
+    "pe": 16.2,
+    "pe_sector": 18.6,
+    "pb": 2.4,
+    "market_cap_cr": 13559,
+    "profit_growth_yoy_pct": 29.2,
+    "roe_pct": 22.3,
+    "debt_to_equity": 0.41,
+    "pledge_pct": 8
+   },
+   "price": {
+    "close": 720.66,
+    "ret_3m_pct": 6.2,
+    "high_52w": 720.66,
+    "low_52w": 678.81
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -4.2
+  }
+ },
+ {
+  "id": "case-02",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC02",
+   "name": "Bench Company 02",
+   "sector": "Software",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 25.2,
+    "pe_sector": 22.3,
+    "pb": 2.1,
+    "market_cap_cr": 62133,
+    "profit_growth_yoy_pct": -5.8,
+    "roe_pct": 20.5,
+    "debt_to_equity": 0.84,
+    "pledge_pct": 8
+   },
+   "price": {
+    "close": 191.64,
+    "ret_3m_pct": 22.3,
+    "high_52w": 191.64,
+    "low_52w": 156.67
+   },
+   "news": [
+    {
+     "id": "news:b2",
+     "title": "Order win",
+     "direction": "good",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b2"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -10.5
+  }
+ },
+ {
+  "id": "case-03",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC03",
+   "name": "Bench Company 03",
+   "sector": "Autos",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 25.0,
+    "pe_sector": 24.3,
+    "pb": 4.6,
+    "market_cap_cr": 13245,
+    "profit_growth_yoy_pct": -7.8,
+    "roe_pct": 5.7,
+    "debt_to_equity": 0.6,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 216.52,
+    "ret_3m_pct": 8.3,
+    "high_52w": 216.52,
+    "low_52w": 199.98
+   },
+   "news": [
+    {
+     "id": "news:b3",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "large",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b3"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -17.3
+  }
+ },
+ {
+  "id": "case-04",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC04",
+   "name": "Bench Company 04",
+   "sector": "Pharma",
+   "horizon_days": 91,
+   "code": {
+    "call": "avoid",
+    "chance_pct": 40
+   },
+   "facts": {
+    "pe": 25.2,
+    "pe_sector": 15.3,
+    "pb": 1.6,
+    "market_cap_cr": 28330,
+    "profit_growth_yoy_pct": -1.3,
+    "roe_pct": 14.5,
+    "debt_to_equity": 0.54,
+    "pledge_pct": 8
+   },
+   "price": {
+    "close": 85.21,
+    "ret_3m_pct": -3.1,
+    "high_52w": 87.91,
+    "low_52w": 85.21
+   },
+   "news": [
+    {
+     "id": "news:b4",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b4"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -15.8
+  }
+ },
+ {
+  "id": "case-05",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC05",
+   "name": "Bench Company 05",
+   "sector": "Power",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 25.2,
+    "pe_sector": 15.5,
+    "pb": 1.4,
+    "market_cap_cr": 81637,
+    "profit_growth_yoy_pct": -7.7,
+    "roe_pct": 10.1,
+    "debt_to_equity": 0.66,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 224.26,
+    "ret_3m_pct": 22.8,
+    "high_52w": 224.26,
+    "low_52w": 182.64
+   },
+   "news": [
+    {
+     "id": "news:b5",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b5"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 16.0
+  }
+ },
+ {
+  "id": "case-06",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC06",
+   "name": "Bench Company 06",
+   "sector": "Metals",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 7.5,
+    "pe_sector": 12.6,
+    "pb": 3.0,
+    "market_cap_cr": 49413,
+    "profit_growth_yoy_pct": 19.4,
+    "roe_pct": 8.9,
+    "debt_to_equity": 1.56,
+    "pledge_pct": 8
+   },
+   "price": {
+    "close": 830.09,
+    "ret_3m_pct": -7.2,
+    "high_52w": 894.02,
+    "low_52w": 830.09
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -5.4
+  }
+ },
+ {
+  "id": "case-07",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC07",
+   "name": "Bench Company 07",
+   "sector": "Banks",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 26.8,
+    "pe_sector": 20.4,
+    "pb": 1.7,
+    "market_cap_cr": 33013,
+    "profit_growth_yoy_pct": -0.3,
+    "roe_pct": 7.2,
+    "debt_to_equity": 0.97,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 152.84,
+    "ret_3m_pct": 9.7,
+    "high_52w": 152.84,
+    "low_52w": 139.29
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -3.0
+  }
+ },
+ {
+  "id": "case-08",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC08",
+   "name": "Bench Company 08",
+   "sector": "Software",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 70
+   },
+   "facts": {
+    "pe": 10.2,
+    "pe_sector": 15.3,
+    "pb": 4.3,
+    "market_cap_cr": 11199,
+    "profit_growth_yoy_pct": 18.2,
+    "roe_pct": 27.6,
+    "debt_to_equity": 0.45,
+    "pledge_pct": 8
+   },
+   "price": {
+    "close": 441.47,
+    "ret_3m_pct": 3.8,
+    "high_52w": 441.47,
+    "low_52w": 425.11
+   },
+   "news": [
+    {
+     "id": "news:b8",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b8"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 14.5
+  }
+ },
+ {
+  "id": "case-09",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC09",
+   "name": "Bench Company 09",
+   "sector": "Autos",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 70
+   },
+   "facts": {
+    "pe": 11.3,
+    "pe_sector": 13.0,
+    "pb": 5.5,
+    "market_cap_cr": 83692,
+    "profit_growth_yoy_pct": 14.8,
+    "roe_pct": 22.8,
+    "debt_to_equity": 0.18,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 939.92,
+    "ret_3m_pct": 16.8,
+    "high_52w": 939.92,
+    "low_52w": 804.98
+   },
+   "news": [
+    {
+     "id": "news:b9",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b9"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 3.3
+  }
+ },
+ {
+  "id": "case-10",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC10",
+   "name": "Bench Company 10",
+   "sector": "Pharma",
+   "horizon_days": 91,
+   "code": {
+    "call": "avoid",
+    "chance_pct": 40
+   },
+   "facts": {
+    "pe": 28.1,
+    "pe_sector": 23.9,
+    "pb": 0.7,
+    "market_cap_cr": 62405,
+    "profit_growth_yoy_pct": -3.2,
+    "roe_pct": 13.1,
+    "debt_to_equity": 1.28,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 233.98,
+    "ret_3m_pct": -18.1,
+    "high_52w": 285.59,
+    "low_52w": 233.98
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 3.6
+  }
+ },
+ {
+  "id": "case-11",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC11",
+   "name": "Bench Company 11",
+   "sector": "Power",
+   "horizon_days": 91,
+   "code": {
+    "call": "avoid",
+    "chance_pct": 35
+   },
+   "facts": {
+    "pe": 46.3,
+    "pe_sector": 28.0,
+    "pb": 1.0,
+    "market_cap_cr": 58555,
+    "profit_growth_yoy_pct": 15.1,
+    "roe_pct": 7.4,
+    "debt_to_equity": 2.22,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 368.75,
+    "ret_3m_pct": -19.2,
+    "high_52w": 456.21,
+    "low_52w": 368.75
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -2.8
+  }
+ },
+ {
+  "id": "case-12",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC12",
+   "name": "Bench Company 12",
+   "sector": "Metals",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 22.5,
+    "pe_sector": 12.4,
+    "pb": 5.5,
+    "market_cap_cr": 22985,
+    "profit_growth_yoy_pct": 2.1,
+    "roe_pct": 10.3,
+    "debt_to_equity": 0.13,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 534.41,
+    "ret_3m_pct": -13.2,
+    "high_52w": 615.76,
+    "low_52w": 534.41
+   },
+   "news": [
+    {
+     "id": "news:b12",
+     "title": "Order win",
+     "direction": "good",
+     "size": "large",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b12"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -4.4
+  }
+ },
+ {
+  "id": "case-13",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC13",
+   "name": "Bench Company 13",
+   "sector": "Banks",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 31.4,
+    "pe_sector": 22.7,
+    "pb": 0.8,
+    "market_cap_cr": 56936,
+    "profit_growth_yoy_pct": 33.0,
+    "roe_pct": 6.5,
+    "debt_to_equity": 0.59,
+    "pledge_pct": 30
+   },
+   "price": {
+    "close": 565.09,
+    "ret_3m_pct": -4.0,
+    "high_52w": 588.33,
+    "low_52w": 565.09
+   },
+   "news": [
+    {
+     "id": "news:b13",
+     "title": "Order win",
+     "direction": "good",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b13"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 17.2
+  }
+ },
+ {
+  "id": "case-14",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC14",
+   "name": "Bench Company 14",
+   "sector": "Software",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 45
+   },
+   "facts": {
+    "pe": 18.1,
+    "pe_sector": 10.8,
+    "pb": 3.2,
+    "market_cap_cr": 68739,
+    "profit_growth_yoy_pct": -18.1,
+    "roe_pct": 26.6,
+    "debt_to_equity": 1.64,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 751.95,
+    "ret_3m_pct": 8.9,
+    "high_52w": 751.95,
+    "low_52w": 690.3
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 2.1
+  }
+ },
+ {
+  "id": "case-15",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC15",
+   "name": "Bench Company 15",
+   "sector": "Autos",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 42.1,
+    "pe_sector": 29.7,
+    "pb": 2.7,
+    "market_cap_cr": 43559,
+    "profit_growth_yoy_pct": 34.4,
+    "roe_pct": 26.1,
+    "debt_to_equity": 1.83,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 170.81,
+    "ret_3m_pct": 1.5,
+    "high_52w": 170.81,
+    "low_52w": 168.26
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 7.1
+  }
+ },
+ {
+  "id": "case-16",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC16",
+   "name": "Bench Company 16",
+   "sector": "Pharma",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 65
+   },
+   "facts": {
+    "pe": 6.9,
+    "pe_sector": 12.2,
+    "pb": 3.9,
+    "market_cap_cr": 15461,
+    "profit_growth_yoy_pct": -1.4,
+    "roe_pct": 27.2,
+    "debt_to_equity": 0.34,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 364.24,
+    "ret_3m_pct": 24.9,
+    "high_52w": 364.24,
+    "low_52w": 291.72
+   },
+   "news": [
+    {
+     "id": "news:b16",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b16"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 3.0
+  }
+ },
+ {
+  "id": "case-17",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC17",
+   "name": "Bench Company 17",
+   "sector": "Power",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 60
+   },
+   "facts": {
+    "pe": 27.6,
+    "pe_sector": 22.1,
+    "pb": 2.8,
+    "market_cap_cr": 16539,
+    "profit_growth_yoy_pct": 27.0,
+    "roe_pct": 24.5,
+    "debt_to_equity": 2.21,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 361.48,
+    "ret_3m_pct": 13.1,
+    "high_52w": 361.48,
+    "low_52w": 319.75
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 10.9
+  }
+ },
+ {
+  "id": "case-18",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC18",
+   "name": "Bench Company 18",
+   "sector": "Metals",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 13.6,
+    "pe_sector": 18.2,
+    "pb": 1.3,
+    "market_cap_cr": 81127,
+    "profit_growth_yoy_pct": 9.8,
+    "roe_pct": 9.3,
+    "debt_to_equity": 0.28,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 81.69,
+    "ret_3m_pct": -15.6,
+    "high_52w": 96.83,
+    "low_52w": 81.69
+   },
+   "news": [
+    {
+     "id": "news:b18",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "large",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b18"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -2.5
+  }
+ },
+ {
+  "id": "case-19",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC19",
+   "name": "Bench Company 19",
+   "sector": "Banks",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 70
+   },
+   "facts": {
+    "pe": 15.7,
+    "pe_sector": 11.7,
+    "pb": 1.6,
+    "market_cap_cr": 58883,
+    "profit_growth_yoy_pct": 39.4,
+    "roe_pct": 25.7,
+    "debt_to_equity": 0.14,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 228.88,
+    "ret_3m_pct": 18.8,
+    "high_52w": 228.88,
+    "low_52w": 192.7
+   },
+   "news": [
+    {
+     "id": "news:b19",
+     "title": "Order win",
+     "direction": "good",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b19"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 2.7
+  }
+ },
+ {
+  "id": "case-20",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC20",
+   "name": "Bench Company 20",
+   "sector": "Software",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 60
+   },
+   "facts": {
+    "pe": 13.4,
+    "pe_sector": 17.0,
+    "pb": 2.5,
+    "market_cap_cr": 61177,
+    "profit_growth_yoy_pct": -18.0,
+    "roe_pct": 15.5,
+    "debt_to_equity": 0.98,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 735.06,
+    "ret_3m_pct": 6.6,
+    "high_52w": 735.06,
+    "low_52w": 689.51
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 8.2
+  }
+ },
+ {
+  "id": "case-21",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC21",
+   "name": "Bench Company 21",
+   "sector": "Autos",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 45.3,
+    "pe_sector": 25.4,
+    "pb": 1.4,
+    "market_cap_cr": 64280,
+    "profit_growth_yoy_pct": 30.4,
+    "roe_pct": 14.2,
+    "debt_to_equity": 0.85,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 510.94,
+    "ret_3m_pct": 14.7,
+    "high_52w": 510.94,
+    "low_52w": 445.27
+   },
+   "news": [
+    {
+     "id": "news:b21",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b21"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -13.4
+  }
+ },
+ {
+  "id": "case-22",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC22",
+   "name": "Bench Company 22",
+   "sector": "Pharma",
+   "horizon_days": 91,
+   "code": {
+    "call": "avoid",
+    "chance_pct": 30
+   },
+   "facts": {
+    "pe": 32.3,
+    "pe_sector": 26.2,
+    "pb": 2.5,
+    "market_cap_cr": 3960,
+    "profit_growth_yoy_pct": 6.5,
+    "roe_pct": 5.4,
+    "debt_to_equity": 1.65,
+    "pledge_pct": 30
+   },
+   "price": {
+    "close": 468.86,
+    "ret_3m_pct": -15.6,
+    "high_52w": 555.77,
+    "low_52w": 468.86
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -4.0
+  }
+ },
+ {
+  "id": "case-23",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC23",
+   "name": "Bench Company 23",
+   "sector": "Power",
+   "horizon_days": 91,
+   "code": {
+    "call": "avoid",
+    "chance_pct": 35
+   },
+   "facts": {
+    "pe": 48.3,
+    "pe_sector": 28.5,
+    "pb": 1.5,
+    "market_cap_cr": 11383,
+    "profit_growth_yoy_pct": -19.3,
+    "roe_pct": 22.4,
+    "debt_to_equity": 1.57,
+    "pledge_pct": 30
+   },
+   "price": {
+    "close": 169.38,
+    "ret_3m_pct": 0.3,
+    "high_52w": 169.38,
+    "low_52w": 168.9
+   },
+   "news": [
+    {
+     "id": "news:b23",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b23"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -15.3
+  }
+ },
+ {
+  "id": "case-24",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC24",
+   "name": "Bench Company 24",
+   "sector": "Metals",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 50
+   },
+   "facts": {
+    "pe": 45.2,
+    "pe_sector": 28.8,
+    "pb": 1.6,
+    "market_cap_cr": 29993,
+    "profit_growth_yoy_pct": 35.8,
+    "roe_pct": 19.7,
+    "debt_to_equity": 2.19,
+    "pledge_pct": 30
+   },
+   "price": {
+    "close": 128.22,
+    "ret_3m_pct": 24.1,
+    "high_52w": 128.22,
+    "low_52w": 103.31
+   },
+   "news": [
+    {
+     "id": "news:b24",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b24"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 15.0
+  }
+ },
+ {
+  "id": "case-25",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC25",
+   "name": "Bench Company 25",
+   "sector": "Banks",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 50
+   },
+   "facts": {
+    "pe": 19.0,
+    "pe_sector": 12.3,
+    "pb": 2.5,
+    "market_cap_cr": 66947,
+    "profit_growth_yoy_pct": -19.5,
+    "roe_pct": 16.9,
+    "debt_to_equity": 1.04,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 754.92,
+    "ret_3m_pct": 20.7,
+    "high_52w": 754.92,
+    "low_52w": 625.28
+   },
+   "news": [
+    {
+     "id": "news:b25",
+     "title": "Order win",
+     "direction": "good",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b25"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 14.8
+  }
+ },
+ {
+  "id": "case-26",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC26",
+   "name": "Bench Company 26",
+   "sector": "Software",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 8.0,
+    "pe_sector": 12.8,
+    "pb": 4.7,
+    "market_cap_cr": 62105,
+    "profit_growth_yoy_pct": -7.7,
+    "roe_pct": 23.4,
+    "debt_to_equity": 0.35,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 86.44,
+    "ret_3m_pct": -15.7,
+    "high_52w": 102.55,
+    "low_52w": 86.44
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -8.7
+  }
+ },
+ {
+  "id": "case-27",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC27",
+   "name": "Bench Company 27",
+   "sector": "Autos",
+   "horizon_days": 91,
+   "code": {
+    "call": "buy",
+    "chance_pct": 65
+   },
+   "facts": {
+    "pe": 12.4,
+    "pe_sector": 16.3,
+    "pb": 5.1,
+    "market_cap_cr": 62025,
+    "profit_growth_yoy_pct": 18.7,
+    "roe_pct": 23.1,
+    "debt_to_equity": 1.65,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 564.24,
+    "ret_3m_pct": 20.9,
+    "high_52w": 564.24,
+    "low_52w": 466.7
+   },
+   "news": [
+    {
+     "id": "news:b27",
+     "title": "Order win",
+     "direction": "good",
+     "size": "small",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b27"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -7.3
+  }
+ },
+ {
+  "id": "case-28",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC28",
+   "name": "Bench Company 28",
+   "sector": "Pharma",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 55
+   },
+   "facts": {
+    "pe": 25.2,
+    "pe_sector": 18.8,
+    "pb": 5.8,
+    "market_cap_cr": 18602,
+    "profit_growth_yoy_pct": 19.8,
+    "roe_pct": 10.0,
+    "debt_to_equity": 1.55,
+    "pledge_pct": 0
+   },
+   "price": {
+    "close": 322.16,
+    "ret_3m_pct": 20.8,
+    "high_52w": 322.16,
+    "low_52w": 266.64
+   },
+   "news": [],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": true,
+   "excess_pct": 10.5
+  }
+ },
+ {
+  "id": "case-29",
+  "brief": {
+   "as_of": "2026-02-27",
+   "symbol": "BNC29",
+   "name": "Bench Company 29",
+   "sector": "Power",
+   "horizon_days": 91,
+   "code": {
+    "call": "watch",
+    "chance_pct": 50
+   },
+   "facts": {
+    "pe": 37.1,
+    "pe_sector": 26.7,
+    "pb": 1.8,
+    "market_cap_cr": 49470,
+    "profit_growth_yoy_pct": 8.5,
+    "roe_pct": 24.8,
+    "debt_to_equity": 0.6,
+    "pledge_pct": 30
+   },
+   "price": {
+    "close": 230.33,
+    "ret_3m_pct": -3.4,
+    "high_52w": 238.39,
+    "low_52w": 230.33
+   },
+   "news": [
+    {
+     "id": "news:b29",
+     "title": "Probe opened",
+     "direction": "bad",
+     "size": "medium",
+     "why": "Moves the next two quarters"
+    }
+   ],
+   "evidence": [
+    "fact:pe",
+    "fact:pe_sector",
+    "fact:pb",
+    "fact:market_cap_cr",
+    "fact:profit_growth_yoy_pct",
+    "fact:roe_pct",
+    "fact:debt_to_equity",
+    "fact:pledge_pct",
+    "price",
+    "news:b29"
+   ],
+   "gaps": [
+    "dividend_yield_pct",
+    "sales_growth_yoy_pct",
+    "roce_pct",
+    "promoter_pct"
+   ]
+  },
+  "outcome": {
+   "beat": false,
+   "excess_pct": -11.2
+  }
+ }
+]

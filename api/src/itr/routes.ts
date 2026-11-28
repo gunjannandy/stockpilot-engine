@@ -48,9 +48,26 @@ export function itrRoutes(ctx: Ctx) {
       price_per_unit: s.pricePerUnit,
       currency: s.currency,
     }));
+    // Schedule FA's peak and closing values need the dollar closes of calendar year `fy` (stored by the usprices Job).
+    const closes: Record<string, Record<string, number>> = {};
+    for (const sym of new Set(
+      lots.filter((l) => l.currency && l.currency !== "INR").map((l) => l.symbol),
+    )) {
+      const rows =
+        (
+          (await ctx.d1
+            .prepare(
+              "select date, close from us_prices where symbol = ? and date >= ? and date <= ? order by date",
+            )
+            .bind(sym, `${fy}-01-01`, `${fy}-12-31`)
+            .all()
+            .catch(() => ({ results: [] }))) as { results?: { date: string; close: number }[] }
+        ).results ?? [];
+      if (rows.length) closes[sym] = Object.fromEntries(rows.map((r) => [r.date, r.close]));
+    }
     let bytes: Uint8Array;
     try {
-      const pack = buildPack({ lots, sales, fy, rateOn: await loadRateOn(ctx.d1), closes: {} });
+      const pack = buildPack({ lots, sales, fy, rateOn: await loadRateOn(ctx.d1), closes });
       bytes = packZip(pack.files);
     } catch (e) {
       if (e instanceof MissingRate)

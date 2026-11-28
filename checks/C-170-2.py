@@ -1,36 +1,49 @@
-"""C-170-1 (screen half): the screen is deterministic, and the run's counts are the real analysed and passed."""
-import random
+"""C-170-2: an answer citing a number not in the brief, or moving a call without evidence, is rejected and the code-only call stands."""
+import json
+import sys
+from pathlib import Path
 
-from stockpilot.jobs.screen import build_file, rank, summary
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "py/tests/analyse"))
+from analyse_support import AnalyseWorker, DAY, door, good_answer, made_up_inputs  # noqa: E402
 
+from stockpilot.jobs.analyse import run  # noqa: E402
+from stockpilot.jobs.analyse.answer import code_only, verify  # noqa: E402
+from stockpilot.jobs.analyse.brief import build  # noqa: E402
+from stockpilot.runtime import run_job  # noqa: E402
 
-def stocks():
-    rng = random.Random(7)
-    out = []
-    for i in range(40):
-        out.append({"symbol": f"S{i:02d}", "exchange": "NSE", "industry": "A" if i % 2 else "B",
-                    **{f: rng.random() for f in ("quality", "value", "momentum", "risk")}})
-    out.append({"symbol": "LONE", "exchange": "NSE", "industry": "C", "quality": 0.5, "value": 0.5, "momentum": 0.5, "risk": 0.5})
-    out.append({"symbol": "THIN", "exchange": "NSE", "industry": "A", "quality": 0.5, "value": None, "momentum": None, "risk": None})
-    return out
-
-
-def test_same_rows_in_any_order_give_the_same_file_byte_for_byte():
-    a = build_file(rank(stocks()), "2026-11-28")
-    shuffled = stocks()
-    random.Random(1).shuffle(shuffled)
-    assert build_file(rank(shuffled), "2026-11-28") == a
+D = made_up_inputs()
+BRIEF = build("ABC", DAY, facts=D["facts"], history=D["history"], news=D["news"])
+CODE = BRIEF["code"]["call"]
 
 
-def test_ranks_are_percentiles_in_industry_and_exclusions_say_why():
-    rows = {r["symbol"]: r for r in rank(stocks())}
-    assert rows["LONE"]["excluded"] == "too few peers in its industry" and rows["LONE"]["rank"] is None
-    assert rows["THIN"]["excluded"] == "too few figures"
-    ranks = sorted(r["rank"] for r in rows.values() if r["rank"])
-    assert ranks == list(range(1, len(ranks) + 1))
-    assert all(0 <= r["quality"] <= 1 for r in rows.values() if r["quality"] is not None)
+def stand(monkeypatch, answer):
+    w = AnalyseWorker()
+    monkeypatch.setattr("stockpilot.model.client.run_claude", lambda prompt, model, **kw: json.dumps(answer))
+    run_job("analyse", lambda ctx: run(ctx), door=door(w), subject="ABC", day=DAY, out=open("/dev/null", "w"))
+    assert not w.cache, "a rejected answer must not be stored"
+    return w.calls_stored[0]
 
 
-def test_summary_counts_analysed_and_passed():
-    s = summary(rank(stocks()))
-    assert s == {"analysed": 42, "passed": 40}
+def test_a_number_not_in_the_brief_is_rejected_and_the_code_call_stands(monkeypatch):
+    bad = good_answer(call=CODE)
+    bad["reasons"][0]["text_en"] = "Its P/E of 777 is below the sector's 20."
+    bad["reasons"][0]["text_bn"] = "এর P/E ৭৭৭, সেক্টরের ২০-এর নিচে।"
+    assert not verify(json.dumps(bad), BRIEF).ok
+    got = stand(monkeypatch, bad)
+    assert got["source"] == "code" and got["call"] == CODE and "777" in got["note"]
+
+
+def test_a_moved_call_without_evidence_is_rejected(monkeypatch):
+    other = "avoid" if CODE != "avoid" else "buy"
+    moved = good_answer(call=other)
+    moved["reasons"][0]["evidence"] = []
+    assert not verify(json.dumps(moved), BRIEF).ok
+    got = stand(monkeypatch, moved)
+    assert got["source"] == "code" and got["call"] == CODE and got["chance_pct"] == code_only(BRIEF)["chance_pct"]
+
+
+def test_a_moved_call_with_evidence_stands(monkeypatch):
+    other = "avoid" if CODE != "avoid" else "watch"
+    ok = good_answer(call=other, moved_because="Plant approval adds capacity.")
+    ok["reasons"][0]["evidence"] = ["news:n1"]
+    assert verify(json.dumps(ok), BRIEF).ok

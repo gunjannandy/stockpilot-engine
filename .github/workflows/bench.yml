@@ -1,0 +1,57 @@
+# The bench: scores the Analyse method on its past public briefs. The Worker's hourly duty dispatches it; it ends at
+# once unless the prompt, model, method or cases changed since the last score. It runs on `main` itself (not
+# `production`), so a fix that would lift a red pause can be scored before it is released. The model token is the secret
+# of the protected `models` environment (main only). The model worker has one slot, so the bench and Analyse queue.
+name: bench
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always bench)
+        default: bench
+      subject:
+        description: The hour slot, HH
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-bench
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  bench:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: models
+    env:
+      STOCKPILOT_API_URL: https://stockpilot-app.stockpilotgn.workers.dev
+      STOCKPILOT_INGEST_KEY: ${{ secrets.INGEST_HMAC_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      JOB_DAY: ${{ inputs.day }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: py/uv.lock
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: uv sync --frozen --project py
+      - name: Run the Job
+        env:
+          SUBJECT: ${{ inputs.subject }}
+          STOCKPILOT_VERSION: ${{ github.sha }}
+        run: uv run --frozen --project py python -m stockpilot.runtime bench --subject "${SUBJECT:-all}"
