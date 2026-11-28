@@ -7,5 +7,19 @@
   "harvest": "Sell {n} to save about {s} in tax.",
   "rsuNext": "Next vest 14 Aug 2027, about 34 shares (estimate).",
   "chance": "Chance",
-  "holdings": "holdings"
+  "holdings": "holdings",
+  "holdingsTitle": "What we own",
+  "asOf": "Last synced snapshot, as of",
+  "price": "Price",
+  "call": "Today's call",
+  "noPrice": "no price yet",
+  "gainSentence": "What the {n} holdings with a price are worth now, less what was paid for them.",
+  "gainHow": "Price now times shares held, minus the average buy price times shares. Funds and holdings with no recent price are left out.",
+  "call.sell": "Sell",
+  "call.weak": "Weak",
+  "call.keep": "Fine, keep",
+  "call.buy": "Close to a buy",
+  "call.unusual": "Unusual today",
+  "kind.mf": "fund",
+  "kind.rsu": "RSU"
 }

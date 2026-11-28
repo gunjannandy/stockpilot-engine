@@ -31,6 +31,11 @@ export const LIVE_SCREENS = ["today", "portfolio", "market", "watchlist", "stock
 export const ALWAYS_OPEN_SCREENS = ["admin", "signin", "sync", "ping", "more"] as const;
 const OPEN: readonly string[] = [...LIVE_SCREENS, ...ALWAYS_OPEN_SCREENS];
 
+/** Sections that start bannered inside a live screen (an explicit row still wins): Portfolio's analysis and tax. */
+export const DEFAULT_BANNERED_SECTIONS: Readonly<Record<string, readonly string[]>> = {
+  portfolio: ["analysis", "tax"],
+};
+
 export function isBannered(
   flags: Record<string, boolean>,
   screen: string,
@@ -39,5 +44,6 @@ export function isBannered(
   const own = flags[bannerKey(screen)];
   const screenOn = own === undefined ? !OPEN.includes(screen) : own;
   if (screenOn || section === undefined) return screenOn;
-  return flags[bannerKey(screen, section)] === true;
+  const row = flags[bannerKey(screen, section)];
+  return row ?? DEFAULT_BANNERED_SECTIONS[screen]?.includes(section) === true;
 }

@@ -45,6 +45,8 @@ export const SyncStatus = z.object({
   synced_at: z.string().nullable(),
   changes: z.number().int().min(0).nullable(),
   steps: z.array(SyncStep),
+  /** The yellow dot: a trading day (IST) and the last Sync was before that day's 09:15 open. */
+  sync_dot: z.boolean().default(false),
 });
 export type SyncStatus = z.infer<typeof SyncStatus>;
 

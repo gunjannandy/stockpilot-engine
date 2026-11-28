@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
+import { SyncDot } from "./SyncDot";
 import { shortTime, syncQuery } from "./useSynced";
 
 export function SyncPane() {
@@ -21,6 +22,7 @@ export function SyncPane() {
       <p>
         <a className="button" href="/kite/login" data-testid="sync-button">
           {t("sync.press")}
+          <SyncDot />
         </a>
       </p>
       <p>

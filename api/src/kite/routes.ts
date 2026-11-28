@@ -5,6 +5,8 @@ import { Hono } from "hono";
 import { type GithubBot, githubFromEnv } from "../../../adapters/src/github";
 import { type KiteClient, kiteFromEnv } from "../../../adapters/src/kite";
 import { type Ctx, istDay, istText } from "../app";
+import { loadCalendar } from "../calendar/routes";
+import { syncDot } from "../calendar/syncdot";
 import { getJob, isPaused, jobKey } from "../jobs/runtime";
 import { queueJob } from "../schedule/tick";
 import { lastSync, storeSync } from "./sync";
@@ -54,6 +56,7 @@ export function kiteRoutes(ctx: Ctx, opts: { kite?: KiteClient; github?: GithubB
             { id: "done", state: "ok", count: last.changes ?? 0 },
           ]
         : [],
+      sync_dot: syncDot(await loadCalendar(ctx), last?.fetched_at ?? null, ctx.now()),
     };
     return c.json(status);
   });
