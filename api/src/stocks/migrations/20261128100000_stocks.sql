@@ -9,3 +9,7 @@ create table if not exists universe (
   id text primary key, symbol text not null, exchange text not null, segment text not null,
   name text not null, isin text not null, aliases text not null, status text not null
 );
+-- The `history` dataset's table: one summary row per daily run.
+create table if not exists history_runs (
+  id text primary key, day text not null, stocks integer not null, held_back integer not null
+);

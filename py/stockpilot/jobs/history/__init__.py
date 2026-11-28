@@ -1,4 +1,4 @@
-"""The history Job. Subject `all`: append the newest trading days' prices for every stock. Subject a symbol: load that
+"""The history Job. Subject `history` (or `all`): append the newest trading days' prices for every stock. Subject a symbol: load that
 one stock's whole history (the load Job the stock page starts for a symbol it holds nothing for).
 
 Prices go to the Worker's `POST /api/stocks/history`, one stock a call; the Worker upserts, so a rerun is harmless.
@@ -12,7 +12,8 @@ from datetime import UTC, date, datetime, timedelta
 from stockpilot.runtime import JobContext
 from stockpilot.sources import history as h
 
-KIND = "history"
+KIND = DATASET = "history"
+DAILY_SUBJECTS = ("all", "history")
 MOVE_LIMIT = 0.4
 HELD_BACK_LIMIT = 0.02
 LOOKBACK_DAYS = 5
@@ -96,7 +97,7 @@ def load_one(ctx: JobContext, symbol: str, fetch_json: Callable[[str], object], 
 def run(ctx: JobContext, fetch: Callable[[str], bytes | None] | None = None,
         fetch_json: Callable[[str], object] | None = None) -> str:
     today = ctx.range.end
-    if ctx.subject != "all":
+    if ctx.subject not in DAILY_SUBJECTS:
         if fetch_json is None:
             from stockpilot.sources.http import fetch as raw
 
@@ -115,6 +116,8 @@ def run(ctx: JobContext, fetch: Callable[[str], bytes | None] | None = None,
     if not total:
         ctx.progress.line("no prices published yet for these days")
         return "no new prices"
+    ctx.publish(DATASET, [{"id": str(today), "day": str(today), "stocks": len(good), "held_back": len(held)}],
+                source="exchange files", as_of=str(today))
     if len(held) / total > HELD_BACK_LIMIT:
         raise RuntimeError(f"{len(held)} of {total} stocks held back for unexplained moves (limit {HELD_BACK_LIMIT:.0%})")
     return f"posted {len(good)} stocks, held back {len(held)}"

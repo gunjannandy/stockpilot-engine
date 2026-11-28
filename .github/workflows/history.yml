@@ -1,12 +1,10 @@
 # The history Job: appends the day's prices for every stock (subject all), or loads one stock's whole history
 # (subject = the symbol, started by the Worker when a stock page opens a symbol it holds nothing for).
-# Public data only, so no model token and no private repo. The daily run is this workflow's own weekday cron,
-# 21:00 IST, after NSE publishes its file (about 19:00) and BSE's lag; a missed day is re-asked for 5 days.
+# Public data only, so no model token and no private repo. The daily run is the `history` dataset's
+# slot (subject history, 21:00 IST on trading days: NSE publishes about 19:00, BSE lags); a missed day is re-asked for 5 days.
 # The steps live in _job.yml, which every Job shares.
 name: history
 on:
-  schedule:
-    - cron: "30 15 * * 1-5"
   workflow_dispatch:
     inputs:
       kind:
@@ -14,7 +12,7 @@ on:
         default: history
       subject:
         description: Job subject
-        default: all
+        default: history
       day:
         description: The Job's day, YYYY-MM-DD (empty = today, IST)
         default: ""
@@ -25,7 +23,7 @@ on:
         description: Last day of the range, YYYY-MM-DD
         default: ""
 concurrency:
-  group: job-history-${{ inputs.subject || 'all' }}
+  group: job-history-${{ inputs.subject || 'history' }}
   cancel-in-progress: false
 permissions:
   contents: read
@@ -34,7 +32,7 @@ jobs:
     uses: ./.github/workflows/_job.yml
     with:
       kind: history
-      subject: ${{ inputs.subject || 'all' }}
+      subject: ${{ inputs.subject || 'history' }}
       day: ${{ inputs.day }}
       from: ${{ inputs.from }}
       to: ${{ inputs.to }}

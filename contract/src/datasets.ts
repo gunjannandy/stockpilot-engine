@@ -3,7 +3,7 @@ import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 import { RawTrade } from "./kite/kite";
-import { UniverseRow, universeRowCheck } from "./stocks/stocks";
+import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
  * JSON Schema; the door enforces `writeBudget` per day. */
@@ -81,6 +81,19 @@ export const datasets = {
     run: { at: "07:00", on: "every" },
     runCheck: (run) =>
       (run.rows ?? []).some((r) => r.kind === "holiday") ? null : "no holiday listed",
+  },
+  history: {
+    name: "history",
+    job: "history",
+    table: "history_runs",
+    schedule: "every trading day at 21:00 IST",
+    freshnessHours: 96,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 50,
+    row: HistoryRun,
+    run: { at: "21:00", on: "trading" },
   },
   universe: {
     name: "universe",

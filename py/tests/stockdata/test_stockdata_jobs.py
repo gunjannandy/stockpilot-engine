@@ -64,3 +64,24 @@ def test_a_symbol_with_no_history_fails_the_load():
     with pytest.raises(RuntimeError, match="no price history"):
         run_job("history", lambda ctx: hist.run(ctx, fetch_json=lambda url: None), door=Door("https://x.invalid", KEY, w.transport),
                 subject="NOPE", day="2026-11-28", out=io.StringIO())
+
+
+def test_the_daily_run_posts_good_stocks_holds_back_a_jump_and_publishes_its_summary(monkeypatch):
+    rows = {("NSE", "OK"): [{"date": date(2026, 11, 27), "close": 10.0, "prev_close": 9.5}],
+            ("NSE", "JUMP"): [{"date": date(2026, 11, 27), "close": 50.0, "prev_close": 100.0}]}
+    monkeypatch.setattr(hist, "daily_rows", lambda fetch, today, lookback=5: rows)
+    monkeypatch.setattr(hist, "HELD_BACK_LIMIT", 0.6)
+    w = FakeRuntimeWorker()
+    posted = []
+    orig = w.transport
+
+    def transport(method, url, headers, body):
+        if url.endswith("/api/stocks/history"):
+            posted.append(json.loads(body)["symbol"])
+            return 200, {"stored": 1}
+        return orig(method, url, headers, body)
+
+    run_job("history", lambda ctx: hist.run(ctx, fetch=lambda url: None), door=Door("https://x.invalid", KEY, transport),
+            subject="history", day="2026-11-27", out=io.StringIO())
+    assert posted == ["OK"]
+    assert [(r["stocks"], r["held_back"]) for r in w.rows["history"].values()] == [(1, 1)]

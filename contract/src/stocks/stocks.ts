@@ -170,3 +170,12 @@ export function universeRowCheck(r: Record<string, unknown>): string | null {
     : "symbol and name are required";
 }
 export type LoadJob = z.infer<typeof LoadJob>;
+
+/** One row a day for the `history` dataset: what the daily run did. The prices themselves go to `POST /api/stocks/history`. */
+export const HistoryRun = z.object({
+  id: z.string().min(1),
+  day: IsoDate,
+  stocks: z.number().int().min(0),
+  held_back: z.number().int().min(0),
+});
+export type HistoryRun = z.infer<typeof HistoryRun>;
