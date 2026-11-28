@@ -75,3 +75,24 @@ def test_a_failing_ping_job_endes_failed_and_still_beats():
         run_ping(d)
     assert mock.calls[-2][0] == "job_end" and mock.calls[-2][1]["status"] == "failed"
     assert mock.calls[-1][0] == "heartbeat_write" and mock.calls[-1][1]["ok"] is False
+
+
+def test_urllib_transport_names_itself(monkeypatch):
+    """Cloudflare answers 403 to Python's default User-Agent, which stops every Job."""
+    import io
+    import urllib.request
+
+    from stockpilot.io import door
+
+    seen = {}
+
+    class Answer(io.BytesIO):
+        status = 200
+
+    def fake_urlopen(req, timeout):
+        seen["agent"] = req.get_header("User-agent")
+        return Answer(b"{}")
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    assert door.urllib_transport("GET", "https://example.invalid/x", {}, None) == (200, {})
+    assert seen["agent"] == "stockpilot-job"
