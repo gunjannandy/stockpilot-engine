@@ -83,7 +83,18 @@ Owner's scope after round 1 (round 1 questions withdrawn):
 - Tier 2, brush layout: Market and news, Portfolio, Funds.
 - Tier 3, complete overhaul as working screens, not charts: Feedback, Admin, Settings, Record. Most of the running of the app (asks, jobs) is done from here.
 Backend these screens can drive (already exists): GET /api/admin (needs, freshness, runs, problems, usage), POST /api/admin/retry, GET /api/admin/state + PUT release-pause, job-pause, flags, layout, POST /api/admin/recompute, POST /api/job/press (kind, subject, range, rerun), GET /api/job/run, GET /api/publish/runs and /api/publish/held/:dataset (rows held back with reasons), GET /api/secrets, GET /api/monitor (usage today), GET /api/model/status, GET/POST /api/feedback + POST /api/feedback/:id/review (owner only), GET /api/sync + POST /api/refresh (Kite), GET /api/itr/pack, GET /api/me (owner or father), GET /api/calendar/status.
-Next: grilling round 2 (tier 3 layouts), then build.
+Round 2 answers (paraphrased):
+- Both owners see Admin. Feedback keeps no review controls; review moves to Admin.
+- Feedback: v2 shape was fine; improve its design.
+- Admin: a beautiful console of jobs and status at a glance, including asks being worked on; no tables at a glance (a filterable Details part is fine). It follows GitHub issues. The morning email will show this same view.
+- Settings screen goes; budget and allowance are driven from Portfolio.
+- Record: charts stay; tighter layout, less white space.
+- Market and news: mostly fine, must look really good and cope with many items arriving every 5 to 10 minutes; ranking needs thought (an old big story should stay high).
+- Funds: the chart should show a forecast, since we make fund calls.
+- Yellow mark as built does not look good; the page needs animation; UI and UX both matter.
+- Verdict words: match the engine.
+Facts found: news score today = impact x closeness (holding 4, watchlist 3, sector 2) x freshness 1/(1+age_h/12) x sources (py/stockpilot/news_rank.py), so a 3-day-old item keeps about 1/7 of its score. Fund calls are weekly (Keep, Add, Stop adding, Switch, Review) with a chance against the category middle over 12 months (py/stockpilot/fundcall.py); no NAV path or range. Asks follow GitHub tickets by labels (api/src/feedback/feedback.ts); only the ticket number reaches the screen. No morning email renderer exists yet.
+Next: grilling round 3, then build.
 
 ## Brief for the next (Opus) session
 Read all of `web/src`, `DESIGN.md`, `docs/prototypes/v2` and `docs/prototypes/ui/r10`, `legacy/web/public` and this file first. Then grill the owner about what each screen is for BEFORE designing. It may change, merge or drop anything, including layouts, keeping the existing theme (tokens, type, azure primary, graphite surfaces) and the DESIGN.md rules. Owner's direction: Portfolio, Admin and Record should be very simple. The design has hit a roadblock: aim for screens whose purpose is clear at a glance, dense and calm, cards that separate meanings, no hero blocks, one search (the top bar). Decide per screen only after reading the code and understanding the intent.
