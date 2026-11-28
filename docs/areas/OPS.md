@@ -10,7 +10,7 @@ Status: building
 
 ## Next
 - [ ] Admin: a preview e2e for C-099-1 / C-106-2 / C-104-1 needs the owner's prototype review; layout editor not built (route exists).
-- [ ] Bridge check: a script that compares the live Apps Script bridge with the committed copy (private run).
+- [ ] Bridge check (#238): the bridge source is not in this repo, and a live probe would send a sign-in mail; needs the owner's run.
 - [ ] Drill on the Job runtime (private repo workflow; needs the owner's word).
 
 ## Decisions
@@ -18,5 +18,8 @@ Status: building
 - The archive reads only rows past the archive age in SQL, so a big table is never pulled whole.
 
 ## Blocked
+- private run: bridge-matches-source (#238) send one sign-in from the preview and confirm the mail arrives.
 - Secrets never created: `CF_ACCOUNT_ID`, `D1_PRODUCTION_ID`, `CF_D1_ARCHIVE_TOKEN` as repository secrets here (the archive reports "nothing to archive" until they exist).
 - Private-repo workflow changes (backup, drill) wait on the owner's word.
+
+Chapter end: 1
