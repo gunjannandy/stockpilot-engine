@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
+import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -80,6 +81,21 @@ export const datasets = {
     run: { at: "07:00", on: "every" },
     runCheck: (run) =>
       (run.rows ?? []).some((r) => r.kind === "holiday") ? null : "no holiday listed",
+  },
+  funds: {
+    name: "funds",
+    job: "funds",
+    table: "funds",
+    schedule: "every night at 21:00 IST",
+    freshnessHours: 72,
+    checks: { row: ["at least two NAVs", "costs are not negative"], run: ["at least 100 funds"] },
+    visibility: "private",
+    recomputable: true,
+    writeBudget: 1000,
+    row: FundRow,
+    rowCheck: fundRowCheck,
+    run: { at: "21:00", on: "every" },
+    runCheck: (run) => (run.rowCount < FUNDS_MIN ? "fewer than 100 funds" : null),
   },
 } as const satisfies Record<string, Dataset>;
 export type DatasetName = keyof typeof datasets;
