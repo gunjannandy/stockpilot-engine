@@ -280,7 +280,7 @@ def collect(api=_api, now=None):
 
 # ---- command line ------------------------------------------------------------------------------------------------
 STATE = Path.home() / ".local/state/stockpilot-watch/state.json"
-ACCOUNTS = [{"name": "secondary", "slots": 3, "config_dir": "~/.claude-second"},
+ACCOUNTS = [{"name": "secondary", "slots": 5, "config_dir": "~/.claude-second"},
             {"name": "primary", "slots": 3, "config_dir": "~/.claude"}]   # both work at once, 2026-11-28
 STATUS_LABELS = ["status:ready", "status:blocked", "status:building", "status:pr", "status:prototype", "status:stuck"]
 CFG = {"accounts": ACCOUNTS, "quiet_minutes": 60}
