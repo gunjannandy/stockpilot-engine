@@ -1,10 +1,14 @@
 // MONEY's computed routes, behind sign-in. Lots are rebuilt from the stored trades on every call (nothing is
 // cached or written, except the USD/INR rates the ITR route also refreshes); no broker is called.
 import {
+  CalendarResponse,
+  DividendsPost,
+  HeldSymbols,
   RiskResponse,
   RsuResponse,
   TaxResponse,
   UsPricesPost,
+  UsSymbols,
   XirrResponse,
 } from "@stockpilot/contract";
 import { Hono } from "hono";
@@ -25,7 +29,7 @@ import {
 } from "../../../money/src/tax/tax";
 import { type Flow, returnVsNifty, xirr } from "../../../money/src/xirr/xirr";
 import { type Ctx, rawBody } from "../app";
-import { loadRateOn } from "../fx/rates";
+import { loadRateOn, refreshRates } from "../fx/rates";
 import { loadRebuild } from "../lots/load";
 
 export default function routes(ctx: Ctx) {
@@ -179,8 +183,8 @@ export default function routes(ctx: Ctx) {
     );
   });
 
-  // Concentration and the Nifty −10% view over held INR stocks at the newest close. Sector and beta are not
-  // stored yet, so every stock is "Unknown" and moves with the market (beta 1); the response says so.
+  // Concentration and the Nifty −10% view over held INR stocks at the newest close. Sector comes from the newest
+  // `facts` row; beta is not stored yet, so every stock moves with the market (beta 1) and the response says so.
   app.get("/api/money/risk", ctx.guard.person, async (c) => {
     const rows =
       (
@@ -198,6 +202,17 @@ export default function routes(ctx: Ctx) {
       );
     const items: Exposure[] = [];
     const warnings: string[] = [];
+    const sectorOf = async (symbol: string): Promise<string | null> => {
+      try {
+        const row = (await ctx.d1
+          .prepare("select sector from facts where symbol = ? order by as_of desc limit 1")
+          .bind(symbol)
+          .first()) as { sector?: string | null } | null;
+        return row?.sector ? String(row.sector) : null;
+      } catch {
+        return null; // facts not stored yet
+      }
+    };
     for (const [symbol, q] of qty) {
       if (q <= 1e-9) continue;
       const p = await latestClose(symbol);
@@ -205,7 +220,7 @@ export default function routes(ctx: Ctx) {
         warnings.push(`No price for ${symbol}.`);
         continue;
       }
-      items.push({ symbol, sector: null, value: q * p.close, beta: null });
+      items.push({ symbol, sector: await sectorOf(symbol), value: q * p.close, beta: null });
     }
     return c.json(
       RiskResponse.parse({
@@ -231,6 +246,34 @@ export default function routes(ctx: Ctx) {
         .bind(post.data.symbol.toUpperCase(), r.date, r.close)
         .run();
     return c.json({ stored: post.data.rows.length });
+  });
+
+  // What the Job needs to ask for: dollar symbols still held, and where to start prices and USD/INR.
+  app.get("/api/money/us-symbols", ctx.guard.ingest, async (c) => {
+    const built = await loadRebuild(ctx.d1, {});
+    const open = built.lots.filter(
+      (l) => l.currency !== "INR" && l.quantity - l.closedQuantity > 1e-9,
+    );
+    const first = open.map((l) => l.acquiredOn).sort()[0] ?? ctx.now().toISOString().slice(0, 10);
+    return c.json(
+      UsSymbols.parse({
+        symbols: [...new Set(open.map((l) => l.symbol))].sort(),
+        since: first,
+        fx_since: first,
+      }),
+    );
+  });
+
+  // The Job asks for USD/INR to be filled up to today, from the free ECB feed (best effort, rows added).
+  app.post("/api/money/fx-refresh", ctx.guard.ingest, async (c) => {
+    const today = ctx.now().toISOString().slice(0, 10);
+    let since = today;
+    try {
+      const body = JSON.parse(rawBody(c)) as { since?: unknown };
+      if (typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since))
+        since = body.since;
+    } catch {}
+    return c.json({ added: await refreshRates(ctx.d1, today, since) });
   });
 
   // The dollar holding (RSUs and any other USD lot) valued at the newest stored close and rate. Tax assumes the
@@ -300,6 +343,106 @@ export default function routes(ctx: Ctx) {
         as_of: fx?.day ?? null,
         symbols: out,
         usdInr: fx?.usd_inr ?? null,
+        warnings,
+      }),
+    );
+  });
+
+  const heldInr = async () => {
+    const built = await loadRebuild(ctx.d1, {});
+    const held = new Map<string, number>();
+    let first = ctx.now().toISOString().slice(0, 10);
+    for (const l of built.lots) {
+      const q = l.quantity - l.closedQuantity;
+      if (l.currency !== "INR" || l.kind !== "stock" || q <= 1e-9) continue;
+      held.set(l.symbol, (held.get(l.symbol) ?? 0) + q);
+      if (l.acquiredOn < first) first = l.acquiredOn;
+    }
+    return { held, first };
+  };
+
+  app.get("/api/money/held-symbols", ctx.guard.ingest, async (c) => {
+    const { held, first } = await heldInr();
+    return c.json(HeldSymbols.parse({ symbols: [...held.keys()].sort(), since: first }));
+  });
+
+  app.post("/api/money/dividends", ctx.guard.ingest, async (c) => {
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody(c));
+    } catch {
+      return c.json({ error: "bad body" }, 400);
+    }
+    const post = DividendsPost.safeParse(body);
+    if (!post.success) return c.json({ error: "bad body" }, 400);
+    for (const r of post.data.rows)
+      await ctx.d1
+        .prepare("insert or replace into dividends (symbol, ex_date, per_share) values (?, ?, ?)")
+        .bind(post.data.symbol.toUpperCase(), r.ex_date, r.per_share)
+        .run();
+    return c.json({ stored: post.data.rows.length });
+  });
+
+  // Dated corporate actions for held stocks, and expected dividend cash: each ex-date of the last year,
+  // one year on, times the shares held now. An estimate; the company may pay more, less or nothing.
+  app.get("/api/money/calendar", ctx.guard.person, async (c) => {
+    const today = ctx.now().toISOString().slice(0, 10);
+    const { held } = await heldInr();
+    const warnings: string[] = [];
+    const rows = async (sql: string, ...args: unknown[]) =>
+      (
+        (await ctx.d1
+          .prepare(sql)
+          .bind(...args)
+          .all()) as { results?: Record<string, unknown>[] }
+      ).results ?? [];
+    const actions = (
+      await rows(
+        "select date, kind, symbol, old_shares, new_shares, new_symbol, reason from calendar where date >= ? and kind != 'holiday' and symbol is not null order by date, symbol",
+        today,
+      )
+    )
+      .filter((r) => held.has(String(r.symbol)))
+      .map((r) => ({
+        date: String(r.date),
+        kind: String(r.kind),
+        symbol: String(r.symbol),
+        detail:
+          r.new_symbol != null
+            ? `now ${r.new_symbol}`
+            : r.old_shares != null
+              ? `${r.old_shares} to ${r.new_shares}`
+              : ((r.reason as string | null) ?? null),
+      }));
+    const yearAgo = `${Number(today.slice(0, 4)) - 1}${today.slice(4)}`;
+    const dividends = (
+      await rows(
+        "select symbol, ex_date, per_share from dividends where ex_date > ? and ex_date <= ? order by ex_date, symbol",
+        yearAgo,
+        today,
+      )
+    )
+      .filter((r) => held.has(String(r.symbol)))
+      .map((r) => {
+        const shares = held.get(String(r.symbol)) ?? 0;
+        const perShare = Number(r.per_share);
+        return {
+          date: `${Number(String(r.ex_date).slice(0, 4)) + 1}${String(r.ex_date).slice(4)}`,
+          symbol: String(r.symbol),
+          perShare,
+          shares,
+          cash: Math.round(perShare * shares * 100) / 100,
+        };
+      })
+      .filter((d) => d.date >= today);
+    if (held.size && dividends.length === 0)
+      warnings.push("No dividend history stored for the stocks held.");
+    return c.json(
+      CalendarResponse.parse({
+        as_of: today,
+        actions,
+        dividends,
+        expectedCash: Math.round(dividends.reduce((s, d) => s + d.cash, 0) * 100) / 100,
         warnings,
       }),
     );

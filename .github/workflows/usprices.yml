@@ -1,0 +1,24 @@
+# The usprices Job: daily closes of held US shares and USD/INR. Public data only, so no model token and no private repo.
+# The daily run is the `usprices` dataset's slot (06:30 IST, after the US close). The steps live in _job.yml.
+name: usprices
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+concurrency:
+  group: job-usprices
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  usprices:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: usprices
+      subject: all
+      day: ${{ inputs.day }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
