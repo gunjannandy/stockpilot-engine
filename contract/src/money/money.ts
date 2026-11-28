@@ -96,3 +96,50 @@ export const RiskResponse = z.object({
   warnings: z.array(z.string()),
 });
 export type RiskResponse = z.infer<typeof RiskResponse>;
+
+/** `POST /api/money/us-prices` (the usprices Job): newest closes of US shares, one symbol a call. */
+export const UsPricesPost = z.object({
+  symbol: z.string().min(1),
+  rows: z
+    .array(
+      z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), close: z.number().positive() }),
+    )
+    .max(5000),
+});
+export type UsPricesPost = z.infer<typeof UsPricesPost>;
+
+/** `GET /api/money/rsu`: the dollar holding valued at the newest stored close and USD/INR, with the tax if all
+ * of it were sold that day, and the vests expected next. `value` is null until a price and a rate are stored. */
+export const RsuResponse = z.object({
+  as_of: z.string().nullable(),
+  symbols: z.array(
+    z.object({
+      symbol: z.string(),
+      priceUsd: z.number().nullable(),
+      priceDate: z.string().nullable(),
+      view: z
+        .object({
+          shares: z.number(),
+          valueInr: z.number(),
+          gainInr: z.number(),
+          taxInr: z.number(),
+          estimatedShares: z.number(),
+          lots: z.array(
+            z.object({
+              acquiredOn: z.string(),
+              quantity: z.number(),
+              valueInr: z.number(),
+              gainInr: z.number(),
+              taxInr: z.number(),
+              estimated: z.boolean(),
+            }),
+          ),
+        })
+        .nullable(),
+      expectedVests: z.array(z.object({ day: z.string(), quantity: z.number() })),
+    }),
+  ),
+  usdInr: z.number().nullable(),
+  warnings: z.array(z.string()),
+});
+export type RsuResponse = z.infer<typeof RsuResponse>;

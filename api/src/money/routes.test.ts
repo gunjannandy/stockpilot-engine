@@ -87,3 +87,34 @@ describe("money harvest and risk", () => {
     expect(r.shock.assumedBeta).toEqual(["AAA"]);
   });
 });
+
+describe("money rsu route", () => {
+  it("values a dollar lot at the newest stored close and rate, null without a price", async () => {
+    const { app, db, signed } = await makeApp({ now: () => new Date("2026-06-01T00:00:00Z") });
+    await app.request("/api/money/rsu");
+    await db.exec(
+      `insert into trades (trade_key,account,source,source_ref,kind,symbol,isin,side,trade_date,quantity,price,currency,status)
+       values ('u','main','tradebook','r','stock','USX','US0000000001','buy','2025-01-01',10,50,'USD','confirmed');
+       insert into fx_rates (day, usd_inr) values ('2025-01-01', 80), ('2026-05-29', 90);`,
+    );
+    const none = (await (await app.request("/api/money/rsu")).json()) as {
+      symbols: { view: unknown }[];
+      warnings: string[];
+    };
+    expect(none.symbols[0]?.view).toBeNull();
+    expect(none.warnings).toContain("No price for USX.");
+    const post = await signed("POST", "/api/money/us-prices", {
+      symbol: "usx",
+      rows: [{ date: "2026-05-29", close: 100 }],
+    });
+    expect(((await post.json()) as { stored: number }).stored).toBe(1);
+    const j = (await (await app.request("/api/money/rsu")).json()) as {
+      usdInr: number;
+      symbols: { view: { shares: number; valueInr: number; gainInr: number } }[];
+    };
+    expect(j.usdInr).toBe(90);
+    expect(j.symbols[0]?.view.shares).toBe(10);
+    expect(j.symbols[0]?.view.valueInr).toBe(90000);
+    expect(j.symbols[0]?.view.gainInr).toBe(90000 - 10 * 50 * 80);
+  });
+});

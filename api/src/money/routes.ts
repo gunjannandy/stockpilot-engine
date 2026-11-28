@@ -1,8 +1,15 @@
 // MONEY's computed routes, behind sign-in. Lots are rebuilt from the stored trades on every call (nothing is
 // cached or written, except the USD/INR rates the ITR route also refreshes); no broker is called.
-import { RiskResponse, TaxResponse, XirrResponse } from "@stockpilot/contract";
+import {
+  RiskResponse,
+  RsuResponse,
+  TaxResponse,
+  UsPricesPost,
+  XirrResponse,
+} from "@stockpilot/contract";
 import { Hono } from "hono";
 import { concentration, type Exposure, niftyShock } from "../../../money/src/risk/risk";
+import { expectedVests, type RsuLot, rsuView, type Vest } from "../../../money/src/rsu/rsu";
 import {
   fyLabel,
   harvest,
@@ -17,7 +24,7 @@ import {
   type TaxSale,
 } from "../../../money/src/tax/tax";
 import { type Flow, returnVsNifty, xirr } from "../../../money/src/xirr/xirr";
-import type { Ctx } from "../app";
+import { type Ctx, rawBody } from "../app";
 import { loadRateOn } from "../fx/rates";
 import { loadRebuild } from "../lots/load";
 
@@ -204,6 +211,95 @@ export default function routes(ctx: Ctx) {
       RiskResponse.parse({
         concentration: concentration(items),
         shock: niftyShock(items),
+        warnings,
+      }),
+    );
+  });
+
+  app.post("/api/money/us-prices", ctx.guard.ingest, async (c) => {
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody(c));
+    } catch {
+      return c.json({ error: "bad body" }, 400);
+    }
+    const post = UsPricesPost.safeParse(body);
+    if (!post.success) return c.json({ error: "bad body" }, 400);
+    for (const r of post.data.rows)
+      await ctx.d1
+        .prepare("insert or replace into us_prices (symbol, date, close) values (?, ?, ?)")
+        .bind(post.data.symbol.toUpperCase(), r.date, r.close)
+        .run();
+    return c.json({ stored: post.data.rows.length });
+  });
+
+  // The dollar holding (RSUs and any other USD lot) valued at the newest stored close and rate. Tax assumes the
+  // top slab on a short-term gain and the long-term rate after 24 months, as for unlisted foreign shares.
+  app.get("/api/money/rsu", ctx.guard.person, async (c) => {
+    const today = ctx.now().toISOString().slice(0, 10);
+    const rateOn = await loadRateOn(ctx.d1);
+    const built = await loadRebuild(ctx.d1, { rateOn });
+    const warnings: string[] = [];
+    const fx = (await ctx.d1
+      .prepare("select day, usd_inr from fx_rates order by day desc limit 1")
+      .first()) as { day: string; usd_inr: number } | null;
+    const rules = rulesFor(Number(today.slice(0, 4)) - (today.slice(5) < "04-01" ? 1 : 0));
+    const topSlab = rules.slabs[rules.slabs.length - 1]?.[1] ?? 0.3;
+    const open = built.lots.filter(
+      (l) => l.currency !== "INR" && l.quantity - l.closedQuantity > 1e-9,
+    );
+    const symbols = [...new Set(open.map((l) => l.symbol))].sort();
+    if (symbols.length && !fx) warnings.push("No USD/INR rate stored yet.");
+    const out = [];
+    for (const symbol of symbols) {
+      const mine = open.filter((l) => l.symbol === symbol);
+      const lots: RsuLot[] = mine.map((l) => ({
+        acquiredOn: l.acquiredOn,
+        quantity: l.quantity - l.closedQuantity,
+        costUsd: l.costPerUnit || null,
+        estimated: l.estimated,
+      }));
+      const p = (await ctx.d1
+        .prepare("select date, close from us_prices where symbol = ? order by date desc limit 1")
+        .bind(symbol)
+        .first()) as { date: string; close: number } | null;
+      if (!p) warnings.push(`No price for ${symbol}.`);
+      const view =
+        p && fx
+          ? rsuView({
+              lots,
+              priceUsd: p.close,
+              rate: fx.usd_inr,
+              rateOn: (d) => rateOn?.(d) ?? null,
+              rule: { longTermDays: 730, shortRate: topSlab, longRate: rules.ltcg_other_rate },
+              asOf: today,
+            })
+          : null;
+      const confirmed: Vest[] = mine
+        .filter((l) => !l.estimated)
+        .map((l) => ({
+          day: l.acquiredOn,
+          quantity: l.quantity,
+          priceUsd: l.costPerUnit || null,
+          status: "confirmed" as const,
+        }));
+      const through = `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`;
+      out.push({
+        symbol,
+        priceUsd: p?.close ?? null,
+        priceDate: p?.date ?? null,
+        view,
+        expectedVests: expectedVests(confirmed, through).map((v) => ({
+          day: v.day,
+          quantity: v.quantity,
+        })),
+      });
+    }
+    return c.json(
+      RsuResponse.parse({
+        as_of: fx?.day ?? null,
+        symbols: out,
+        usdInr: fx?.usd_inr ?? null,
         warnings,
       }),
     );
