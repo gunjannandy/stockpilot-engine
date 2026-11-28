@@ -3,6 +3,11 @@ import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 import { FeedbackRow } from "./feedback/feedback";
+import {
+  FUND_HOLDINGS_MIN,
+  FundHoldingsRow,
+  fundHoldingsRowCheck,
+} from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
 
@@ -97,6 +102,22 @@ export const datasets = {
     rowCheck: fundRowCheck,
     run: { at: "21:00", on: "every" },
     runCheck: (run) => (run.rowCount < FUNDS_MIN ? "fewer than 100 funds" : null),
+  },
+  fund_holdings: {
+    name: "fund_holdings",
+    job: "fundholdings",
+    table: "fund_holdings",
+    schedule:
+      "every night at 22:00 IST (houses publish monthly; a night with nothing new republishes the same month)",
+    freshnessHours: 24 * 45,
+    checks: { row: ["at least one holding"], run: ["at least 20 funds"] },
+    visibility: "private",
+    recomputable: true,
+    writeBudget: 1000,
+    row: FundHoldingsRow,
+    rowCheck: fundHoldingsRowCheck,
+    run: { at: "22:00", on: "every" },
+    runCheck: (run) => (run.rowCount < FUND_HOLDINGS_MIN ? "fewer than 20 funds" : null),
   },
   feedback: {
     name: "feedback",
