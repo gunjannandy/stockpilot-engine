@@ -1,5 +1,12 @@
-// Who has seen which What's new note (WORDS area). The notes themselves are health's `whatsnew` table.
+// What's new (WORDS area): the notes promote.yml posts, and who has seen which.
 import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const whatsnew = sqliteTable("whatsnew", {
+  pr: integer("pr").primaryKey(),
+  en: text("en").notNull(),
+  bn: text("bn").notNull(),
+  at: text("at").notNull(),
+});
 
 export const whatsnewSeen = sqliteTable(
   "whatsnew_seen",

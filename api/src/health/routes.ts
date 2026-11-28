@@ -5,11 +5,10 @@ import {
   Heartbeat,
   PARTS,
   PAUSE_RELEASES,
-  WhatsNewPost,
 } from "@stockpilot/contract";
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { checkResults, flags, heartbeats, whatsnew, writeBudget } from "../../drizzle/core";
+import { checkResults, flags, heartbeats, writeBudget } from "../../drizzle/core";
 import { type Ctx, istDay, istText, rawBody } from "../app";
 import { calendarStatus, loadCalendar } from "../calendar/routes";
 
@@ -140,22 +139,6 @@ export default function routes(ctx: Ctx) {
       checks,
       budgets,
     });
-  });
-
-  app.post("/api/whatsnew", ctx.guard.ingest, async (c) => {
-    const req = WhatsNewPost.safeParse(JSON.parse(rawBody(c) || "null"));
-    if (!req.success) return c.json({ error: "bad body" }, 400);
-    const at = istText(ctx.now());
-    for (const l of req.data.lines)
-      await ctx.db
-        .insert(whatsnew)
-        .values({ ...l, at })
-        .onConflictDoUpdate({ target: whatsnew.pr, set: { en: l.en, bn: l.bn, at } });
-    return c.json({ stored: req.data.lines.length });
-  });
-  app.get("/api/whatsnew", ctx.guard.person, async (c) => {
-    const rows = await ctx.db.select().from(whatsnew).orderBy(desc(whatsnew.at), desc(whatsnew.pr));
-    return c.json({ lines: rows });
   });
 
   return app;
