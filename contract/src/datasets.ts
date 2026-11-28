@@ -13,6 +13,7 @@ import {
 } from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
+import { LISTS_MIN_TOP, ListRow, listRowCheck } from "./lists/lists";
 import { DividendsRun, UsPricesRun } from "./money/money";
 import { NewsItemRow } from "./news/news";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
@@ -188,6 +189,26 @@ export const datasets = {
     writeBudget: 10,
     row: CallsRun,
     run: { at: "23:00", on: "trading" },
+  },
+  lists: {
+    name: "lists",
+    job: "lists",
+    table: "list_rows",
+    schedule: "every 30 minutes in market hours, and after the nightly screen",
+    freshnessHours: 72,
+    checks: {
+      row: ["every row has a reason", "every reason has Bengali"],
+      run: ["the Top 10 list has 10 stocks"],
+    },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 4000,
+    row: ListRow,
+    rowCheck: listRowCheck,
+    runCheck: (run) =>
+      (run.rows ?? []).filter((r) => r.list === "top10").length < LISTS_MIN_TOP
+        ? "the Top 10 list has fewer than 10 stocks"
+        : null,
   },
   dividends: {
     name: "dividends",

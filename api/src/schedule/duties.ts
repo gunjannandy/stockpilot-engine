@@ -6,6 +6,7 @@ import { githubFromEnv } from "../../../adapters/src/github";
 import { istText } from "../app";
 import { feedbackDuty } from "../feedback/duty";
 import type { Core } from "../jobs/runtime";
+import { listsDuty } from "../lists/duty";
 import { newsDuty } from "../news/duty";
 import { quotesDuty } from "../quotes/duty";
 import { runSecretsDuty } from "../secrets/duty";
@@ -38,6 +39,7 @@ export const DUTIES: Duty[] = [
   },
   quotesDuty,
   newsDuty,
+  listsDuty,
   watcherDuty,
   {
     id: "secrets",
