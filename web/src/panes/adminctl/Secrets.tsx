@@ -46,9 +46,11 @@ export function Secrets() {
                     )}
                   </td>
                   <td>
-                    <span className={`k-pill ${due ? "worse" : r.days === null ? "" : "better"}`}>
-                      {due ? t("secrets.due") : t("secrets.ok")}
-                    </span>
+                    {r.days !== null && (
+                      <span className={`k-pill ${due ? "worse" : "better"}`}>
+                        {due ? t("secrets.due") : t("secrets.ok")}
+                      </span>
+                    )}
                     {r.emailed && <span className="k-note"> {t("secrets.emailed")}</span>}
                   </td>
                 </tr>
