@@ -3,7 +3,7 @@
 // slow duty stops nothing else and each stays inside the 10 ms CPU limit.
 import { datasets as registry } from "@stockpilot/contract";
 import { githubFromEnv } from "../../../adapters/src/github";
-import { benchDuty } from "../analyse/duty";
+import { modelsDuty } from "../analyse/duty";
 import { istText } from "../app";
 import { feedbackDuty } from "../feedback/duty";
 import type { Core } from "../jobs/runtime";
@@ -39,7 +39,7 @@ export const DUTIES: Duty[] = [
   },
   quotesDuty,
   newsDuty,
-  benchDuty,
+  modelsDuty,
   watcherDuty,
   {
     id: "secrets",
