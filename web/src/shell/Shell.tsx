@@ -4,6 +4,7 @@ import { Link, Outlet } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Pane } from "../areas";
 import { WhatsNew } from "../i18n/WhatsNew";
+import { useSyncedAt } from "../panes/sync/useSynced";
 import { SearchBox } from "../search";
 import {
   getLang,
@@ -47,6 +48,8 @@ function Segmented<T extends string>(props: {
 
 export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string }) {
   const t = useWords();
+  const syncedNow = useSyncedAt();
+  const synced = syncedAt ?? syncedNow;
   const [row, setRow] = useState<LayoutRow | null>(null);
   const [theme, setThemeState] = useState<ThemeChoice>(getTheme);
   const [size, setSizeState] = useState<SizeChoice>(getSize);
@@ -113,7 +116,7 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
       <header className="top">
         <SearchBox ref={search} />
         <span className="sync note">
-          {syncedAt ? `${t("shell.synced")} ${syncedAt}` : t("shell.synced.none")}
+          {synced ? `${t("shell.synced")} ${synced}` : t("shell.synced.none")}
         </span>
         <div className="controls">
           <Segmented
