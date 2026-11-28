@@ -50,6 +50,8 @@ export type Dataset = {
     rows?: Record<string, unknown>[];
     summary: Record<string, unknown>;
   }) => string | null;
+  /** Most rows one run may publish as rows when the default (ROWS_LIMIT) is too small: the screens read these rows from D1 (the universe, the facts), so they cannot be a file. Never above `writeBudget`. */
+  rowsLimit?: number;
   /** Share of a run's rows that may be held back before the run fails (default 0.2). */
   heldBackLimit?: number;
   /** When the 5-minute tick starts this dataset's Job: from `at` (IST, HH:MM) on every day, or only on trading days. Absent: only by a press. */
@@ -159,6 +161,7 @@ export const datasets = {
     visibility: "public",
     recomputable: true,
     writeBudget: 5000,
+    rowsLimit: 5000,
     row: FactsRow,
     rowCheck: factsRowCheck,
     run: { at: "03:00", on: "every" },
@@ -274,7 +277,7 @@ export const datasets = {
     checks: { row: ["id, link and title are present"], run: [] },
     visibility: "public",
     recomputable: true,
-    writeBudget: 4000,
+    writeBudget: 6000,
     row: NewsItemRow,
   },
   history: {
@@ -303,6 +306,7 @@ export const datasets = {
     visibility: "public",
     recomputable: true,
     writeBudget: 30000,
+    rowsLimit: 12000,
     row: UniverseRow,
     rowCheck: universeRowCheck,
     run: { at: "07:30", on: "every" },

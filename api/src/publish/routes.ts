@@ -89,8 +89,9 @@ export function publishRoutes(ctx: Ctx, all: Datasets = defaultDatasets) {
     if (existing && existing.status !== "running")
       return c.json({ error: "run already finished" }, 409);
     const base = (existing?.accepted ?? 0) + (existing?.held ?? 0) + (existing?.refused ?? 0);
-    if ((existing?.accepted ?? 0) + b.rows.length > ROWS_LIMIT)
-      return c.json({ error: `over ${ROWS_LIMIT} rows: publish one file per run instead` }, 413);
+    const limit = ds.rowsLimit ?? ROWS_LIMIT;
+    if ((existing?.accepted ?? 0) + b.rows.length > limit)
+      return c.json({ error: `over ${limit} rows: publish one file per run instead` }, 413);
 
     // Row checks hold a row back with its reason; the run goes on.
     const good: { seq: number; row: Record<string, unknown> }[] = [];

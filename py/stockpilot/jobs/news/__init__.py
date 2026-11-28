@@ -14,6 +14,8 @@ from .weights import rank_items
 KIND = "news"
 ITEMS = "news_items"
 MAX_JUDGED_PER_RUN = 60
+# One run publishes at most this many ranked items: 96 runs a day at this size stay inside the dataset's day write budget.
+MAX_PUBLISHED = 50
 
 
 def item_row(i: dict) -> dict:
@@ -32,11 +34,14 @@ def run(ctx: JobContext, *, fetch=None, model=None, article=None, universe=None,
     for name, url, parse in sources(now, universe):
         try:
             blob = fetch(url)
+            if blob is None:  # the server has no such file (404): nothing from this feed, not a failure
+                ctx.progress.line(f"feed {name} has nothing right now")
+                continue
             reports += parse(blob.decode() if isinstance(blob, bytes) else blob)
         except Exception:  # noqa: BLE001 - one dead feed must not stop the others
             ctx.progress.line(f"feed {name} failed", "fail")
     items = rank_items([{**g, "id": g["group_id"]} for g in nc.group_items(reports)], now)
-    ctx.publish(ITEMS, [item_row(i) for i in items], source="nse, bse, publisher feeds", as_of=str(ctx.range.end))
+    ctx.publish(ITEMS, [item_row(i) for i in items[:MAX_PUBLISHED]], source="nse, bse, publisher feeds", as_of=str(ctx.range.end))
     judged = 0
     if model is not None:
         have = set(ctx.client._ok("/api/news/judged", None, "GET").get("item_ids", []))
