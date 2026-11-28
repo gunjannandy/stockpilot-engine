@@ -9,13 +9,13 @@ class FakeDoor:
     def __init__(self):
         self.calls = []
 
-    def job_start(self, kind, run_id):
+    def job_begin(self, kind, run_id):
         self.calls.append(("start", kind))
 
     def write_rows(self, dataset, run_id, rows):
         self.calls.append(("rows", dataset, rows))
 
-    def job_finish(self, run_id, ok, result=None, error=None):
+    def job_end(self, run_id, ok, result=None, error=None):
         self.calls.append(("finish", ok, result))
 
     def heartbeat(self, *a):
