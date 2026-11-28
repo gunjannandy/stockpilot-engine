@@ -77,6 +77,7 @@ export function StockChart(props: {
   const [range, setRange] = useState<RangeId | null>(
     () => load<{ r: RangeId }>("sk-range", { r: "1Y" }).r,
   );
+  const [menu, setMenu] = useState(false);
   const [layers, setLayers] = useState<Record<Layer, boolean>>(() =>
     load("sk-layers", { vol: true, avg: true, band: true, levels: true, trades: true }),
   );
@@ -116,7 +117,7 @@ export function StockChart(props: {
         textColor: c.text2,
         fontFamily: css("--font"),
         fontSize: 13,
-        attributionLogo: true,
+        attributionLogo: false,
       },
       grid: { vertLines: { visible: false }, horzLines: { color: c.line } },
       rightPriceScale: { visible: false },
@@ -368,11 +369,41 @@ export function StockChart(props: {
           >
             −
           </button>
-          <button type="button" className="sk-btn" onClick={() => setRange(range ?? "1Y")}>
-            {t("stock.reset")}
-          </button>
         </span>
-        <span className="sk-tr">{extra}</span>
+        <span className="sk-tr">
+          <span className="sk-lyr">
+            <button
+              type="button"
+              className="sk-ib"
+              aria-label={t("stock.layers")}
+              title={t("stock.layers")}
+              aria-expanded={menu}
+              onClick={() => setMenu((m) => !m)}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  d="M12 3 2 8l10 5 10-5-10-5Zm0 12L4.6 11.3 2 12.6l10 5 10-5-2.6-1.3L12 15Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            {menu && (
+              <div className="sk-menu">
+                {LAYERS.map((k) => (
+                  <label key={k} className="sk-mi">
+                    <input
+                      type="checkbox"
+                      checked={layers[k]}
+                      onChange={(e) => setLayers((l) => ({ ...l, [k]: e.target.checked }))}
+                    />
+                    <span>{t(`stock.layer.${k}`)}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </span>
+          {extra}
+        </span>
       </div>
       <div className="sk-cvw">
         <div className="sk-cv" ref={host} data-testid="chart" />
@@ -380,19 +411,13 @@ export function StockChart(props: {
           {readout}
         </div>
       </div>
-      <fieldset className="sk-legend" aria-label={t("stock.layers")}>
-        <span className="sk-lg-on">
+      <div className="sk-legend">
+        <span>
           <i className="ln" style={{ borderColor: "var(--primary)" }} />
           {t("stock.price")}
         </span>
-        {LAYERS.filter((k) => k !== "band" || call).map((k) => (
-          <button
-            key={k}
-            type="button"
-            className="sk-lg"
-            aria-pressed={layers[k]}
-            onClick={() => setLayers((l) => ({ ...l, [k]: !l[k] }))}
-          >
+        {LAYERS.filter((k) => layers[k] && (k !== "band" || call)).map((k) => (
+          <span key={k}>
             {SWATCH[k].map(([cls, color]) => (
               <i
                 key={color}
@@ -401,11 +426,11 @@ export function StockChart(props: {
               />
             ))}
             {t(`stock.layer.${k}`)}
-          </button>
+          </span>
         ))}
-      </fieldset>
+      </div>
       <p className="note">
-        {t("stock.hint")}
+        {t("stock.hint")} · Lightweight Charts™ · TradingView
         {last ? "" : ""}
       </p>
     </div>

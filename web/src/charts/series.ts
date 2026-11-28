@@ -8,8 +8,8 @@ export type Ohlc = {
   volume: number;
 };
 export type Point = { time: string; value: number };
-export type RangeId = "1M" | "6M" | "1Y" | "5Y" | "All";
-export const RANGES: RangeId[] = ["1M", "6M", "1Y", "5Y", "All"];
+export type RangeId = "5D" | "1W" | "1M" | "6M" | "1Y" | "5Y" | "All";
+export const RANGES: RangeId[] = ["5D", "1W", "1M", "6M", "1Y", "5Y", "All"];
 
 const parse = (s: string) => new Date(`${s}T00:00:00Z`);
 export const addDays = (s: string, n: number) => {
@@ -41,6 +41,11 @@ const BACK: Record<string, [number, number]> = {
 export function rangeStart(range: RangeId, dates: string[]): string {
   const first = dates[0] ?? "";
   const last = dates[dates.length - 1];
+  if (range === "5D") return dates[Math.max(0, dates.length - 5)] ?? first;
+  if (range === "1W" && last) {
+    const w = addDays(last, -7);
+    return dates.find((x) => x >= w) ?? first;
+  }
   const back = BACK[range];
   if (!last || !back) return first;
   const d = parse(last);

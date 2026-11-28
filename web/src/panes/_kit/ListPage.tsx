@@ -108,14 +108,6 @@ export function ListPage({
             </button>
           ))}
         </div>
-        <input
-          className="k-input grow"
-          style={{ maxWidth: "22rem" }}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("v2.filt")}
-          aria-label={t("v2.filt")}
-        />
         <Seg
           label={t("v3.listView")}
           value={view}

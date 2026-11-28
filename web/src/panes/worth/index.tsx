@@ -2,7 +2,6 @@
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { isHeld, type Reason, reasonsOf, STOCKS, UNIVERSE } from "../_kit/data";
-import { Find } from "../_kit/Find";
 import { ListPage } from "../_kit/ListPage";
 
 // Needs data: the real count of stocks analysed and the count that passed the filters; these two are placeholders.
@@ -22,7 +21,11 @@ function Worth() {
     <ListPage
       eyebrow={t(scope === "all" ? "v2.universeS" : "v2.follow")}
       title={scope === "all" ? t("v2.universe") : fill(t("v3.followN"), { n: base.length })}
-      sub={scope === "all" ? t("v2.universeP") : t("v2.followP")}
+      sub={fill(t("v3.funnelLine"), {
+        a: UNIVERSE_N.toLocaleString("en-IN"),
+        p: PASSED_N,
+        n: base.length,
+      })}
       updated={t("v3.updatedAt")}
       rows={base}
       chips={[
@@ -43,23 +46,6 @@ function Worth() {
       reasonsOf={reasonText}
       tableCols={["sector", "pe", "growth"]}
       empty={t("v2.noneHere")}
-      top={
-        <>
-          <section className="wl-glance wt-funnel" aria-label={t("v3.funnelT")}>
-            {[
-              [UNIVERSE_N.toLocaleString("en-IN"), t("v3.funAnalysed")],
-              [PASSED_N.toLocaleString("en-IN"), t("v3.funPassed")],
-              [String(base.length), t("v3.funShown")],
-            ].map(([n, l], i) => (
-              <div key={l} className="wl-g" style={{ animationDelay: `${i * 80}ms` }}>
-                <b className="num">{n}</b>
-                <span className="k-note">{l}</span>
-              </div>
-            ))}
-          </section>
-          <Find placeholder={t("v3.findAny")} />
-        </>
-      }
     />
   );
 }

@@ -16,6 +16,8 @@ describe("chart maths", () => {
     expect(rangeStart("1Y", dates)).toBe("2025-11-27");
     expect(rangeStart("6M", dates)).toBe("2026-05-27");
     expect(rangeStart("1M", dates)).toBe("2026-11-26");
+    expect(rangeStart("5D", dates)).toBe("2021-11-26");
+    expect(rangeStart("1W", dates)).toBe("2026-11-26");
     expect(rangeStart("All", dates)).toBe("2021-11-26");
     expect(rangeStart("5Y", dates)).toBe("2025-11-27"); // first date on or after 5 years back
   });

@@ -50,14 +50,10 @@
   font-size: var(--fs-body);
   cursor: pointer;
   transition:
-    background 0.15s var(--ease),
-    transform 0.1s var(--ease);
+    background 0.15s var(--ease),;
 }
 .k-chipbtn:hover {
   background: var(--c2);
-}
-.k-chipbtn:active {
-  transform: scale(0.97);
 }
 .k-chipbtn[aria-pressed="true"] {
   background: var(--tonal);
@@ -187,9 +183,7 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition:
-    transform 0.15s var(--ease),
-    color 0.15s var(--ease);
+  transition: color 0.15s var(--ease);
 }
 .k-star:hover {
   background: var(--c2);
@@ -246,7 +240,6 @@
 @keyframes k-fade {
   from {
     opacity: 0;
-    transform: translateY(var(--sp-2));
   }
 }
 .k-in {
@@ -571,12 +564,10 @@
   font: inherit;
   cursor: pointer;
   transition:
-    border-color 0.15s var(--ease),
-    transform 0.15s var(--ease);
+    border-color 0.15s var(--ease),;
 }
 .k-peer:hover {
   border-color: var(--primary);
-  transform: translateY(-2px);
 }
 .sk-btn[aria-pressed="true"] {
   background: var(--tonal);
@@ -942,9 +933,6 @@
 .k-gnav a:hover {
   background: var(--c2);
 }
-.k-gnav a:active {
-  transform: scale(0.97);
-}
 .k-gnav a[aria-current="true"] {
   background: var(--tonal);
   color: var(--on-tonal);
@@ -953,13 +941,6 @@
   margin: 0 0 var(--sp-6);
   scroll-margin-top: calc(var(--sp-6) + var(--sp-4));
   animation: k-fade 0.4s var(--ease) both;
-}
-@supports (animation-timeline: view()) {
-  .k-group {
-    animation: k-fade linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 35%;
-  }
 }
 .k-group-h {
   display: flex;
@@ -986,13 +967,7 @@
 .k-chipbtn {
   transition:
     background 0.18s var(--ease),
-    transform 0.12s var(--ease),
     box-shadow 0.18s var(--ease);
-}
-.sk-btn:active,
-.k-seg button:active,
-.k-chipbtn:active {
-  transform: scale(0.97);
 }
 /* shimmer while a part loads */
 .k-skel {
@@ -1120,12 +1095,10 @@
   border-radius: var(--r-card);
   animation: k-fade 0.4s var(--ease) both;
   transition:
-    border-color 0.18s var(--ease),
-    transform 0.18s var(--ease);
+    border-color 0.18s var(--ease),;
 }
 .wl-g:hover {
   border-color: var(--line);
-  transform: translateY(-2px);
 }
 .wl-g b {
   font-size: var(--fs-title);

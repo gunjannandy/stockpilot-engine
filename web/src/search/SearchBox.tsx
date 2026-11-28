@@ -1,6 +1,8 @@
 // The top-bar search. `/` focuses it (Shell owns that key); typing lists matches; Enter or a click opens the stock.
 import { useNavigate } from "@tanstack/react-router";
 import { forwardRef, useEffect, useMemo, useState } from "react";
+import { UNIVERSE } from "../panes/_kit/data";
+import { useWatch, watch } from "../panes/_kit/watch";
 import { useWords } from "../words";
 import { createSearch, type Entry } from "./core";
 
@@ -14,7 +16,11 @@ export const SearchBox = forwardRef<HTMLInputElement, { entries?: Entry[] }>(fun
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState<Entry[]>([]);
   const [q, setQ] = useState("");
-  const entries = given ?? loaded;
+  const w = useWatch();
+  // Preview only: with no search index file, search the made-up universe so every stock can be found and starred.
+  const entries =
+    given ?? (loaded.length ? loaded : UNIVERSE.map((u) => ({ symbol: u.symbol, name: u.name })));
+  const idOf = (symbol: string) => UNIVERSE.find((u) => u.symbol === symbol)?.id;
 
   useEffect(() => {
     if (given) return;
@@ -53,10 +59,24 @@ export const SearchBox = forwardRef<HTMLInputElement, { entries?: Entry[] }>(fun
         <ul className="search-results" aria-label={t("search.list")}>
           {found.length === 0 ? <li className="note">{t("search.none")}</li> : null}
           {found.map((e) => (
-            <li key={`${e.exchange}-${e.symbol}`}>
+            <li key={`${e.exchange}-${e.symbol}`} className="search-row">
               <button type="button" onClick={() => open(e)}>
                 <b>{e.symbol}</b> <span>{e.name}</span>
               </button>
+              {idOf(e.symbol) ? (
+                <button
+                  type="button"
+                  className="search-star"
+                  aria-pressed={w.star.has(idOf(e.symbol) as string)}
+                  aria-label={t("v2.watchStar")}
+                  title={t("v2.watchStar")}
+                  onClick={() =>
+                    watch.toggleStar(idOf(e.symbol) as string, t("v2.added"), t("v2.removed"))
+                  }
+                >
+                  {w.star.has(idOf(e.symbol) as string) ? "★" : "☆"}
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>

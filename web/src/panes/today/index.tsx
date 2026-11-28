@@ -31,37 +31,6 @@ const GROUPS = [
   { id: "odd", t: "v2.secOdd", p: "v2.secOddP", cls: "r-watch" },
 ] as const;
 
-function Health() {
-  const t = useWords();
-  const rising = useCountUp(64);
-  return (
-    <Tile title={t("v3.marketHealth")}>
-      <dl className="k-kv td-health">
-        <dt>{t("v2.tRise")}</dt>
-        <dd>
-          <b className="num">{Math.round(rising)}%</b>{" "}
-          <span className="k-note">{t("v2.tRiseS")}</span>
-        </dd>
-        <dt>{t("v2.tNifty")}</dt>
-        <dd>
-          <b className="up">▲ {t("v2.up")}</b> <span className="num k-note">26,182 {pct(0.4)}</span>
-        </dd>
-        <dt>{t("v2.tLevel")}</dt>
-        <dd>
-          <b>{t("v2.fairW")}</b>
-          <span className="td-band" aria-hidden="true">
-            <i style={{ left: "52%" }} />
-          </span>
-          <span className="td-band-l">
-            <span>{t("v2.cheapW")}</span>
-            <span>{t("v2.dearW")}</span>
-          </span>
-        </dd>
-      </dl>
-    </Tile>
-  );
-}
-
 function InNews({ onPick }: { onPick: (id: string) => void }) {
   const t = useWords();
   const seen = new Set<string>();
@@ -136,9 +105,6 @@ function TodayScreen() {
           {t("v3.print")}
         </button>
       </header>
-      <div className="td-tiles k-in">
-        <Health />
-      </div>
       <InNews onPick={pick} />
       <div className="k-bar td-bar">
         <div className="k-chips">
@@ -164,13 +130,6 @@ function TodayScreen() {
             </button>
           ))}
         </div>
-        <input
-          className="k-input grow"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("v3.filterList")}
-          aria-label={t("v3.filterList")}
-        />
         <Seg
           label={t("v3.listView")}
           value={view}

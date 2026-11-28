@@ -78,8 +78,7 @@
   font-size: var(--fs-body);
   cursor: pointer;
   transition:
-    border-color 0.15s var(--ease),
-    transform 0.15s var(--ease);
+    border-color 0.15s var(--ease),;
 }
 .td-ntile:hover {
   border-color: var(--primary);

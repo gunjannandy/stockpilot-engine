@@ -539,7 +539,23 @@ ul {
   list-style: none;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-card);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.search-row {
+  display: flex;
+  align-items: center;
+}
+.search-results .search-row > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.search-results .search-star {
+  width: 40px;
+  flex: none;
+  text-align: center;
+  font-size: 1.125rem;
+  color: var(--warn);
 }
 .search-results button {
   width: 100%;

@@ -427,41 +427,6 @@ svg.sp.dn path.a {
   font-size: var(--fs-note);
   color: var(--text-2);
 }
-.sk-lg {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-chip);
-  background: var(--surface);
-  color: var(--text-2);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  opacity: 0.55;
-  transition:
-    opacity 0.18s var(--ease),
-    background 0.18s var(--ease),
-    transform 0.12s var(--ease);
-}
-.sk-lg:hover {
-  background: var(--c1);
-}
-.sk-lg:active {
-  transform: scale(0.96);
-}
-.sk-lg[aria-pressed="true"] {
-  opacity: 1;
-  background: var(--selected);
-  border-color: var(--primary);
-  color: var(--text);
-}
-@media (prefers-reduced-motion: reduce) {
-  .sk-lg {
-    transition: none;
-  }
-}
 .sk-legend span {
   display: inline-flex;
   align-items: center;
@@ -569,4 +534,47 @@ svg.sp.dn path.a {
 }
 .sk-list .lrow[aria-current="true"] {
   background: var(--selected);
+}
+
+/* The pane is a stack of separate cards, each with its own heading. */
+.sk-pane {
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+.sk {
+  display: grid;
+  gap: var(--sp-3);
+}
+.sk-top,
+.sk > .sk-sec {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  overflow: clip;
+}
+.sk > .sk-sec {
+  padding: var(--sp-4) var(--sp-5);
+  gap: var(--sp-3);
+}
+.sk-stt h3 {
+  font-size: var(--fs-section);
+  font-weight: 800;
+}
+.k-raw td:first-child {
+  color: var(--text-2);
+}
+
+.sk-open {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+.sk-open .sk-ib,
+.sk-lyr .sk-ib {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--text);
+  text-decoration: none;
 }

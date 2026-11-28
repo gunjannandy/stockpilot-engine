@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Pane as PaneDef } from "../../areas";
 import { Pane } from "../../panekit";
 import { useWords } from "../../words";
-import { Group, GroupNav } from "../_kit/ui";
+import { Group } from "../_kit/ui";
 import { Controls } from "../adminctl/Controls";
 
 type Overview = AdminOverview;
@@ -59,19 +59,7 @@ function AdminPane() {
       <header className="k-head">
         <p className="k-eyebrow">{t("shell.nav.admin")}</p>
         <h1>{t("admin.headline")}</h1>
-        <p>{t("admin.sub")}</p>
       </header>
-      <GroupNav
-        label={t("v3.groupsNav")}
-        items={[
-          { id: "needs", label: t("admin.needs") },
-          { id: "fresh", label: t("admin.freshS") },
-          { id: "runs", label: t("admin.runs") },
-          { id: "problems", label: t("admin.problems") },
-          { id: "usage", label: t("admin.usage") },
-          { id: "controls", label: t("admin.controls") },
-        ]}
-      />
       <Pane<Overview>
         id="admin"
         title={t("admin.title")}
@@ -80,29 +68,9 @@ function AdminPane() {
         updatedAt={(d) => d.at}
       >
         {(d) => {
-          const fresh = d.freshness.filter((f) => f.state === "fresh").length;
-          const failed = d.runs.filter((r) => r.status === "failed").length;
           const top = Math.max(1, ...d.usage.map((u) => u.n));
           return (
             <>
-              <div className="wl-glance">
-                {[
-                  [t("admin.needs"), String(d.needs_you.length), d.needs_you.length ? "dn" : "up"],
-                  [
-                    t("admin.freshS"),
-                    `${fresh}/${d.freshness.length}`,
-                    fresh === d.freshness.length ? "up" : "dn",
-                  ],
-                  [t("admin.failedRuns"), String(failed), failed ? "dn" : "up"],
-                  [t("admin.problems"), String(d.problems.length), d.problems.length ? "dn" : "up"],
-                ].map(([k, v, tone], i) => (
-                  <div key={k} className="wl-g" style={{ animationDelay: `${i * 60}ms` }}>
-                    <span className="k-eyebrow">{k}</span>
-                    <b className={`num ${tone}`}>{v}</b>
-                  </div>
-                ))}
-              </div>
-
               <Group id="needs" title={t("admin.needs")} sub={t("admin.needsP")}>
                 {d.needs_you.length === 0 ? (
                   <p className="ad-ok" data-testid="admin-nothing">
@@ -207,9 +175,10 @@ function AdminPane() {
           );
         }}
       </Pane>
-      <Group id="controls" title={t("admin.controls")} sub={t("admin.controlsP")}>
+      <details className="ad-adv">
+        <summary>{t("admin.controls")}</summary>
         <Controls />
-      </Group>
+      </details>
     </div>
   );
 }

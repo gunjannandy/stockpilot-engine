@@ -52,3 +52,13 @@ Older lane branches compared with preview/V3: MARKS identical; STOCK, FUNDS, ADM
 
 ## How to check
 `pnpm gen`, then in `web/`: `npx vite build && npx vite preview --port 4173`; screenshot with Playwright at 1440 and 400 px, light and dark. Admin and Feedback need `/api/admin` and `/api/feedback` answers; mock them when there is no backend.
+
+## Round 2 (owner feedback, applied)
+- Stock page: daily-numbers table removed; a compact Key numbers table (range, volume, delivery, P/E, ROE, debt, growth, swing, fall, holding, results) against the sector. The pane is now a stack of separate cards, each with its own heading.
+- Chart: plain text legend again; Layers is one small icon with a checkbox popover; ranges 5D, 1W, 1M, 6M, 1Y, 5Y, All; zoom is two buttons; Reset removed; Open in is two small icons (Kite, Screener); the library logo is hidden and credited in the hint line (Lightweight Charts, TradingView).
+- Today: market card removed. Worth following: no cards, one-sentence heading. Watchlist: cards and add box removed.
+- No in-page search bars: the top search finds any stock and has a star on each result. Preview only: it falls back to the made-up universe because there is no search index file.
+- Admin: glance cards and jump row removed; switches folded under one heading (owner questions whether they are needed). Feedback: back to a v2-style box and status cards.
+- Motion trimmed to DESIGN.md (opacity and colour only, nothing moves layout).
+- Open: chart library swap (needs an owner decision, see review post), whether Admin switches stay, 5D and 1W look the same on daily data, the /stock page still has its own filter box.
+- Lesson: read DESIGN.md and the v2/v10 shots in `docs/prototypes/v2/shots` and `legacy/web` BEFORE changing a screen; they are in the engine.

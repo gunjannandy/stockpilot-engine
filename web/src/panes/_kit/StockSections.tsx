@@ -1,5 +1,4 @@
 // The stock page's v2 sections, rebuilt for v3: changed band, call card, numbers in plain words, holding, news, similar companies.
-import { useMemo, useState } from "react";
 import { useWords } from "../../words";
 import { Analyse } from "./Analyse";
 import {
@@ -367,71 +366,66 @@ export function PeersSec({ st, onPick }: { st: SampleStock; onPick: (id: string)
 
 export { stockById, RS, Icon };
 
-/** The raw numbers behind the chart: one row a day, newest first, to copy or download. */
-export function RawSec({ st }: { st: SampleStock }) {
+/** The numbers that matter in one dense table: this stock against its sector, the way v2 showed them. */
+export function KeyNumbers({ st }: { st: SampleStock }) {
   const t = useWords();
-  const [n, setN] = useState(15);
-  const rows = useMemo(() => [...barsOf(st)].reverse(), [st]);
-  const shown = rows.slice(0, n);
-  const csv = () => {
-    const head = "date,open,high,low,close,volume";
-    const body = rows.map((b) => [b.time, b.open, b.high, b.low, b.close, b.volume].join(","));
-    const url = URL.createObjectURL(new Blob([[head, ...body].join("\n")], { type: "text/csv" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${st.symbol}-daily.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const names: Record<string, string> = {
+    pe: "v2.fPe",
+    roe: "v2.fRoe",
+    debt: "v2.fDe",
+    growth: "v2.fGr",
+    swing: "v2.fVol",
+    fall: "v2.fDd",
+    trading: "v2.fAdv",
   };
+  const q = quote(st);
+  const lo = Math.min(...q.closes);
+  const hi = Math.max(...q.closes);
+  const seed = st.seed;
+  const rows: { k: string; v: string; sector?: string; better?: string }[] = [
+    { k: t("v3.kn.range"), v: `${money(lo, 0)} – ${money(hi, 0)}` },
+    { k: t("v2.xVolS"), v: `${(0.8 + (seed % 5) * 0.4).toFixed(1)}× ${t("v3.kn.usual")}` },
+    { k: t("v2.xDelivery"), v: `${40 + (seed % 6) * 5}%` },
+    ...facts(st).map((f) => ({
+      k: t(names[f.id] ?? ""),
+      v: f.value,
+      sector: f.sector,
+      better: f.better,
+    })),
+    { k: t("v2.ownHold"), v: `${38 + (seed % 9) * 4}%` },
+    { k: t("v2.ownPledge"), v: `${seed % 4}%` },
+    { k: t("v3.results"), v: ["12 Dec", "5 Jan", "19 Jan", "2 Feb"][seed % 4] ?? "" },
+  ];
   return (
-    <Sec
-      icon="facts"
-      title={t("v3.rawH")}
-      sub={t("v3.rawP")}
-      aside={
-        <button type="button" className="sk-btn" onClick={csv}>
-          {t("v3.rawCsv")}
-        </button>
-      }
-    >
+    <Sec icon="facts" title={t("v3.kn.h")} sub={t("v3.kn.p")}>
       <div className="k-scroll">
         <table className="k-table k-raw">
           <thead>
             <tr>
-              <th>{t("v3.rawDate")}</th>
-              <th className="r">{t("v3.rawOpen")}</th>
-              <th className="r">{t("v3.rawHigh")}</th>
-              <th className="r">{t("v3.rawLow")}</th>
-              <th className="r">{t("v3.rawClose")}</th>
-              <th className="r">{t("v3.rawChg")}</th>
-              <th className="r">{t("v3.rawVol")}</th>
+              <th>{t("v3.kn.num")}</th>
+              <th className="r">{t("v3.kn.this")}</th>
+              <th className="r">{t("v3.kn.sector")}</th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {shown.map((b, i) => {
-              const prev = rows[i + 1]?.close ?? b.open;
-              const ch = (b.close / prev - 1) * 100;
-              return (
-                <tr key={b.time}>
-                  <td className="num">{b.time}</td>
-                  <td className="r num">{b.open.toFixed(2)}</td>
-                  <td className="r num">{b.high.toFixed(2)}</td>
-                  <td className="r num">{b.low.toFixed(2)}</td>
-                  <td className="r num">{b.close.toFixed(2)}</td>
-                  <td className={`r num ${ch >= 0 ? "up" : "dn"}`}>{pct(ch, 2)}</td>
-                  <td className="r num">{b.volume.toLocaleString("en-IN")}</td>
-                </tr>
-              );
-            })}
+            {rows.map((r) => (
+              <tr key={r.k}>
+                <td>{r.k}</td>
+                <td className="r num">
+                  <b>{r.v}</b>
+                </td>
+                <td className="r num">{r.sector ?? ""}</td>
+                <td>
+                  {r.better ? (
+                    <span className={`k-pill ${r.better}`}>{t(`v3.vs.${r.better}`)}</span>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-      {n < rows.length ? (
-        <button type="button" className="sk-btn" onClick={() => setN(n + 30)}>
-          {t("v3.rawMore")}
-        </button>
-      ) : null}
-      <p className="k-note">{t("v3.rawNeeds")}</p>
     </Sec>
   );
 }

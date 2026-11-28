@@ -10,9 +10,9 @@ import {
   ChangedBand,
   FactsSec,
   HoldingSec,
+  KeyNumbers,
   NewsSec,
   PeersSec,
-  RawSec,
 } from "../_kit/StockSections";
 import { Toast } from "../_kit/Toast";
 import { StockRow } from "../_kit/ui";
@@ -61,34 +61,41 @@ function _Meter({ v }: { v: number }) {
 
 function OpenIn({ st }: { st: SampleStock }) {
   const t = useWords();
-  const [open, setOpen] = useState(false);
   const l = openLinks(st);
   return (
-    <span className="sk-lyr">
-      <button
-        type="button"
-        className="sk-btn"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+    <span className="sk-open">
+      <a
+        className="sk-ib"
+        href={l.kite}
+        target="_blank"
+        rel="noreferrer noopener"
+        aria-label={t("stock.kite")}
+        title={t("stock.kite")}
       >
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
           <path
-            d="M14 3v2h3.6l-9.8 9.8 1.4 1.4L19 6.4V10h2V3h-7ZM5 5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6h-2v6H5V7h6V5H5Z"
+            d="M12 2 4 10l8 12 8-12-8-8Zm0 4.4 3.6 3.6L12 15.4 8.4 10 12 6.4Z"
             fill="currentColor"
           />
         </svg>
-        {t("stock.openIn")}
-      </button>
-      {open && (
-        <div className="sk-menu">
-          <a className="sk-mi" href={l.kite} target="_blank" rel="noreferrer noopener">
-            {t("stock.kite")}
-          </a>
-          <a className="sk-mi" href={l.screener} target="_blank" rel="noreferrer noopener">
-            {t("stock.screener")}
-          </a>
-        </div>
-      )}
+        <span className="sr">{t("stock.kite")}</span>
+      </a>
+      <a
+        className="sk-ib"
+        href={l.screener}
+        target="_blank"
+        rel="noreferrer noopener"
+        aria-label={t("stock.screener")}
+        title={t("stock.screener")}
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path
+            d="M4 20V4h2v14h14v2H4Zm4-4 3-5 3 3 5-7 1.6 1.2-6.2 8.600-3-3-2.600 4.400L8 16Z"
+            fill="currentColor"
+          />
+        </svg>
+        <span className="sr">{t("stock.screener")}</span>
+      </a>
     </span>
   );
 }
@@ -113,27 +120,29 @@ export function Detail({
       : t("stock.liveMin").replace("{n}", String(Math.round(st.ageSeconds / 60)));
   return (
     <article className="sk">
-      <header className="sk-head">
-        <div className="sk-hl">
-          <span className={`chip v-${st.verdict}`}>{t(`stock.verdict.${st.verdict}`)}</span>
-          <h2>{st.name}</h2>
-          <p className="note">
-            {st.symbol} · {st.sector} · {st.exchange}
-          </p>
-        </div>
-        <div className="sk-hr">
-          <p className="px num">{money(last)}</p>
-          <p className="sk-pl">
-            <span className={day >= 0 ? "up" : "dn"}>
-              {day >= 0 ? "+" : "−"}
-              {Math.abs(day).toFixed(1)}% {t("stock.today")}
-            </span>{" "}
-            · {age}
-          </p>
-        </div>
-      </header>
-      <Actions st={st} />
-      <ChangedBand st={st} />
+      <div className="sk-top">
+        <header className="sk-head">
+          <div className="sk-hl">
+            <span className={`chip v-${st.verdict}`}>{t(`stock.verdict.${st.verdict}`)}</span>
+            <h2>{st.name}</h2>
+            <p className="note">
+              {st.symbol} · {st.sector} · {st.exchange}
+            </p>
+          </div>
+          <div className="sk-hr">
+            <p className="px num">{money(last)}</p>
+            <p className="sk-pl">
+              <span className={day >= 0 ? "up" : "dn"}>
+                {day >= 0 ? "+" : "−"}
+                {Math.abs(day).toFixed(1)}% {t("stock.today")}
+              </span>{" "}
+              · {age}
+            </p>
+          </div>
+        </header>
+        <Actions st={st} />
+        <ChangedBand st={st} />
+      </div>
       <section className="sk-sec">
         <div className="sk-sh">
           <span className="sk-ic" aria-hidden="true">
@@ -150,10 +159,10 @@ export function Detail({
         <StockChart bars={bars} call={call} trades={st.trades} extra={<OpenIn st={st} />} />
       </section>
       <CallSec st={st} />
+      <KeyNumbers st={st} />
       <FactsSec st={st} />
       <HoldingSec st={st} />
       <NewsSec st={st} />
-      <RawSec st={st} />
       <PeersSec st={st} onPick={(id) => onPick?.(id)} />
     </article>
   );
