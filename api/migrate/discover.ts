@@ -11,16 +11,14 @@ export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../.."
 const srcDir = (root: string) => join(root, "api/src");
 
 export function areaNames(root = repoRoot): string[] {
-  return (
-    readdirSync(srcDir(root), { withFileTypes: true })
-      .filter((d) => d.isDirectory() && d.name !== "generated")
-      .map((d) => d.name)
-      .filter((n) =>
-        ["routes.ts", "checks.ts", "migrations"].some((f) => existsSync(join(srcDir(root), n, f))),
-      )
-      // `auth` first whatever its neighbours are called: its guard must be installed before any route reads it.
-      .sort((a, b) => (a === "auth" ? -1 : b === "auth" ? 1 : a < b ? -1 : a > b ? 1 : 0))
-  );
+  return readdirSync(srcDir(root), { withFileTypes: true })
+    .filter((d) => d.isDirectory() && d.name !== "generated")
+    .map((d) => d.name)
+    .filter((n) =>
+      ["routes.ts", "checks.ts", "migrations"].some((f) => existsSync(join(srcDir(root), n, f))),
+    )
+    // `auth` first whatever its neighbours are called: its guard must be installed before any route reads it.
+    .sort((a, b) => (a === "auth" ? -1 : b === "auth" ? 1 : a < b ? -1 : a > b ? 1 : 0));
 }
 
 export function migrationFiles(root = repoRoot): Migration[] {

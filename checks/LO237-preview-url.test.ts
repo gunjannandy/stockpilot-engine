@@ -4,7 +4,5 @@ import { expect, it } from "vitest";
 
 it("wrangler.toml sets PREVIEW_URL to the preview Worker address", () => {
   const toml = readFileSync(new URL("../wrangler.toml", import.meta.url), "utf8");
-  expect(toml).toMatch(
-    /^PREVIEW_URL = "https:\/\/stockpilot-preview\.stockpilotgn\.workers\.dev"$/m,
-  );
+  expect(toml).toMatch(/^PREVIEW_URL = "https:\/\/stockpilot-preview\.stockpilotgn\.workers\.dev"$/m);
 });

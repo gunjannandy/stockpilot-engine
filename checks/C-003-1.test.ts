@@ -3,9 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { makeAuthApp, OWNER } from "../api/src/auth/testkit";
 
 const restores: (() => void)[] = [];
-afterEach(() => {
-  for (const r of restores.splice(0)) r();
-});
+afterEach(() => { for (const r of restores.splice(0)) r(); });
 
 describe("C-003-1 separate preview sign-in", () => {
   it("refuses each side's cookie on the other, under either cookie name", async () => {
@@ -19,8 +17,7 @@ describe("C-003-1 separate preview sign-in", () => {
     expect(p?.cookie).toMatch(/^__Host-sp=/);
     expect(v?.cookie).toMatch(/^__Host-sp_preview=/);
     const value = (c?: { cookie: string }) => (c?.cookie ?? "").split("=").slice(1).join("=");
-    const ask = (t: typeof prod, cookie: string) =>
-      t.app.request("/api/me", { headers: { cookie } });
+    const ask = (t: typeof prod, cookie: string) => t.app.request("/api/me", { headers: { cookie } });
     expect((await ask(prod, p?.cookie ?? "")).status).toBe(200);
     expect((await ask(preview, v?.cookie ?? "")).status).toBe(200);
     for (const name of ["__Host-sp", "__Host-sp_preview"]) {
@@ -29,9 +26,7 @@ describe("C-003-1 separate preview sign-in", () => {
     }
   });
   it("will not let a preview reuse production's secret", async () => {
-    const t = await makeAuthApp({
-      auth: { SP_ENV: "preview", SP_PREVIEW_COOKIE_KEY: "p".repeat(40) },
-    });
+    const t = await makeAuthApp({ auth: { SP_ENV: "preview", SP_PREVIEW_COOKIE_KEY: "p".repeat(40) } });
     restores.push(t.bridge.restore);
     expect((await t.post("/login", { email: OWNER })).status).toBe(503);
   });
