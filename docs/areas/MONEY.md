@@ -46,7 +46,9 @@ Status: done
 - Chapter 8: re-checked #218 after C-069-2 passed. Every module still has live importers outside this area (`jobs/docs.py` imports acted and lots; `forecast.py`, `verify/*`, `dossier.py`, `fundcall.py`, `asks.py`, `analysis/{allocation,fundreview,opportunities}.py` import positions, record, units; all `trades/*` parsers import `Trade` from lots) plus about 30 tests. Deleting now would break CI, which the rules forbid, so the deletion stays left out; each module goes with its last importer when that area ports. Not a blocker.
 - Beta and US split terms: left out, no free source.
 
+- Chapter 9: nothing new to build; branch matches the open PR, Status stays done. #218 deletion stays left out (live importers in other areas, rules forbid breaking CI). The Opus money-correctness review is the next chapter.
+
 ## Blocked
 none
 
-Chapter end: 8
+Chapter end: 9
