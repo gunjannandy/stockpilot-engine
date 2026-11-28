@@ -5,3 +5,7 @@ create table if not exists us_prices (
   close real not null,
   primary key (symbol, date)
 );
+-- The `usprices` dataset's table: one summary row per daily run.
+create table if not exists usprices_runs (
+  id text primary key, day text not null, symbols integer not null, rows integer not null, held_back integer not null
+);

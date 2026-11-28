@@ -25,7 +25,7 @@ import {
 } from "../../../money/src/tax/tax";
 import { type Flow, returnVsNifty, xirr } from "../../../money/src/xirr/xirr";
 import { type Ctx, rawBody } from "../app";
-import { loadRateOn } from "../fx/rates";
+import { loadRateOn, refreshRates } from "../fx/rates";
 import { loadRebuild } from "../lots/load";
 
 export default function routes(ctx: Ctx) {
@@ -231,6 +231,34 @@ export default function routes(ctx: Ctx) {
         .bind(post.data.symbol.toUpperCase(), r.date, r.close)
         .run();
     return c.json({ stored: post.data.rows.length });
+  });
+
+  // What the Job needs to ask for: dollar symbols still held, and where to start prices and USD/INR.
+  app.get("/api/money/us-symbols", ctx.guard.ingest, async (c) => {
+    const built = await loadRebuild(ctx.d1, {});
+    const open = built.lots.filter(
+      (l) => l.currency !== "INR" && l.quantity - l.closedQuantity > 1e-9,
+    );
+    const first = open.map((l) => l.acquiredOn).sort()[0] ?? ctx.now().toISOString().slice(0, 10);
+    return c.json(
+      UsSymbols.parse({
+        symbols: [...new Set(open.map((l) => l.symbol))].sort(),
+        since: first,
+        fx_since: first,
+      }),
+    );
+  });
+
+  // The Job asks for USD/INR to be filled up to today, from the free ECB feed (best effort, rows added).
+  app.post("/api/money/fx-refresh", ctx.guard.ingest, async (c) => {
+    const today = ctx.now().toISOString().slice(0, 10);
+    let since = today;
+    try {
+      const body = JSON.parse(rawBody(c)) as { since?: unknown };
+      if (typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since))
+        since = body.since;
+    } catch {}
+    return c.json({ added: await refreshRates(ctx.d1, today, since) });
   });
 
   // The dollar holding (RSUs and any other USD lot) valued at the newest stored close and rate. Tax assumes the

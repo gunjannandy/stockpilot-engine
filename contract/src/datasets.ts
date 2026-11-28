@@ -12,6 +12,7 @@ import {
 } from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
+import { UsPricesRun } from "./money/money";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -157,6 +158,19 @@ export const datasets = {
     rowCheck: factsRowCheck,
     run: { at: "03:00", on: "every" },
     runCheck: (run) => (run.rowCount < FACTS_MIN ? "fewer than 100 stocks" : null),
+  },
+  usprices: {
+    name: "usprices",
+    job: "usprices",
+    table: "usprices_runs",
+    schedule: "every day at 06:30 IST",
+    freshnessHours: 72,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 300,
+    row: UsPricesRun,
+    run: { at: "06:30", on: "every" },
   },
   history: {
     name: "history",

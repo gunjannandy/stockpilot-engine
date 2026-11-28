@@ -143,3 +143,21 @@ export const RsuResponse = z.object({
   warnings: z.array(z.string()),
 });
 export type RsuResponse = z.infer<typeof RsuResponse>;
+
+/** One row a day for the `usprices` dataset: what the daily run did. The closes go to `POST /api/money/us-prices`. */
+export const UsPricesRun = z.object({
+  id: z.string().min(1),
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  symbols: z.number().int().min(0),
+  rows: z.number().int().min(0),
+  held_back: z.number().int().min(0),
+});
+export type UsPricesRun = z.infer<typeof UsPricesRun>;
+
+/** `GET /api/money/us-symbols` (the usprices Job): the dollar stocks still held and the day to load from. */
+export const UsSymbols = z.object({
+  symbols: z.array(z.string()),
+  since: z.string(),
+  fx_since: z.string(),
+});
+export type UsSymbols = z.infer<typeof UsSymbols>;
