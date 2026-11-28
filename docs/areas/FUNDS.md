@@ -3,6 +3,7 @@
 Status: building
 
 ## Done
+- Held-fund call (`held_calls`: Add/Keep/Review/No data with the measured chance) and `score_calls` (past published calls scored against the category middle after 12 months): `py/stockpilot/jobs/funds/calls.py`.
 - Funds Job: `py/stockpilot/jobs/funds/__init__.py`, workflow `.github/workflows/funds.yml` (allowed in `checks/MOVE-2.py`).
 - Dataset `funds` (schemes with stats and NAVs): `contract/src/funds/funds.ts`, registered in `contract/src/datasets.ts`.
 - API: `api/src/funds/routes.ts`, migration `api/src/funds/migrations/`, tests `api/src/funds/funds.test.ts`.
@@ -14,7 +15,7 @@ Status: building
 ## Next
 - [ ] Confirm `gate` is green on PR #69 and it merges.
 - [ ] Find a source each of the 10 houses serves to Actions (`config/fund_house_sources.json` has 5 of 10 unfound); until then they report 'cannot be fetched' in the run's lines.
-- [ ] Held-fund call (Keep/Add/Switch/Review, private on the VM): reuse `py/stockpilot/fundcall.py` and the `fund_calls` rate by quartile; then the scored-later track record of past published calls. Was: weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
+- [x] Held-fund call and scored-later track record: `held_calls` and `score_calls` in `py/stockpilot/jobs/funds/calls.py` (tests beside). Remaining: the VM caller passes held ids and past published rows to them (private side, outside this repo's data). Was: weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
 - [x] Fund detail report: see section below.
 - [ ] Unit checks: overlap from fixtures, returns/rolling/falls/cost/size from fixtures.
 
@@ -32,9 +33,10 @@ Not supportable free: exit load, fund manager and tenure, official benchmark and
 
 - `fund_calls` is built inside the funds Job from the rows it just read (no new workflow, no cross-dataset read); public visibility because it holds no holdings.
 - Track record is a backtest on the weekly NAVs (only funds alive today, caveat carried in every row), until real past calls exist to score.
+- `held_calls` takes held ids from the caller and stores nothing, so no holdings reach the public engine; it uses the same screen and base rate as Buy/Watch rather than fundcall.py's heavier flow (switch costs, tax and model view stay on the VM).
 - Buy needs top quarter on 3 years, last year above category middle, at most 15% of rolling years lost, size 500 crore+, cost known; otherwise Watch.
 
 ## Blocked
 - Nothing yet.
 
-Chapter end: 2
+Chapter end: 3

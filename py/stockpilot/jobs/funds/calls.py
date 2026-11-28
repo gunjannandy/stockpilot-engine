@@ -143,3 +143,62 @@ def build(rows: list[dict], as_of: str) -> list[dict]:
             "caveat": CAVEAT, "as_of": as_of,
         })
     return out
+
+
+# ---- held funds (the caller passes the held ids; nothing about holdings is stored or published here) ----
+
+def held_calls(rows: list[dict], held_ids: list[str], as_of: str) -> list[dict]:
+    """One call per held fund found in rows: Add (the screen would Buy it), Keep (top half of its category),
+    Review (bottom half, last year below the category and rolling years lost), or No data. The chance is the same
+    measured base rate by kind and quartile, None when the cases are too few."""
+    rates = base_rates(rows)
+    screened = {s["row"]["id"]: s for s in screen(rows)}
+    by_id = {r["id"]: r for r in rows}
+    out = []
+    for fid in held_ids:
+        r = by_id.get(fid)
+        if r is None or r.get("r3") is None or not r.get("category"):
+            out.append({"id": fid, "call": "No data", "chance": None, "cases": None,
+                        "reasons": "not enough NAV history or category peers", "as_of": as_of})
+            continue
+        s = screened.get(fid)
+        peers = [p["r3"] for p in rows if p.get("category") == r["category"] and p.get("r3") is not None]
+        rank = 1 + sum(v > r["r3"] for v in peers)
+        quartile = math.ceil(4 * rank / len(peers))
+        if s and s["call"] == "buy":
+            call, why = "Add", "top quarter of its category on 3 years and nothing weak"
+        elif s:
+            call, why = "Keep", "; ".join(s["reasons"]) or "top half of its category on 3 years"
+        elif r.get("r1") is not None and r.get("cat_r1") is not None and r["r1"] < r["cat_r1"] \
+                and (r.get("roll_loss_share") or 0) > BUY_MAX_LOSS_SHARE:
+            call, why = "Review", "bottom half on 3 years, below the category last year, and rolling years lost money"
+        else:
+            call, why = "Keep", "bottom half on 3 years but no other weakness"
+        rate = rate_for(rates, r["category"], quartile)
+        out.append({"id": fid, "call": call, "quartile": quartile,
+                    "chance": round(rate["hit_rate"], 3) if rate else None,
+                    "cases": rate["n"] if rate else None, "reasons": why, "caveat": CAVEAT, "as_of": as_of})
+    return out
+
+
+def score_calls(past: list[dict], rows: list[dict], today: str) -> dict:
+    """Score earlier published calls once 12 months have passed: did the fund beat its category's middle fund over the
+    year after the call? past rows need id, call, as_of. Returns {call: {n, hits, hit_rate}}; unscored ones are left out."""
+    grids = {r["id"]: month_grid(_navs(r)) for r in rows}
+    cat_of = {r["id"]: r.get("category") for r in rows}
+    t_now = _month(today)
+    tally: dict[str, dict] = {}
+    for p in past:
+        t = _month(p["as_of"])
+        grid = grids.get(p["id"], {})
+        if not p.get("call") or t + HORIZON_MONTHS > t_now or t not in grid or t + HORIZON_MONTHS not in grid:
+            continue
+        peers = [g for fid, g in grids.items()
+                 if cat_of[fid] == cat_of[p["id"]] and t in g and t + HORIZON_MONTHS in g]
+        if len(peers) < MIN_PEERS:
+            continue
+        middle = median(g[t + HORIZON_MONTHS] / g[t] - 1 for g in peers)
+        q = tally.setdefault(p["call"], {"n": 0, "hits": 0})
+        q["n"] += 1
+        q["hits"] += grid[t + HORIZON_MONTHS] / grid[t] - 1 > middle
+    return {k: {"n": v["n"], "hits": v["hits"], "hit_rate": v["hits"] / v["n"]} for k, v in tally.items()}

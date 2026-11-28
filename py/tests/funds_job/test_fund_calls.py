@@ -50,3 +50,22 @@ def test_steady_leaders_keep_winning_in_the_track_record():
     top = rates[("Equity Scheme", 1)]
     assert top["hit_rate"] == 1.0 and top["periods"] >= 2
     assert rates[("Equity Scheme", 4)]["hit_rate"] == 0.0
+
+
+def test_held_calls_add_keep_review_and_no_data():
+    rows = universe()
+    rows[2].update(r1=0.0, roll_loss_share=0.5)            # weak fund, below category last year, losing years
+    out = {c["id"]: c for c in calls.held_calls(rows, ["f10", "f7", "f2", "f1", "zz"], "2026-11-27")}
+    assert out["f10"]["call"] == "Add"
+    assert out["f7"]["call"] == "Keep"
+    assert out["f2"]["call"] == "Review"
+    assert out["f1"]["call"] == "Keep" and "no other weakness" in out["f1"]["reasons"]
+    assert out["zz"]["call"] == "No data" and out["zz"]["chance"] is None
+
+
+def test_score_calls_waits_for_twelve_months_then_scores():
+    rows = universe()
+    past = [{"id": "f11", "call": "Buy", "as_of": "2025-06-30"}, {"id": "f0", "call": "Buy", "as_of": "2025-06-30"},
+            {"id": "f11", "call": "Buy", "as_of": "2026-06-30"}]           # too recent: not scored
+    out = calls.score_calls(past, rows, "2026-11-27")
+    assert out["Buy"]["n"] == 2 and out["Buy"]["hits"] == 1
