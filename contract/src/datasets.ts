@@ -4,6 +4,7 @@ import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 import { FACTS_MIN, FactsRow, factsRowCheck } from "./facts/facts";
 import { FeedbackRow } from "./feedback/feedback";
+import { FUND_CALLS_MIN, FundCallRow, fundCallRowCheck } from "./fundcalls/fundcalls";
 import {
   FUND_HOLDINGS_MIN,
   FundHoldingsRow,
@@ -104,6 +105,24 @@ export const datasets = {
     rowCheck: fundRowCheck,
     run: { at: "21:00", on: "every" },
     runCheck: (run) => (run.rowCount < FUNDS_MIN ? "fewer than 100 funds" : null),
+  },
+  fund_calls: {
+    name: "fund_calls",
+    job: "funds",
+    table: "fund_calls",
+    schedule: "every night at 21:00 IST, with the funds it is built from",
+    freshnessHours: 72,
+    checks: {
+      row: ["a call row has a call", "a chance has its cases"],
+      run: ["at least 5 rows"],
+    },
+    visibility: "private",
+    recomputable: true,
+    writeBudget: 1000,
+    row: FundCallRow,
+    rowCheck: fundCallRowCheck,
+    run: { at: "21:00", on: "every" },
+    runCheck: (run) => (run.rowCount < FUND_CALLS_MIN ? "fewer than 5 rows" : null),
   },
   fund_holdings: {
     name: "fund_holdings",
