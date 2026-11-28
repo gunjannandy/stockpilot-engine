@@ -13,6 +13,8 @@ from statistics import median
 
 from stockpilot.sources import fund_stats, fund_universe
 
+from . import calls
+
 KIND = "funds"
 DATASET = "funds"
 MFAPI_URL = "https://api.mfapi.in/mf/{code}"
@@ -155,4 +157,6 @@ def run(ctx, fetch: Callable[[str], bytes | None] | None = None) -> str:
     day = ctx.range.end
     rows = collect(day, fetch, progress=ctx.progress.line)
     ctx.publish(DATASET, rows, source="amfi+mfapi", as_of=str(day))
-    return f"published {len(rows)} funds"
+    called = calls.build(rows, str(day))
+    ctx.publish("fund_calls", called, source="funds", as_of=str(day))
+    return f"published {len(rows)} funds and {len(called)} fund call rows"

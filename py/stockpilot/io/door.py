@@ -28,7 +28,8 @@ class DoorError(RuntimeError):
 
 
 def urllib_transport(method: str, url: str, headers: dict[str, str], body: bytes | None) -> tuple[int, object]:
-    req = urllib.request.Request(url, data=body, headers=headers, method=method)
+    # Cloudflare refuses Python's default User-Agent on workers.dev (403, error code 1010).
+    req = urllib.request.Request(url, data=body, headers={"user-agent": "stockpilot-job", **headers}, method=method)
     try:
         with urllib.request.urlopen(req, timeout=30) as res:  # noqa: S310 (https endpoint from config)
             return res.status, json.loads(res.read() or b"null")
