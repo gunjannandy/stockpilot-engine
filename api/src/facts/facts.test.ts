@@ -24,6 +24,7 @@ const row = (n: number, over: Partial<FactsRow> = {}): FactsRow => ({
   sentences_json:
     '[{"key":"pe","en":"Priced at 20 times a year\'s profit.","bn":"এক বছরের লাভের ২০ গুণ দামে চলছে।"}]',
   figures_json: '[{"metric":"sales","value":1200,"period":"2026-03-31","source":"nse"}]',
+  similar_json: "[]",
   not_available: "",
   ...over,
 });
