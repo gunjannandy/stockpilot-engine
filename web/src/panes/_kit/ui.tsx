@@ -2,7 +2,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useWords } from "../../words";
 import { sparkPath } from "../stock/sample";
-import { money, quote, type SampleStock } from "./data";
+import { callCard, type Change, money, quote, type SampleStock } from "./data";
 import "./kit.css";
 
 export function Spark({ closes }: { closes: number[] }) {
@@ -29,6 +29,21 @@ export function Meter({ v }: { v: number }) {
         <i style={{ left: `${Math.min(96, Math.max(4, v))}%` }} />
       </span>
       <span className={`sk-mw t-${tone}`}>{t(`stock.meter.${tone}`)}</span>
+    </span>
+  );
+}
+
+/** A change as numbers: the call before and after (when it moved) and the chance before and after. */
+export function ChangeText({ c }: { c: Change }) {
+  const t = useWords();
+  return (
+    <span className="k-chg num">
+      {c.from !== c.to ? (
+        <>
+          {t(`stock.verdict.${c.from}`)}→{t(`stock.verdict.${c.to}`)} ·{" "}
+        </>
+      ) : null}
+      {c.was}→{c.now}%
     </span>
   );
 }
@@ -153,7 +168,7 @@ export function StockRow({
     <div className="k-lrowwrap">
       <button
         type="button"
-        className={`lrow r-${st.verdict}`}
+        className={`lrow r-${st.verdict}${mark ? " is-changed" : ""}`}
         aria-current={active ? "true" : undefined}
         onClick={onClick}
       >
@@ -164,7 +179,13 @@ export function StockRow({
             {st.name}
           </b>
           <span className="ls trunc">
-            {st.symbol} · {st.sector}
+            {mark && callCard(st).changed ? (
+              <ChangeText c={callCard(st).changed as Change} />
+            ) : (
+              <>
+                {st.symbol} · {st.sector}
+              </>
+            )}
           </span>
           {reasons}
         </span>

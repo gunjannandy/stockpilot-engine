@@ -43,8 +43,8 @@
   "theme.dark": "Dark",
   "theme.light": "Light",
   "verdict.buy": "Buy",
-  "verdict.keep": "Keep",
+  "verdict.keep": "Hold",
   "verdict.sell": "Sell",
-  "verdict.weak": "Weak",
+  "verdict.weak": "Trim",
   "view": "Our view"
 }

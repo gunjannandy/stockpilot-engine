@@ -226,10 +226,10 @@
   "touchesCall": "Touches a call",
   "updatedAt": "List updated 11:05 today",
   "verdictLine.buy": "Our forecast is good. A fair place to buy a little.",
-  "verdictLine.keep": "Nothing to do. Keep it.",
+  "verdictLine.keep": "Hold. Nothing to do.",
   "verdictLine.sell": "We think this will do worse than the Nifty, or the reason to own it has gone.",
   "verdictLine.watch": "Not a buy yet. Close enough to keep an eye on.",
-  "verdictLine.weak": "Our forecast is low but nothing has broken. Worth a look, no hurry.",
+  "verdictLine.weak": "Trim. Forecast is low; take some off, do not add.",
   "volUsual": "of the usual volume",
   "vs.better": "Better than sector",
   "vs.same": "Like the sector",
@@ -257,5 +257,6 @@
   "xirrP": "Counts when each rupee went in, not only how much.",
   "xirrSame": "If every rupee had gone into the Nifty on the same days.",
   "xirrUs": "Our return a year",
-  "yourNews": "Your stocks in the news"
+  "yourNews": "Your stocks in the news",
+  "changedAt": "Changed {t}"
 }

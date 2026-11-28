@@ -17,7 +17,7 @@ import {
   similar,
   stockById,
 } from "./data";
-import { Icon, Sec, VChip } from "./ui";
+import { ChangeText, Icon, Sec, VChip } from "./ui";
 import { useWatch, watch } from "./watch";
 
 const fill = (s: string, v: Record<string, string | number>) =>
@@ -62,8 +62,11 @@ export function ChangedBand({ st }: { st: SampleStock }) {
   if (!c || w.seen.has(st.id)) return null;
   return (
     <div className="k-band k-in">
-      <i className="k-dot" />
-      <b>{c}</b>
+      <span className="k-chgchip">
+        <i className="k-dot" />
+        {t("v3.changedAt").replace("{t}", c.at)}
+      </span>
+      <ChangeText c={c} />
       <button type="button" className="k-link" onClick={() => watch.markSeen([st.id])}>
         {t("v2.gotIt")}
       </button>

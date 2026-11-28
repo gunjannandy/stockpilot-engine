@@ -152,12 +152,18 @@ export type CallCardData = {
   couldRise: string;
   track: { n: number; beat: number };
   limited: boolean;
-  changed?: string;
+  /** A change since the last look, as numbers: the call and the chance before and after. */
+  changed?: Change;
+};
+export type Change = { at: string; from: Verdict; to: Verdict; was: number; now: number };
+const CHANGES: Record<string, Change> = {
+  "alpha-steel": { at: "09:42", from: "keep", to: "sell", was: 44, now: 34 },
+  "echo-bank": { at: "08:15", from: "buy", to: "buy", was: 67, now: 74 },
 };
 export function callCard(st: SampleStock): CallCardData {
   const last = quote(st).last;
   const strength = st.strength;
-  const chance = Math.round(30 + strength * 0.5);
+  const chance = CHANGES[st.id]?.now ?? Math.round(30 + strength * 0.5);
   const k = st.verdict === "sell" ? 0.9 : st.verdict === "buy" ? 1.12 : 1.05;
   const held = st.trades.reduce((q, t) => q + (t.kind === "buy" ? t.qty : -t.qty), 0);
   return {
@@ -183,10 +189,7 @@ export function callCard(st: SampleStock): CallCardData {
     couldRise: `${money(last * k, 0)} in 6 months`,
     track: { n: 24, beat: Math.round(8 + strength / 8) },
     limited: st.seed % 7 === 0,
-    changed:
-      st.verdict === "sell" && st.seed === 3
-        ? "Changed 09:42: Keep to Sell. Chance of a gain in 6 months went from 44% to 34%."
-        : undefined,
+    changed: CHANGES[st.id],
   };
 }
 

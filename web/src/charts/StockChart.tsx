@@ -79,9 +79,10 @@ export function StockChart(props: {
   const langKey = words("stock.up");
   const host = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const [range, setRange] = useState<RangeId | null>(
-    () => load<{ r: RangeId }>("sk-range", { r: "1Y" }).r,
-  );
+  const [range, setRange] = useState<RangeId | null>(() => {
+    const r = load<{ r: RangeId }>("sk-range", { r: "1Y" }).r;
+    return RANGES.includes(r) ? r : "1Y";
+  });
   const [menu, setMenu] = useState(false);
   const lastIdx = useRef(0);
   const [layers, setLayers] = useState<Record<Layer, boolean>>(() =>

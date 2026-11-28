@@ -42,9 +42,9 @@
   "theme": "থিম",
   "theme.dark": "গাঢ়",
   "theme.light": "হালকা",
-  "verdict.buy": "কিনুন",
-  "verdict.keep": "ধরে রাখুন",
-  "verdict.sell": "বেচুন",
-  "verdict.weak": "দুর্বল",
+  "verdict.buy": "Buy",
+  "verdict.keep": "Hold",
+  "verdict.sell": "Sell",
+  "verdict.weak": "Trim",
   "view": "আমাদের মত"
 }

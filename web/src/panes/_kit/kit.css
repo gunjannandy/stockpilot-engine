@@ -131,24 +131,66 @@
 }
 .k-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: var(--sp-2);
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
   border-radius: 50%;
-  background: var(--warn);
+  background: var(--mark);
   vertical-align: middle;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--mark) 60%, transparent);
+  animation: k-ping 1.6s var(--ease) 0.3s 2 both;
+}
+@keyframes k-ping {
+  70% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--mark) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+/* the change itself, in numbers: Hold→Sell · 44→34% */
+.k-chg {
+  color: var(--mark-ink);
+  font-weight: 700;
 }
 .k-band {
   display: flex;
-  gap: var(--sp-3);
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
   align-items: center;
-  padding: var(--sp-3) var(--sp-4);
-  border-left: 4px solid var(--warn);
+  padding: var(--sp-2) var(--sp-4);
   background: var(--c1);
   border-bottom: 1px solid var(--line-2);
+  font-size: var(--fs-cell);
 }
-.k-band b {
+.k-band > b {
   flex: 1;
+}
+.k-band .k-link {
+  margin-left: auto;
+}
+.k-chgchip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--mark) 16%, var(--surface));
+  color: var(--mark-ink);
+  font-weight: 700;
+  font-size: var(--fs-note);
+}
+/* a changed row glows amber once when it first shows, then rests with its dot */
+.lrow.is-changed {
+  animation: k-glow 2.4s var(--ease) 0.2s both;
+}
+@keyframes k-glow {
+  0% {
+    background: color-mix(in srgb, var(--mark) 22%, var(--surface));
+  }
+  100% {
+    background: transparent;
+  }
 }
 .k-link {
   border: 0;
@@ -1169,5 +1211,41 @@
   .rc-dot,
   .rc-bar {
     animation: none;
+  }
+}
+
+/* Motion (DESIGN.md): entrances rise a few pixels and fade, cards lift on hover; nothing shifts layout. */
+@keyframes k-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.k-up {
+  animation: k-up 0.36s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+.sk-list .k-lrowwrap {
+  animation: k-up 0.32s var(--ease) both;
+}
+.k-lift {
+  transition:
+    transform 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+}
+.k-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--shadow);
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-up,
+  .k-dot,
+  .lrow.is-changed,
+  .sk-list .k-lrowwrap,
+  .k-lift {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

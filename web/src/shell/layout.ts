@@ -7,7 +7,7 @@ export type LayoutRow = { rail: string[]; hidden?: string[] };
 const NEVER_IN_RAIL = new Set(["signin", "more", "ping", "sync", "changes", "stock", "itr"]);
 
 /** v10's lower group: desk, feedback and admin screens sit at the bottom of the rail. */
-const LOWER = new Set(["record", "feedback", "admin", "settings", "health"]);
+const LOWER = new Set(["record", "feedback", "admin", "health"]);
 export const splitRail = (items: Pane[]) => ({
   daily: items.filter((p) => !LOWER.has(p.id)),
   lower: items.filter((p) => LOWER.has(p.id)),
