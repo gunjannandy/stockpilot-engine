@@ -33,8 +33,6 @@ Status: building
 - `similar_json` is optional in the contract (default empty) so older rows still pass; migration `20261129100000_facts_similar.sql` adds the column.
 
 ## Blocked
-- none
-
-private run: C-040-3 production check (last close vs bhavcopy) once data runs
+- private run: C-040-3 production check (last close vs bhavcopy) once data runs
 
 Chapter end: 4
