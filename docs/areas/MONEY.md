@@ -19,6 +19,7 @@ Status: building
 ## Next
 - [ ] Beta: no stored source yet (stocks area); risk keeps beta 1 until one exists.
 - [ ] RSU: splits for expected vests (corporate-action terms of US symbols); payslip vests.
+- [ ] #218: C-069-2 passed, so deleting is allowed, but `trades/lots.py` (`Trade`) and `book/positions.py` are still imported by unported Python (`trades/{coin,rsu,tradebook,contract_note}.py`, `jobs/docs.py`, forecast, dossier and their tests). Delete only after those move off them (other areas' files); `book/{units,record,acted}.py` go with them.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
 - [ ] RSU splits need US corporate-action terms (no source yet).
 - [ ] Opus review chapter over the whole diff for money correctness.
@@ -40,6 +41,8 @@ Status: building
 - Risk sector now read from the newest `facts` row per symbol (stocks area's table, read only; missing table or row means Unknown).
 - Merge of main: main held a squash of an earlier part of this branch, so conflicting money files took this branch's side (a superset).
 - Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
+
+- #218 not deleted in chapter 6: the ported lots and positions Python still has live importers outside this area, and removing them would break CI.
 
 ## Blocked
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
