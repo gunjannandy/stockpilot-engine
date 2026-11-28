@@ -7,10 +7,11 @@ Status: building
 - `gate` blockers fixed: `web/src/panes/admin/admin.test.tsx` rewritten for the approved Admin (glance and Details); English and Bengali words files added for every pane folder (`web/src/words/{_kit,fundoverlap,market,portfolio,record,watchlist}.{en,bn}.json`). No screen look changed.
 - Local: lint, typecheck, web and api tests, py tests, never-order, workflow-triggers, contract-additive, trace green.
 
+- Baseline screenshots of ten approved screens (1440 light, 400 light, 1440 dark): `docs/prototypes/ui/baseline/`.
+- Screen checks without real data: `web/src/panes/screens.test.tsx` (eight screens, English and Bengali: heading shown, no missing word keys).
+
 ## Next
 - [ ] Push; confirm `gate` green on PR (privacy gate needs a secret list, cannot run here).
-- [ ] Screenshots of approved screens as the drift baseline (1440 and 400 px, light and dark).
-- [ ] Screen checks that need no real data (render each pane with fixtures).
 - [ ] Wire real routes: budget, money left, target mix (MONEY); fund calls; worth counts.
 - [ ] Set Status: done when PR merged and all checks green.
 
