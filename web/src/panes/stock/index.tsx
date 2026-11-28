@@ -3,6 +3,19 @@ import type { Pane } from "../../areas";
 import { StockChart } from "../../charts/StockChart";
 import { useWords } from "../../words";
 import "./stock.css";
+import { callCard } from "../_kit/data";
+import {
+  Actions,
+  CallSec,
+  ChangedBand,
+  FactsSec,
+  HoldingSec,
+  NewsSec,
+  PeersSec,
+} from "../_kit/StockSections";
+import { Toast } from "../_kit/Toast";
+import { StockRow } from "../_kit/ui";
+import { useWatch, watch } from "../_kit/watch";
 import {
   callFor,
   history,
@@ -79,7 +92,15 @@ function OpenIn({ st }: { st: SampleStock }) {
   );
 }
 
-function Detail({ st, bars }: { st: SampleStock; bars: ReturnType<typeof history> }) {
+export function Detail({
+  st,
+  bars,
+  onPick,
+}: {
+  st: SampleStock;
+  bars: ReturnType<typeof history>;
+  onPick?: (id: string) => void;
+}) {
   const t = useWords();
   const last = bars[bars.length - 1]?.close ?? 0;
   const prev = bars[bars.length - 2]?.close ?? last;
@@ -110,11 +131,8 @@ function Detail({ st, bars }: { st: SampleStock; bars: ReturnType<typeof history
           </p>
         </div>
       </header>
-      <div className="sk-acts">
-        <button type="button" className="sk-btn sk-tonal">
-          ＋ {t("stock.watchAdd")}
-        </button>
-      </div>
+      <Actions st={st} />
+      <ChangedBand st={st} />
       <section className="sk-sec">
         <div className="sk-sh">
           <span className="sk-ic" aria-hidden="true">
@@ -130,6 +148,11 @@ function Detail({ st, bars }: { st: SampleStock; bars: ReturnType<typeof history
         </div>
         <StockChart bars={bars} call={call} trades={st.trades} extra={<OpenIn st={st} />} />
       </section>
+      <CallSec st={st} />
+      <FactsSec st={st} />
+      <HoldingSec st={st} />
+      <NewsSec st={st} />
+      <PeersSec st={st} onPick={(id) => onPick?.(id)} />
     </article>
   );
 }
@@ -145,9 +168,16 @@ export function StockPane() {
   );
   const data = useMemo(() => new Map(STOCKS.map((s) => [s.id, history(s)])), []);
   const listRef = useRef<HTMLDivElement>(null);
-  const items = STOCKS.filter((s) =>
-    (s.name + s.symbol).toLowerCase().includes(q.toLowerCase()),
-  ).sort((a, b) => ORDER.indexOf(a.verdict) - ORDER.indexOf(b.verdict));
+  const w = useWatch();
+  const [vf, setVf] = useState<"all" | Verdict>("all");
+  const base = STOCKS.filter((s) => !w.snooze.has(s.id) && !w.never.has(s.id));
+  const items = base
+    .filter(
+      (s) =>
+        (vf === "all" || s.verdict === vf) &&
+        (s.name + s.symbol).toLowerCase().includes(q.toLowerCase()),
+    )
+    .sort((a, b) => ORDER.indexOf(a.verdict) - ORDER.indexOf(b.verdict));
   const cur = STOCKS.find((s) => s.id === sel) ?? STOCKS[0];
 
   const choose = (id: string, open = false) => {
@@ -193,11 +223,41 @@ export function StockPane() {
             autoComplete="off"
           />
         </label>
+        <div className="k-chips sk-chips">
+          {(["all", ...ORDER] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="k-chipbtn"
+              aria-pressed={vf === v}
+              onClick={() => setVf(v)}
+            >
+              {v === "all" ? t("v2.all") : t(`stock.verdict.${v}`)}
+              <span className="num">
+                {v === "all" ? base.length : base.filter((x) => x.verdict === v).length}
+              </span>
+            </button>
+          ))}
+        </div>
+        {items.some((s) => callCard(s).changed && !w.seen.has(s.id)) && (
+          <div className="k-band">
+            <i className="k-dot" />
+            <b>
+              {items.filter((s) => callCard(s).changed && !w.seen.has(s.id)).length}{" "}
+              {t("v3.changedN")}
+            </b>
+            <button
+              type="button"
+              className="k-link"
+              onClick={() => watch.markSeen(items.map((s) => s.id))}
+            >
+              {t("marks.markAll")}
+            </button>
+          </div>
+        )}
         {items.map((s) => {
           const head = s.verdict !== lastV;
           lastV = s.verdict;
-          const closes = (data.get(s.id) ?? []).slice(-130).map((b) => b.close);
-          const price = closes[closes.length - 1] ?? 0;
           return (
             <div key={s.id}>
               {head && (
@@ -208,27 +268,23 @@ export function StockPane() {
                   </span>
                 </div>
               )}
-              <button
-                type="button"
-                className={`lrow r-${s.verdict}`}
-                aria-current={cur?.id === s.id ? "true" : undefined}
+              <StockRow
+                st={s}
+                active={cur?.id === s.id}
                 onClick={() => choose(s.id, true)}
-              >
-                <span className={`chip v-${s.verdict}`}>{t(`stock.verdict.${s.verdict}`)}</span>
-                <span className="lm">
-                  <b className="trunc">{s.name}</b>
-                  <span className="ls trunc">
-                    {s.symbol} · {s.sector}
-                  </span>
-                </span>
-                <span className="lspc">
-                  <Spark closes={closes} />
-                </span>
-                <span className="lr num">
-                  {money(price)}
-                  <Meter v={s.strength} />
-                </span>
-              </button>
+                mark={!!callCard(s).changed && !w.seen.has(s.id)}
+                star={
+                  <button
+                    type="button"
+                    className="k-star"
+                    aria-pressed={w.star.has(s.id)}
+                    aria-label={t("v2.watchStar")}
+                    onClick={() => watch.toggleStar(s.id, t("v2.added"), t("v2.removed"))}
+                  >
+                    {w.star.has(s.id) ? "★" : "☆"}
+                  </button>
+                }
+              />
             </div>
           );
         })}
@@ -237,7 +293,8 @@ export function StockPane() {
         <button type="button" className="sk-back" onClick={() => setFull(false)}>
           ← {t("stock.back")}
         </button>
-        {cur && <Detail st={cur} bars={data.get(cur.id) ?? []} />}
+        {cur && <Detail st={cur} bars={data.get(cur.id) ?? []} onPick={(id) => choose(id, true)} />}
+        <Toast />
       </aside>
     </div>
   );
