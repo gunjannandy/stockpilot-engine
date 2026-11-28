@@ -1,0 +1,39 @@
+# The record Job: started only by the Worker's 5-minute tick through workflow_dispatch (every trading night). Public data only
+# (the calls, price history, the Nifty), so no model token and no private repo. Publishes the `record` dataset through the Worker.
+# The steps live in _job.yml, which every Job shares.
+name: record
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always record)
+        default: record
+      subject:
+        description: Job subject
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+      from:
+        description: First day of the range, YYYY-MM-DD
+        default: ""
+      to:
+        description: Last day of the range, YYYY-MM-DD
+        default: ""
+concurrency:
+  group: job-record
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  record:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: record
+      subject: ${{ inputs.subject || 'all' }}
+      day: ${{ inputs.day }}
+      from: ${{ inputs.from }}
+      to: ${{ inputs.to }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}

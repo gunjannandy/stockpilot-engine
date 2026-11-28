@@ -13,6 +13,7 @@ it("C-116-3 the cron puts one message per due duty on the queue", async () => {
   expect(ids(sent)).toEqual([
     "digest",
     "feedback",
+    "lists",
     "models",
     "news",
     "quotes",
@@ -29,6 +30,7 @@ it("C-116-3 the cron puts one message per due duty on the queue", async () => {
   expect(DUTIES.map((d) => d.id).sort()).toEqual([
     "digest",
     "feedback",
+    "lists",
     "models",
     "news",
     "quotes",
@@ -47,7 +49,7 @@ it("C-116-3 a duty that cannot be queued does not stop the others being queued",
     },
   };
   await enqueueDuties(queue, at("2026-11-27T04:00:00Z"));
-  expect(sent.sort()).toEqual(["digest", "feedback", "models", "news", "quotes", "secrets", "watcher"]);
+  expect(sent.sort()).toEqual(["digest", "feedback", "lists", "models", "news", "quotes", "secrets", "watcher"]);
 });
 
 it("C-116-3 each message runs its own duty with its own heartbeat, and one throwing leaves the others run", async () => {

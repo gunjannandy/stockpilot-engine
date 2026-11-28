@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { CalendarRow, calendarRowCheck } from "./calendar/calendar";
+import { CallsRun, SCREEN_MIN, ScreenRow } from "./calls/calls";
 import type { JobKind } from "./core/jobs";
 import { PingRow } from "./core/ping";
 import { FACTS_MIN, FactsRow, factsRowCheck } from "./facts/facts";
@@ -12,9 +13,12 @@ import {
 } from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
+import { LISTS_MIN_TOP, ListRow, listRowCheck } from "./lists/lists";
 import { DividendsRun, UsPricesRun } from "./money/money";
 import { NewsItemRow } from "./news/news";
+import { RecordRun } from "./record/record";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
+import { MarketRow, marketRowCheck } from "./today/today";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
  * JSON Schema; the door enforces `writeBudget` per day. */
@@ -159,6 +163,81 @@ export const datasets = {
     rowCheck: factsRowCheck,
     run: { at: "03:00", on: "every" },
     runCheck: (run) => (run.rowCount < FACTS_MIN ? "fewer than 100 stocks" : null),
+  },
+  screen: {
+    name: "screen",
+    job: "screen",
+    table: "screen_runs",
+    schedule: "every trading day at 22:30 IST",
+    freshnessHours: 72,
+    checks: { row: [], run: ["at least 100 stocks"] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: ScreenRow,
+    delivery: "file",
+    run: { at: "22:30", on: "trading" },
+    runCheck: (run) => (run.rowCount < SCREEN_MIN ? "fewer than 100 stocks" : null),
+  },
+  calls_runs: {
+    name: "calls_runs",
+    job: "forecast",
+    table: "calls_runs",
+    schedule: "every trading day at 23:00 IST",
+    freshnessHours: 72,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: CallsRun,
+    run: { at: "23:00", on: "trading" },
+  },
+  lists: {
+    name: "lists",
+    job: "lists",
+    table: "list_rows",
+    schedule: "every 30 minutes in market hours, and after the nightly screen",
+    freshnessHours: 72,
+    checks: {
+      row: ["every row has a reason", "every reason has Bengali"],
+      run: ["the Top 10 list has 10 stocks"],
+    },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 4000,
+    row: ListRow,
+    rowCheck: listRowCheck,
+    runCheck: (run) =>
+      (run.rows ?? []).filter((r) => r.list === "top10").length < LISTS_MIN_TOP
+        ? "the Top 10 list has fewer than 10 stocks"
+        : null,
+  },
+  record_runs: {
+    name: "record_runs",
+    job: "record",
+    table: "record_runs",
+    schedule: "every trading day at 23:30 IST",
+    freshnessHours: 72,
+    checks: { row: ["id is not empty"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: RecordRun,
+    run: { at: "23:30", on: "trading" },
+  },
+  market: {
+    name: "market",
+    job: "market",
+    table: "market_health",
+    schedule: "every trading day at 22:00 IST",
+    freshnessHours: 72,
+    checks: { row: ["at least one figure", "every sentence has Bengali"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 10,
+    row: MarketRow,
+    rowCheck: marketRowCheck,
+    run: { at: "22:00", on: "trading" },
   },
   dividends: {
     name: "dividends",
