@@ -31,6 +31,7 @@ afterEach(() => {
 const SCREENS = [
   "today",
   "watchlist",
+  "stock",
   "market",
   "worth",
   "portfolio",
