@@ -1,3 +1,5 @@
 {
-  "title": "Watchlist"
+  "funds": "Funds you watch",
+  "line": "{n} close to a buy. Best chance of beating the Nifty: {b}.",
+  "saveFailed": "Could not save that. It was put back."
 }
