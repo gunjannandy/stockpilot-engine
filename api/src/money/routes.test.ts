@@ -112,9 +112,42 @@ describe("money rsu route", () => {
       usdInr: number;
       symbols: { view: { shares: number; valueInr: number; gainInr: number } }[];
     };
+    const want = (await (await signed("GET", "/api/money/us-symbols")).json()) as {
+      symbols: string[];
+      since: string;
+    };
+    expect(want).toEqual({ symbols: ["USX"], since: "2025-01-01", fx_since: "2025-01-01" });
     expect(j.usdInr).toBe(90);
     expect(j.symbols[0]?.view.shares).toBe(10);
     expect(j.symbols[0]?.view.valueInr).toBe(90000);
     expect(j.symbols[0]?.view.gainInr).toBe(90000 - 10 * 50 * 80);
+  });
+});
+
+describe("money calendar route", () => {
+  it("lists actions and expected dividend cash for stocks held only", async () => {
+    const { app, db, signed } = await makeApp({ now: () => new Date("2026-06-01T00:00:00Z") });
+    await app.request("/api/money/calendar");
+    await db.exec(
+      trade("b", "buy", "2024-01-01", 10, 100) +
+        `insert into calendar (id,kind,date,symbol,old_shares,new_shares) values
+          ('a','split','2026-07-01','AAA',1,2), ('b','split','2026-07-01','ZZZ',1,2), ('c','holiday','2026-07-02',null,null,null);`,
+    );
+    const p = await signed("POST", "/api/money/dividends", {
+      symbol: "AAA",
+      rows: [
+        { ex_date: "2025-07-15", per_share: 3.5 },
+        { ex_date: "2025-03-01", per_share: 9 },
+      ],
+    });
+    expect(p.status).toBe(200);
+    const j = (await (await app.request("/api/money/calendar")).json()) as {
+      actions: { symbol: string; detail: string }[];
+      dividends: { date: string; cash: number }[];
+      expectedCash: number;
+    };
+    expect(j.actions).toEqual([expect.objectContaining({ symbol: "AAA", detail: "1 to 2" })]);
+    expect(j.dividends).toEqual([expect.objectContaining({ date: "2026-07-15", cash: 35 })]);
+    expect(j.expectedCash).toBe(35);
   });
 });

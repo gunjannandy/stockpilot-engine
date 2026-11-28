@@ -13,13 +13,13 @@ Status: building
 - Tax route returns `harvest` (newest stored closes, today's date); `GET /api/money/risk` (concentration + Nifty -10%), `RiskResponse` in contract.
 - `GET /api/money/rsu` (dollar lots valued at newest `us_prices` close and `fx_rates`, tax if sold, expected vests; `RsuResponse`), ingest `POST /api/money/us-prices`, `GET /api/money/us-symbols`, `POST /api/money/fx-refresh`; migration `api/src/money/migrations/`.
 - usprices Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`, dataset `usprices` (06:30 IST daily, budget 300), test `py/tests/usprices/`.
+- `GET /api/money/calendar` (dated actions of held stocks from `calendar`; expected dividend cash = last year's ex-dates +1y × shares held; `CalendarResponse`); dividends Job `py/stockpilot/jobs/dividends/`, `.github/workflows/dividends.yml`, dataset `dividends` (06:45 IST), ingest `POST /api/money/dividends`, `GET /api/money/held-symbols`, table `dividends`.
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
 - [ ] Register `money_budgets` / `money_mix` as private datasets if the migrate sink needs them (check `contract/src/datasets.ts` rules).
 - [ ] Store sector and beta (stocks area) so risk stops reading "Unknown" and beta 1.
 - [ ] RSU: splits for expected vests (corporate-action terms of US symbols); payslip vests.
-- [ ] Dividends and corporate-actions calendar data with expected cash.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
 - [ ] Opus review chapter over the whole diff for money correctness.
 
@@ -34,6 +34,7 @@ Status: building
 - Risk route uses sector "Unknown" and beta 1 because neither is stored anywhere yet; the response lists the assumed-beta symbols.
 - RSU tax: top slab on short-term gain, long-term after 730 days at the other-assets rate (unlisted foreign shares); US closes live in own table `us_prices`, since `stock_history` only allows NSE/BSE (stocks area's file untouched).
 - Added `usprices.yml` to the allow-list in `checks/MOVE-2.py` (shared file, one word) and `usprices` to `JobKind` in contract core.
+- Dividends and `calendar` rows are expected cash only as an estimate (repeat last year); `dividends.yml` also added to the MOVE-2 allow-list.
 - Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
 
 ## Blocked

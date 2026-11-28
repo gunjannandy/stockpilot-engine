@@ -161,3 +161,56 @@ export const UsSymbols = z.object({
   fx_since: z.string(),
 });
 export type UsSymbols = z.infer<typeof UsSymbols>;
+
+/** `GET /api/money/calendar`: what is coming for the stocks held. `actions` are dated splits, bonuses, symbol
+ * changes and delistings; `dividends` are expected: each past ex-date of the last year, one year on, times the shares held. */
+export const CalendarResponse = z.object({
+  as_of: z.string(),
+  actions: z.array(
+    z.object({
+      date: z.string(),
+      kind: z.string(),
+      symbol: z.string(),
+      detail: z.string().nullable(),
+    }),
+  ),
+  dividends: z.array(
+    z.object({
+      date: z.string(),
+      symbol: z.string(),
+      perShare: z.number(),
+      shares: z.number(),
+      cash: z.number(),
+    }),
+  ),
+  expectedCash: z.number(),
+  warnings: z.array(z.string()),
+});
+export type CalendarResponse = z.infer<typeof CalendarResponse>;
+
+/** `POST /api/money/dividends` (the dividends Job): cash dividends per share by ex-date, one symbol a call. */
+export const DividendsPost = z.object({
+  symbol: z.string().min(1),
+  rows: z
+    .array(
+      z.object({
+        ex_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        per_share: z.number().positive(),
+      }),
+    )
+    .max(2000),
+});
+export type DividendsPost = z.infer<typeof DividendsPost>;
+
+/** `GET /api/money/held-symbols` (the dividends Job): INR stocks still held. */
+export const HeldSymbols = z.object({ symbols: z.array(z.string()), since: z.string() });
+export type HeldSymbols = z.infer<typeof HeldSymbols>;
+
+/** One row a day for the `dividends` dataset. */
+export const DividendsRun = z.object({
+  id: z.string().min(1),
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  symbols: z.number().int().min(0),
+  rows: z.number().int().min(0),
+});
+export type DividendsRun = z.infer<typeof DividendsRun>;
