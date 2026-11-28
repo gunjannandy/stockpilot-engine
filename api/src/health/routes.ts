@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { checkResults, flags, heartbeats, writeBudget } from "../../drizzle/core";
 import { type Ctx, istDay, istText, rawBody } from "../app";
+import { latest as latestBackup } from "../backup/routes";
 import { calendarStatus, loadCalendar } from "../calendar/routes";
 
 const RANK: Record<Colour, number> = { green: 0, amber: 1, red: 2 };
@@ -106,7 +107,18 @@ export default function routes(ctx: Ctx) {
       "green",
     );
     const overall: Colour = checks.some((k) => !k.ok) ? "red" : worst;
-    return c.json({ at: istText(ctx.now()), version: ctx.version, overall, parts, checks });
+    const backup = (await latestBackup(ctx)) as {
+      backup: unknown;
+      drill: unknown;
+    };
+    return c.json({
+      at: istText(ctx.now()),
+      version: ctx.version,
+      overall,
+      parts,
+      checks,
+      backup,
+    });
   });
 
   // Public, no secret, no data: builders and dispatchers read check results and budgets here.

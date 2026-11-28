@@ -15,6 +15,7 @@ export const JobKind = z.enum([
   "history_backfill",
   "nightly",
   "backup",
+  "drill",
   "ping",
   "calendar",
 ]);

@@ -1,13 +1,6 @@
 import { z } from "zod";
-import {
-  IngestRequest,
-  IngestResponse,
-  JobFinishRequest,
-  JobFinishResponse,
-  JobStartRequest,
-  JobStartResponse,
-  MarketStatus,
-} from "./door";
+import { JobBeginRequest, JobBeginResponse, JobEndRequest, JobEndResponse } from "../jobs/jobs";
+import { IngestRequest, IngestResponse, MarketStatus } from "./door";
 import { FlagMap, FlagWrite, FlagWriteResponse } from "./flags";
 import { HealthResponse } from "./health";
 import { Heartbeat, HeartbeatAck } from "./heartbeat";
@@ -55,19 +48,19 @@ export const routes = {
     request: IngestRequest,
     response: IngestResponse,
   }),
-  job_start: route({
+  job_begin: route({
     method: "POST",
-    path: "/api/jobs/start",
+    path: "/api/job/begin",
     auth: "ingest",
-    request: JobStartRequest,
-    response: JobStartResponse,
+    request: JobBeginRequest,
+    response: JobBeginResponse,
   }),
-  job_finish: route({
+  job_end: route({
     method: "POST",
-    path: "/api/jobs/finish",
+    path: "/api/job/end",
     auth: "ingest",
-    request: JobFinishRequest,
-    response: JobFinishResponse,
+    request: JobEndRequest,
+    response: JobEndResponse,
   }),
   market_status: route({
     method: "GET",

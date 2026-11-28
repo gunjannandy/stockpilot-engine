@@ -35,7 +35,7 @@ def read_new(bridge, pan: str, done: set, since: str | None = None, limit: int |
 def run(door: Door, bridge, pan: str, done: set, limit: int | None = None) -> tuple[str, set]:
     """Start, read new files, write rows by key, finish, beat. Returns the run id and the updated `done` set."""
     run_id = new_run_id(KIND)
-    door.job_start(KIND, run_id)
+    door.job_begin(KIND, run_id)
     try:
         result = read_new(bridge, pan, done, limit=limit)
         rows = trade_rows(result.trades)
@@ -44,12 +44,12 @@ def run(door: Door, bridge, pan: str, done: set, limit: int | None = None) -> tu
         note = (f"Read {len(result.handled)} new files: {len(rows)} trades, {len(result.failed)} could not be read"
                 + (", more waiting" if result.more else ""))
     except Exception as err:
-        door.job_finish(run_id, ok=False, error=str(err))
+        door.job_end(run_id, ok=False, error=str(err))
         beat(door, "job.documents", ok=False, error=str(err), every=timedelta(days=1))
         raise
     # Files that failed stay out of `done`, so the next run reads them again.
     done = done | {(h["id"], h["version"]) for h in result.handled}
-    door.job_finish(run_id, ok=True, result=note)
+    door.job_end(run_id, ok=True, result=note)
     beat(door, "job.documents", ok=True, every=timedelta(days=1))
     return run_id, done
 

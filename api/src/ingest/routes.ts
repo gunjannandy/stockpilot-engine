@@ -1,17 +1,11 @@
 // The ingest door (from v2's web/ingest): write-only, HMAC-signed, held to each dataset's day budget.
 
-import {
-  datasets,
-  IngestRequest,
-  JobFinishRequest,
-  JobKind,
-  JobStartRequest,
-} from "@stockpilot/contract";
+import { datasets, IngestRequest } from "@stockpilot/contract";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { jobs, writeBudget } from "../../drizzle/core";
-import { type Ctx, istDay, istText, rawBody } from "../app";
+import { writeBudget } from "../../drizzle/core";
+import { type Ctx, istDay, rawBody } from "../app";
 
 const IDENT = /^[a-z][a-z0-9_]*$/;
 
@@ -66,37 +60,6 @@ export default function routes(ctx: Ctx) {
       ]);
     }
     return c.json({ accepted: take.length, held_back: held });
-  });
-
-  app.post("/api/jobs/start", ctx.guard.ingest, async (c) => {
-    const req = JobStartRequest.safeParse(json(rawBody(c)));
-    if (!req.success || !JobKind.safeParse(req.data.kind).success)
-      return c.json({ error: "bad body" }, 400);
-    const startedAt = istText(ctx.now());
-    const r = await ctx.d1
-      .prepare(
-        "insert or ignore into jobs (id, kind, status, started_at) values (?, ?, 'running', ?)",
-      )
-      .bind(req.data.run_id, req.data.kind, startedAt)
-      .run();
-    if (r.meta.changes === 0) return c.json({ error: "run id already used" }, 409);
-    return c.json({ run_id: req.data.run_id, started_at: startedAt });
-  });
-
-  app.post("/api/jobs/finish", ctx.guard.ingest, async (c) => {
-    const req = JobFinishRequest.safeParse(json(rawBody(c)));
-    if (!req.success) return c.json({ error: "bad body" }, 400);
-    const r = await ctx.db
-      .update(jobs)
-      .set({
-        status: req.data.status,
-        result: req.data.result,
-        error: req.data.error,
-        finishedAt: istText(ctx.now()),
-      })
-      .where(and(eq(jobs.id, req.data.run_id), eq(jobs.status, "running")));
-    if (r.meta.changes === 0) return c.json({ error: "no running job with that id" }, 404);
-    return c.json({ ok: true });
   });
 
   return app;
