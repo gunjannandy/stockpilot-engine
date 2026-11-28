@@ -13,11 +13,11 @@ def r(isin, pct):
 
 
 def test_latest_month_wins_and_holdings_are_isin_name_pct_triples():
-    houses = {"A": got("f1", date(2026, 9, 30), [r("INE000A01010", 5.0)]),
-              "B": got("f1", date(2026, 10, 31), [r("INE000B01012", 7.5), r("IN0000000012", None)])}
+    houses = {"A": got("f1", date(2026, 9, 30), [r("INE-A", 5.0)]),
+              "B": got("f1", date(2026, 10, 31), [r("INE-B", 7.5), r("GILT-1", None)])}
     rows = job.rows_from(houses)
     assert len(rows) == 1 and rows[0]["as_of"] == "2026-10-31"
-    assert rows[0]["holdings_json"] == '[["INE000B01012","INE000B01012",7.5],["IN0000000012","IN0000000012",null]]'
+    assert rows[0]["holdings_json"] == '[["INE-B","INE-B",7.5],["GILT-1","GILT-1",null]]'
 
 
 def test_a_fund_without_holdings_is_left_out():

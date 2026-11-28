@@ -8,10 +8,10 @@ const row = (n: number): FundHoldingsRow => ({
   amc: "Alpha Mutual Fund",
   as_of: "2026-10-31",
   holdings_json: JSON.stringify([
-    ["INE000A01010", "Stock A", 6.5],
-    ["INE000B01012", "Stock B", 3.5],
-    ["IN0000000012", "Gilt", 10],
-    ["INE000C01014", "Stock C", null],
+    ["INE-A", "Stock A", 6.5],
+    ["INE-B", "Stock B", 3.5],
+    ["GILT-1", "Gilt", 10],
+    ["INE-C", "Stock C", null],
   ]),
 });
 
@@ -25,7 +25,7 @@ const stamp = {
 describe("fund overlap (C-076-1)", () => {
   const h = fundHoldings(row(1).holdings_json);
   it("counts shared stocks, their weight and their share of the fund's equities", () => {
-    const o = fundOverlap(h, ["ine000a01010", "INE000B01012", "INE999Z01019"]);
+    const o = fundOverlap(h, ["ine-a", "INE-B", "INE-Z"]);
     expect(o.n_shared).toBe(2);
     expect(o.n_held).toBe(3);
     expect(o.pct_nav).toBe(10);
@@ -33,7 +33,7 @@ describe("fund overlap (C-076-1)", () => {
   });
   it("is zero for no holdings, an empty fund and a bad text", () => {
     expect(fundOverlap(h, []).pct_nav).toBe(0);
-    expect(fundOverlap([], ["INE000A01010"]).pct_of_fund_stocks).toBe(0);
+    expect(fundOverlap([], ["INE-A"]).pct_of_fund_stocks).toBe(0);
     expect(fundHoldings("not json")).toEqual([]);
   });
 });
