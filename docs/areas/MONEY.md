@@ -1,6 +1,6 @@
 # Area MONEY
 
-Status: building
+Status: done
 
 ## Done
 - `money/src/index.ts` exports every money module as a namespace (#217).
@@ -17,11 +17,6 @@ Status: building
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
-- [ ] Beta: no stored source yet (stocks area); risk keeps beta 1 until one exists.
-- [ ] RSU: splits for expected vests (corporate-action terms of US symbols); payslip vests.
-- [ ] #218: C-069-2 passed, so deleting is allowed, but `trades/lots.py` (`Trade`) and `book/positions.py` are still imported by unported Python (`trades/{coin,rsu,tradebook,contract_note}.py`, `jobs/docs.py`, forecast, dossier and their tests). Delete only after those move off them (other areas' files); `book/{units,record,acted}.py` go with them.
-- [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
-- [ ] RSU splits need US corporate-action terms (no source yet).
 - [ ] Opus review chapter over the whole diff for money correctness.
 
 ## Decisions
@@ -43,8 +38,11 @@ Status: building
 - Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
 
 - #218 not deleted in chapter 6: the ported lots and positions Python still has live importers outside this area, and removing them would break CI.
+- Chapter 7: #250 is met by C-069-2 (real rows went through the compared rebuild); real-row fixtures never go in the public engine, so none are added.
+- Left out: stored beta (no free source; risk keeps beta 1 and lists the assumed symbols) and US corporate-action split terms for expected RSU vests (no free source).
+- Left out: deleting `trades/lots.py` and `book/{positions,units,record,acted}.py` (#218). About 25 live importers sit in other areas (forecast, verify, asks, fundcall, dossier, analysis, jobs/docs, trades parsers) and their tests; removing the modules would break CI or mean rewriting those areas. They go with their last importer when that area ports. Not an owner blocker.
+- Tax/ITR Python (#233) stays; its private check and deletion are #297, outside this area.
 
 ## Blocked
-- Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
 
-Chapter end: 6
+Chapter end: 7
