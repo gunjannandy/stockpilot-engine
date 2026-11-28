@@ -8,11 +8,12 @@ Status: building
 - `api/drizzle/portfolio.ts` + `api/src/portfolio/migrations/`: `money_budgets`, `money_mix`.
 - `contract/src/portfolio/portfolio.ts`: shapes for all of the above.
 - `tools/migrate/settings.ts`: v2 budgets and target mix map.
-- Tests: `api/src/portfolio/routes.test.ts`.
+- `api/src/money/routes.ts`: signed-in `GET /api/money/tax?fy=` (gains booked, net by pool, tax, tax-free room left); shape in `contract/src/money/money.ts`.
+- Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
 - [ ] Register `money_budgets` / `money_mix` as private datasets if the migrate sink needs them (check `contract/src/datasets.ts` rules).
-- [ ] `api/src/money/`: tax and harvest route, RSU view route, XIRR and risk routes over `loadRebuild` (`money/src/{tax,rsu,xirr,risk}`); shapes in `contract/`.
+- [ ] `api/src/money/`: harvest ideas on the tax route (needs latest prices), RSU view route, XIRR and risk routes over `loadRebuild` (`money/src/{rsu,xirr,risk}`); shapes in `contract/`.
 - [ ] US price and USD/INR Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`; reuse `api/src/fx/rates.ts`; register dataset, write budget, heartbeat.
 - [ ] Dividends and corporate-actions calendar data with expected cash.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
