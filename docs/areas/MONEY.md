@@ -43,6 +43,10 @@ Status: done
 - Left out: deleting `trades/lots.py` and `book/{positions,units,record,acted}.py` (#218). About 25 live importers sit in other areas (forecast, verify, asks, fundcall, dossier, analysis, jobs/docs, trades parsers) and their tests; removing the modules would break CI or mean rewriting those areas. They go with their last importer when that area ports. Not an owner blocker.
 - Tax/ITR Python (#233) stays; its private check and deletion are #297, outside this area.
 
-## Blocked
+- Chapter 8: re-checked #218 after C-069-2 passed. Every module still has live importers outside this area (`jobs/docs.py` imports acted and lots; `forecast.py`, `verify/*`, `dossier.py`, `fundcall.py`, `asks.py`, `analysis/{allocation,fundreview,opportunities}.py` import positions, record, units; all `trades/*` parsers import `Trade` from lots) plus about 30 tests. Deleting now would break CI, which the rules forbid, so the deletion stays left out; each module goes with its last importer when that area ports. Not a blocker.
+- Beta and US split terms: left out, no free source.
 
-Chapter end: 7
+## Blocked
+none
+
+Chapter end: 8
