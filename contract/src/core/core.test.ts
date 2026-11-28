@@ -22,8 +22,8 @@ describe("core contract", () => {
     expect(Object.keys(routes)).toEqual(
       expect.arrayContaining([
         "ingest_write",
-        "job_start",
-        "job_finish",
+        "job_begin",
+        "job_end",
         "market_status",
         "heartbeat_write",
       ]),

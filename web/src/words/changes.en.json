@@ -1,0 +1,17 @@
+{
+  "chgT": "What changed",
+  "chgOne": "1 change since you last looked",
+  "chgSeen": "Got it",
+  "chgAllSeen": "Got it, clear all",
+  "chgCall": "Call changed",
+  "chgChance": "Chance moved",
+  "chgLevel": "Price level crossed",
+  "chgForecast": "New forecast",
+  "chgIn": "Added to a list",
+  "chgOut": "Left a list",
+  "chgAsk": "Feedback update",
+  "chgListFollow": "Worth following",
+  "chgListWatch": "Watchlist",
+  "chgListHold": "Holdings",
+  "chgListNews": "In today's news"
+}

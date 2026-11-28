@@ -8,6 +8,11 @@ import { type Core, isPaused, type JobRow } from "../jobs/runtime";
 import { dueRuns } from "./plan";
 
 export const ENGINE_REPO = "stockpilot-hq/stockpilot-engine";
+export const PRIVATE_REPO = "stockpilot-hq/stockpilot";
+/** Button Jobs whose workflow is not `<kind>.yml` in the engine repo. `documents` (Refresh) runs privately. */
+export const BUTTON_JOBS: Record<string, { repo: string; workflow: string }> = {
+  documents: { repo: PRIVATE_REPO, workflow: "documents.yml" },
+};
 const MIN = 60_000;
 /** A Job is dispatched this many times at most before it waits for a person. */
 export const MAX_DISPATCHES = 5;
@@ -30,9 +35,10 @@ export async function dispatchJob(
   deps: Pick<TickDeps, "github" | "workflowFor" | "ref">,
   job: Pick<JobRow, "kind" | "subject" | "day" | "range_from" | "range_to">,
 ): Promise<void> {
+  const button = BUTTON_JOBS[job.kind];
   await deps.github.dispatchWorkflow({
-    repo: ENGINE_REPO,
-    workflow: (deps.workflowFor ?? ((k) => `${k}.yml`))(job.kind),
+    repo: button?.repo ?? ENGINE_REPO,
+    workflow: button?.workflow ?? (deps.workflowFor ?? ((k) => `${k}.yml`))(job.kind),
     ref: deps.ref ?? "main",
     inputs: {
       kind: job.kind,

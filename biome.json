@@ -1,6 +1,44 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
-  "files": { "includes": ["**", "!**/node_modules", "!**/dist", "!**/generated", "!contract/src/index.ts"] },
-  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
-  "linter": { "enabled": true, "rules": { "recommended": true } }
+  "files": {
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/generated",
+      "!contract/src/index.ts"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "money/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "Date": "Money works in plain YYYY-MM-DD days (core/dates); the clock and time zones must not reach it."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

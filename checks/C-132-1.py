@@ -44,3 +44,9 @@ def test_ci_itself_may_not_touch_models():
 def test_this_repo_passes():
     root = Path(__file__).resolve().parents[1]
     assert wt.check_dir(root / ".github/workflows") == []
+
+
+def test_the_reusable_job_workflow_may_only_be_called():
+    assert check({"_job.yml": wf({"workflow_call": {}})}) == []
+    assert check({"_job.yml": wf("workflow_dispatch")})
+    assert check({"x.yml": wf({"workflow_call": {}})})

@@ -1,16 +1,30 @@
+// Service worker source. The build turns this into /sw.js (see ../../sw-plugin.ts); do not add a copy to public/.
 // Service worker: the page opens offline and shows the last data. Answers are kept per version.
 const VERSION = "sp-v1";
 const SHELL = "/";
 
-self.addEventListener("install", (e) => {
+type WorkerEvent = {
+  request: Request;
+  waitUntil: (p: Promise<unknown>) => void;
+  respondWith: (p: Promise<Response>) => void;
+};
+
+const sw = self as unknown as {
+  location: { origin: string };
+  addEventListener: (type: string, fn: (e: WorkerEvent) => void) => void;
+  skipWaiting: () => Promise<void>;
+  clients: { claim: () => Promise<void> };
+};
+
+sw.addEventListener("install", (e) => {
   e.waitUntil(
     caches
       .open(VERSION)
       .then((c) => c.add(SHELL))
-      .then(() => self.skipWaiting()),
+      .then(() => sw.skipWaiting()),
   );
 });
-self.addEventListener("activate", (e) => {
+sw.addEventListener("activate", (e) => {
   e.waitUntil(
     caches
       .keys()
@@ -19,11 +33,11 @@ self.addEventListener("activate", (e) => {
           ks.filter((k) => k.startsWith("sp-") && k !== VERSION).map((k) => caches.delete(k)),
         ),
       )
-      .then(() => self.clients.claim()),
+      .then(() => sw.clients.claim()),
   );
 });
 
-async function networkFirst(req, fallbackKey) {
+async function networkFirst(req: Request, fallbackKey?: string | Request) {
   const cache = await caches.open(VERSION);
   try {
     const res = await fetch(req);
@@ -36,11 +50,11 @@ async function networkFirst(req, fallbackKey) {
   }
 }
 
-self.addEventListener("fetch", (e) => {
+sw.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== sw.location.origin) return;
   if (req.mode === "navigate") return void e.respondWith(networkFirst(req, SHELL));
   if (url.pathname.startsWith("/api/") && !url.pathname.startsWith("/api/auth"))
     return void e.respondWith(networkFirst(req));

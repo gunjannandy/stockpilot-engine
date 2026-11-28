@@ -1,0 +1,30 @@
+# The archive Job (decisions §2 Schedules): started only by the Worker's 5-minute tick through
+# workflow_dispatch, never by a schedule of its own. Moves rows past the archive age to Parquet before a cap.
+name: archive
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Job kind (always archive)
+        default: archive
+      subject:
+        description: Job subject
+        default: all
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+concurrency:
+  group: job-archive
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  archive:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: archive
+      subject: ${{ inputs.subject }}
+      day: ${{ inputs.day }}
+      timeout-minutes: 30
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
