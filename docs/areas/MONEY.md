@@ -10,11 +10,12 @@ Status: building
 - `tools/migrate/settings.ts`: v2 budgets and target mix map.
 - `api/src/money/routes.ts`: signed-in `GET /api/money/tax?fy=` (gains booked, net by pool, tax, tax-free room left); shape in `contract/src/money/money.ts`.
 - `GET /api/money/xirr`: portfolio and per-stock XIRR from INR stock trades and newest `stock_history` close; Nifty read from symbol `NIFTY 50` there (null until that history exists); shape `XirrResponse`.
+- Tax route returns `harvest` (newest stored closes, today's date); `GET /api/money/risk` (concentration + Nifty -10%), `RiskResponse` in contract.
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
 - [ ] Register `money_budgets` / `money_mix` as private datasets if the migrate sink needs them (check `contract/src/datasets.ts` rules).
-- [ ] `api/src/money/`: harvest ideas on the tax route (needs latest prices), RSU view route and risk route over `loadRebuild` (`money/src/{rsu,risk}`); shapes in `contract/`.
+- [ ] `api/src/money/`: RSU view route over `loadRebuild` (`money/src/rsu`); shape in `contract/`. Store sector and beta (stocks area) so risk stops reading "Unknown" and beta 1.
 - [ ] US price and USD/INR Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`; reuse `api/src/fx/rates.ts`; register dataset, write budget, heartbeat.
 - [ ] Dividends and corporate-actions calendar data with expected cash.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
@@ -28,8 +29,10 @@ Status: building
 
 - XIRR skips dollar trades (RSU view will value those) and returns null, with a warning, when a held stock has no price.
 - CI `ts` failure on #78 (C-129-1 could not resolve a scaffold package) did not reproduce after merging main: full `pnpm test` green locally; treated as a flake from another area's scaffold check.
+- Risk route uses sector "Unknown" and beta 1 because neither is stored anywhere yet; the response lists the assumed-beta symbols.
+- Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
 
 ## Blocked
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
 
-Chapter end: 2
+Chapter end: 3
