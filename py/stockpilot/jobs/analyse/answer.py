@@ -35,12 +35,12 @@ def _pairs(form: dict):
         yield "risk", r.get("text_en"), r.get("text_bn")
 
 
-def check_shape(form) -> list[str]:
+def check_shape(form, calls=CALLS) -> list[str]:
     if not isinstance(form, dict):
         return ["the answer is not an object"]
     errs = []
-    if form.get("call") not in CALLS:
-        errs.append(f"call is {form.get('call')!r}, not one of {list(CALLS)}")
+    if form.get("call") not in calls:
+        errs.append(f"call is {form.get('call')!r}, not one of {list(calls)}")
     c = form.get("chance_pct")
     if isinstance(c, bool) or not isinstance(c, (int, float)) or not 0 <= c <= 100:
         errs.append("chance_pct is not a number from 0 to 100")
@@ -98,7 +98,7 @@ def verify(text, brief: dict) -> Verdict:
         form = json_in(text)
     except ValueError as err:
         return Verdict(False, None, [f"no JSON in the answer: {err}"])
-    errs = check_shape(form)
+    errs = check_shape(form, tuple(brief.get("calls") or CALLS))
     if errs:
         return Verdict(False, None, errs)
     errs = check_bengali(form) + check_numbers(form, brief) + check_evidence(form, brief)

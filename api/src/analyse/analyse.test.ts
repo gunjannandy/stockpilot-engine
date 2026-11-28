@@ -81,4 +81,40 @@ describe("analyse routes", () => {
     expect(github.dispatched).toHaveLength(1);
     expect((await app.request("/api/analyse/ABC%21/run", { method: "POST" })).status).toBe(400);
   });
+
+  it("stores a fund call, refuses one without Bengali, and has no holding column", async () => {
+    const t = await makeApp();
+    const fund = {
+      fund: "f1",
+      day: "2026-11-28",
+      call: "watch",
+      chance_pct: 50,
+      source: "model",
+      summary_en: "Fine.",
+      summary_bn: "ঠিক আছে।",
+      reasons: [],
+      risks: [],
+      model: "haiku",
+      note: null,
+    };
+    expect((await t.signed("POST", "/api/fundcall/call", fund)).status).toBe(200);
+    expect(
+      (await t.signed("POST", "/api/fundcall/call", { ...fund, summary_bn: "Fine." })).status,
+    ).toBe(422);
+    expect((await t.signed("POST", "/api/fundcall/call", { ...fund, call: "avoid" })).status).toBe(
+      400,
+    );
+    const got = (await (await t.app.request("/api/fundcall/f1")).json()) as {
+      call: { call: string };
+    };
+    expect(got.call.call).toBe("watch");
+    const inputs = (await (await t.signed("GET", "/api/fundcall/inputs/f1")).json()) as {
+      fund: unknown;
+    };
+    expect(inputs.fund).toBeNull();
+    const cols = (await t.db
+      .prepare("select name from pragma_table_info('fund_analyse_calls')")
+      .all()) as { results: { name: string }[] };
+    expect(cols.results.map((c) => c.name).join(" ")).not.toMatch(/hold|tax|sip|lot|qty/);
+  });
 });

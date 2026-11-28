@@ -48,3 +48,39 @@ class AnalyseWorker(FakeRuntimeWorker):
 
 def door(worker):
     return Door("https://x.invalid", KEY, worker.transport)
+
+
+def answer_for(brief, call=None, **over):
+    """A valid, bilingual answer for any brief: it cites the code's own number and one piece of the brief's evidence."""
+    code = brief["code"]
+    c = code["chance_pct"]
+    form = {"call": call or code["call"], "chance_pct": c,
+            "summary_en": f"The code puts the chance at {c} out of 100.",
+            "summary_bn": f"কোডের হিসাবে সম্ভাবনা {c}, ১০০-এর মধ্যে 100।",
+            "reasons": [{"text_en": f"The chance is {c}.", "text_bn": f"সম্ভাবনা {c}।", "evidence": brief["evidence"][:1]}],
+            "risks": [{"text_en": "Prices can fall.", "text_bn": "দাম পড়তে পারে।"}]}
+    if form["call"] != code["call"]:
+        form["moved_because"] = "The evidence points the other way."
+    return json.dumps({**form, **over}, ensure_ascii=False)
+
+
+FUND = {"id": "f1", "name": "Made Up Flexi Fund", "category": "Equity Scheme - Flexi Cap Fund", "ter": 0.6, "aum_cr": 12000,
+        "r1": 14.0, "r3": 16.5, "r5": 15.0, "cat_r1": 11.0, "cat_r3": 13.0, "cat_r5": 12.0, "category_n": 30, "max_fall": -32.0,
+        "roll_min": -8.0, "roll_median": 14.0, "roll_max": 40.0, "roll_loss_share": 12.0}
+FUND_CALL = {"id": "f1", "kind": "call", "call": "buy", "rank": 2, "of": 30, "quartile": 1, "chance": 0.64, "cases": 90,
+             "periods": 6, "avg_excess": 1.8, "reasons": "", "caveat": "Funds alive today only"}
+
+
+class FundWorker(FakeRuntimeWorker):
+    def __init__(self, fund=FUND, call=FUND_CALL, **kw):
+        super().__init__(**kw)
+        self.fund, self.call, self.calls_stored = fund, call, []
+
+    def transport(self, method, url, headers, body):
+        route = "/" + url.split("/", 3)[3]
+        if route.startswith("/api/fundcall/inputs/"):
+            return 200, {"fund": self.fund, "call": self.call}
+        if route == "/api/fundcall/call":
+            self.calls_stored.append(json.loads(body))
+            return 200, {"ok": True}
+        return super().transport(method, url, headers, body)

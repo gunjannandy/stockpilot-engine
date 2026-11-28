@@ -7,6 +7,8 @@ import type { Core } from "./runtime";
 /** Model calls a kind may start in one IST day. Kinds not listed here may not call a model. */
 export const MODEL_DAILY_CAP: Record<string, number> = {
   analyse: 60,
+  fundcall: 30,
+  postmortem: 40,
   refresh_call: 120,
   news_tag: 200,
   news_rank: 100,

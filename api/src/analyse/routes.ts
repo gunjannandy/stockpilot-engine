@@ -8,6 +8,8 @@ import { expectedSeconds, getJob, isPaused, jobKey } from "../jobs/runtime";
 import { readImpact } from "../news/impact";
 import { dispatchJob, queueJob } from "../schedule/tick";
 import { findStock, readHistory } from "../stocks/stocks";
+import { benchRoutes } from "./bench";
+import { fundcallRoutes } from "./fundcall";
 
 const KIND = "analyse";
 const SYMBOL = /^[A-Z0-9][A-Z0-9&-]{0,19}$/;
@@ -52,6 +54,8 @@ async function pointerRows(ctx: Ctx, dataset: string, where = "", bind: unknown[
 
 export function analyseRoutes(ctx: Ctx, opts: { github?: GithubBot } = {}) {
   const app = new Hono();
+  app.route("/", benchRoutes(ctx));
+  app.route("/", fundcallRoutes(ctx));
 
   app.get("/api/analyse/inputs/:symbol", ctx.guard.ingest, async (c) => {
     const symbol = c.req.param("symbol").toUpperCase();
