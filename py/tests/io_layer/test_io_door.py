@@ -59,19 +59,19 @@ def test_a_lost_heartbeat_returns_false_and_does_not_raise():
     assert beat(d, "job.ping", ok=True) is False
 
 
-def test_the_ping_job_starts_writes_one_row_finishes_and_beats():
+def test_the_ping_job_begins_writes_one_row_finishes_and_beats():
     d, mock = door()
     run_id = run_ping(d)
-    assert [c[0] for c in mock.calls] == ["job_start", "ingest_write", "job_finish", "heartbeat_write"]
+    assert [c[0] for c in mock.calls] == ["job_begin", "ingest_write", "job_end", "heartbeat_write"]
     rows = mock.calls[1][1]["rows"]
     assert len(rows) == 1 and rows[0]["source"] == "job"
     assert mock.calls[1][1]["run_id"] == run_id
     assert mock.calls[2][1]["status"] == "done"
 
 
-def test_a_failing_ping_job_finishes_failed_and_still_beats():
+def test_a_failing_ping_job_endes_failed_and_still_beats():
     d, mock = door(fail_on="ingest_write")
     with pytest.raises(DoorError):
         run_ping(d)
-    assert mock.calls[-2][0] == "job_finish" and mock.calls[-2][1]["status"] == "failed"
+    assert mock.calls[-2][0] == "job_end" and mock.calls[-2][1]["status"] == "failed"
     assert mock.calls[-1][0] == "heartbeat_write" and mock.calls[-1][1]["ok"] is False

@@ -1,0 +1,18 @@
+{
+  "wfLead": "Stocks worth a look that you do not own. No forecast yet? Press Analyse.",
+  "wfNoFc": "No forecast yet",
+  "wfAnalyse": "Analyse",
+  "wfRunning": "Analysing",
+  "wfOod": "Out of date",
+  "wfStrong": "Strong",
+  "wfFair": "Fair",
+  "wfWeak": "Weak",
+  "wfChance": "chance",
+  "wfEmpty": "Nothing to follow right now.",
+  "wfLoading": "Loading the list...",
+  "wfFailed": "Could not load this list. Check your connection and try again.",
+  "wfRetry": "Try again",
+  "wfAnalyseStarted": "Started. The forecast will appear here.",
+  "wfTipStrong": "Out of 100 times, this many stocks like it beat the Nifty. 57 or more is strong.",
+  "wfTipWeak": "Below 40 is weak."
+}

@@ -58,10 +58,3 @@ export const deploys = sqliteTable("deploys", {
   version: text("version").primaryKey(),
   firstSeenAt: text("first_seen_at").notNull(),
 });
-
-export const whatsnew = sqliteTable("whatsnew", {
-  pr: integer("pr").primaryKey(),
-  en: text("en").notNull(),
-  bn: text("bn").notNull(),
-  at: text("at").notNull(),
-});

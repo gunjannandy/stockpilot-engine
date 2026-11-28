@@ -5,6 +5,7 @@ import { datasets as registry } from "@stockpilot/contract";
 import { githubFromEnv } from "../../../adapters/src/github";
 import { istText } from "../app";
 import type { Core } from "../jobs/runtime";
+import { runSecretsDuty } from "../secrets/duty";
 import { watcherDuty } from "../watcher/duties";
 import { tick } from "./tick";
 
@@ -34,6 +35,7 @@ export const DUTIES: Duty[] = [
   },
   { id: "quotes", everyMinutes: 5, run: notYet("the quotes duty") },
   watcherDuty,
+  { id: "secrets", everyMinutes: 60, run: (core) => runSecretsDuty(core) },
   { id: "digest", everyMinutes: 60, run: notYet("the digest") },
 ];
 

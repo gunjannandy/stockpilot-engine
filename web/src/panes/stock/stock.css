@@ -515,6 +515,19 @@ svg.sp.dn path.a {
     max-width: calc(100% - 16px);
   }
 }
-.sk-list .lrow { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; background: transparent; font: inherit; color: inherit; }
-.sk-list .lrow:hover { background: var(--c1); }
-.sk-list .lrow[aria-current="true"] { background: var(--selected); }
+.sk-list .lrow {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--line-2);
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+.sk-list .lrow:hover {
+  background: var(--c1);
+}
+.sk-list .lrow[aria-current="true"] {
+  background: var(--selected);
+}
