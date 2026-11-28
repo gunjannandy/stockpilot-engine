@@ -13,6 +13,11 @@ export type GithubBot = {
   openIssue(a: { repo: string; title: string; body: string; labels?: string[] }): Promise<number>;
   comment(a: { repo: string; issue: number; body: string }): Promise<void>;
   labels(a: { repo: string; issue: number }): Promise<string[]>;
+  /** Open issues carrying a label, newest first. */
+  openIssuesWithLabel(a: {
+    repo: string;
+    label: string;
+  }): Promise<{ number: number; title: string; url: string }[]>;
 };
 
 export type BotConfig = {
@@ -125,6 +130,23 @@ export function githubBot(cfg: BotConfig): GithubBot {
       const res = await call("GET", `/repos/${a.repo}/issues/${a.issue}/labels`, "the label list");
       return ((await res.json()) as { name: string }[]).map((l) => l.name);
     },
+    async openIssuesWithLabel(a) {
+      const res = await call(
+        "GET",
+        `/repos/${a.repo}/issues?state=open&per_page=30&labels=${encodeURIComponent(a.label)}`,
+        "the issue list",
+      );
+      return (
+        (await res.json()) as {
+          number: number;
+          title: string;
+          html_url: string;
+          pull_request?: unknown;
+        }[]
+      )
+        .filter((i) => !i.pull_request)
+        .map((i) => ({ number: i.number, title: i.title, url: i.html_url }));
+    },
   };
 }
 
@@ -166,6 +188,15 @@ export function fakeGithub(opts: { failDispatch?: () => boolean } = {}) {
     },
     async labels(a) {
       return issues.find((i) => i.number === a.issue && i.repo === a.repo)?.labels ?? [];
+    },
+    async openIssuesWithLabel(a) {
+      return issues
+        .filter((i) => i.repo === a.repo && i.labels.includes(a.label))
+        .map((i) => ({
+          number: i.number,
+          title: i.title,
+          url: `https://github.com/${i.repo}/issues/${i.number}`,
+        }));
     },
   };
   return Object.assign(bot, { dispatched, issues });
