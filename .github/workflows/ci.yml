@@ -114,24 +114,6 @@ jobs:
       - name: trace gate
         run: |
           uv run --frozen --project py python tools/gates/run.py trace
-  planner-label:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      issues: read
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
-      - run: uv sync --frozen --project py
-      - name: planner-label gate
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          uv run --frozen --project py python tools/gates/run.py planner-label
   check-status:
     # Derives checks/status.json (pending until a check's file is on main) and keeps it as an artifact.
     runs-on: ubuntu-latest
@@ -146,8 +128,9 @@ jobs:
           name: check-status
           path: checks/status.json
   gate:
-    # The one required check on main: green only when every job above is.
-    needs: [py, ts, privacy, never-order, workflow-triggers, contract-additive, trace, planner-label, check-status]
+    # The one required check on main: green only when every safety job is. trace and check-status run for
+    # information only; the planner-label gate was removed (owner decision 2026-11-28: no gate may wait on a label).
+    needs: [py, ts, privacy, never-order, workflow-triggers, contract-additive]
     if: always()
     runs-on: ubuntu-latest
     steps:
