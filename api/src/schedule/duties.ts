@@ -39,13 +39,11 @@ export const DUTIES: Duty[] = [
   {
     id: "secrets",
     everyMinutes: 60,
-    // The hourly slot also lets Feedback follow its tickets; the duty set is fixed by C-116-3, so it rides here.
     async run(core) {
-      const secrets = await runSecretsDuty(core);
-      const feedback = await feedbackDuty.run(core).catch(() => "feedback pass failed");
-      return `${secrets}; feedback: ${feedback}`;
+      return runSecretsDuty(core);
     },
   },
+  feedbackDuty,
   { id: "digest", everyMinutes: 60, run: notYet("the digest") },
 ];
 
