@@ -10,7 +10,7 @@ Status: building
 - PR #67 gate fixed: merged main (dataset conflict kept both sides); the planner-label gate no longer exists on main.
 
 ## Next
-- [ ] Check C-047-1: universe keeps delisted and renamed fixtures (`checks/C-047-1.py`).
+- [x] Check C-047-1 (`checks/C-047-1.py`): universe keeps delisted and renamed stocks (old name kept as alias).
 - [ ] Check C-040-4: backfill gives each listed fixture stock full history; unexplained jump held back with reason; run passes under threshold.
 - [ ] Chart files and search index output in the universe/history Jobs.
 - [ ] Facts Job (XBRL first, yfinance fallback, sector comparison, plain sentences in English and Bengali, raw figures table with value, period, source): `py/stockpilot/jobs/facts/`, `api/src/facts/`, `api/drizzle/facts.ts`, `.github/workflows/facts.yml`, contract shapes. Checks C-048-1, C-171-2.

@@ -22,8 +22,12 @@ def to_rows(entries: list[dict], previous: list[dict]) -> list[dict]:
         rows[rid] = {"id": rid, "symbol": e["symbol"], "exchange": e["exchange"], "segment": e["segment"], "name": e["name"],
                      "isin": e["isin"] or "", "aliases": "|".join(e["aliases"]), "status": "listed"}
     for p in previous:
-        if p["id"] not in rows:
+        row = rows.get(p["id"])
+        if row is None:
             rows[p["id"]] = {**p, "status": "delisted"}
+        elif p["name"] != row["name"]:  # renamed: the old name stays searchable
+            names = [a for a in [*p.get("aliases", "").split("|"), p["name"], *row["aliases"].split("|")] if a]
+            row["aliases"] = "|".join(dict.fromkeys(n for n in names if n != row["name"]))
     return [rows[k] for k in sorted(rows)]
 
 
