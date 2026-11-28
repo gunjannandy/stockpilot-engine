@@ -62,3 +62,11 @@ Older lane branches compared with preview/V3: MARKS identical; STOCK, FUNDS, ADM
 - Motion trimmed to DESIGN.md (opacity and colour only, nothing moves layout).
 - Open: chart library swap (needs an owner decision, see review post), whether Admin switches stay, 5D and 1W look the same on daily data, the /stock page still has its own filter box.
 - Lesson: read DESIGN.md and the v2/v10 shots in `docs/prototypes/v2/shots` and `legacy/web` BEFORE changing a screen; they are in the engine.
+
+## Round 3 (applied)
+- Chart: history takes 70% of the width and the forecast 30% at every range and zoom (zoom anchors on the last price). The chart was being rebuilt on every state change (unstable translate function), which reset zoom; fixed. Buy and sell markers are short (+qty, -qty) in gain/loss colour; hovering that day shows "You bought N x price = total" in the readout line.
+- Logo: yellow rounded square with a trend arrow (`web/public/logo.svg`), used in the rail, the tab icon, the app icons and the theme colour.
+- Rail order: Today, Watchlist, Market and news, Worth following, Portfolio, Funds; then Record, Feedback, Admin, Settings.
+
+## Brief for the next (Opus) session
+Read all of `web/src`, `DESIGN.md`, `docs/prototypes/v2` and `docs/prototypes/ui/r10`, `legacy/web/public` and this file first. Then grill the owner about what each screen is for BEFORE designing. It may change, merge or drop anything, including layouts, keeping the existing theme (tokens, type, azure primary, graphite surfaces) and the DESIGN.md rules. Owner's direction: Portfolio, Admin and Record should be very simple. The design has hit a roadblock: aim for screens whose purpose is clear at a glance, dense and calm, cards that separate meanings, no hero blocks, one search (the top bar). Decide per screen only after reading the code and understanding the intent.

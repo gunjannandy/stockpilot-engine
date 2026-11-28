@@ -106,6 +106,9 @@ ul {
   font-weight: 800;
   font-size: var(--fs-section);
 }
+.brand img {
+  border-radius: var(--r-card);
+}
 .brand i {
   width: 36px;
   height: 36px;

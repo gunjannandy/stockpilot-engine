@@ -71,18 +71,25 @@ export function StockChart(props: {
   extra?: React.ReactNode;
 }) {
   const { bars, call, trades, extra } = props;
-  const t = useWords();
+  const words = useWords();
+  const wordsRef = useRef(words);
+  wordsRef.current = words;
+  // A stable translate function: the chart is built once per data change, not on every render.
+  const t = useCallback((k: string) => wordsRef.current(k), []);
+  const langKey = words("stock.up");
   const host = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [range, setRange] = useState<RangeId | null>(
     () => load<{ r: RangeId }>("sk-range", { r: "1Y" }).r,
   );
   const [menu, setMenu] = useState(false);
+  const lastIdx = useRef(0);
   const [layers, setLayers] = useState<Record<Layer, boolean>>(() =>
     load("sk-layers", { vol: true, avg: true, band: true, levels: true, trades: true }),
   );
   const [theme, setTheme] = useState(0);
   const [readout, setReadout] = useState("");
+  const [trade, setTrade] = useState<{ kind: string; text: string }[]>([]);
   const apiRef = useRef<{
     apply: (l: Record<Layer, boolean>) => void;
     setRange: (r: RangeId | null) => void;
@@ -259,8 +266,8 @@ export function StockChart(props: {
                     position: "belowBar" as const,
                     shape: "arrowUp" as const,
                     color: c.gain,
-                    text: `${t("stock.bought")} ${tr.qty}`,
-                    size: 2,
+                    text: `+${tr.qty}`,
+                    size: 1.5,
                   },
                 ]
               : [
@@ -269,8 +276,8 @@ export function StockChart(props: {
                     position: "aboveBar" as const,
                     shape: "arrowDown" as const,
                     color: c.loss,
-                    text: `${t("stock.sold")} ${tr.qty}`,
-                    size: 2,
+                    text: `−${tr.qty}`,
+                    size: 1.5,
                   },
                 ];
           })
@@ -279,11 +286,11 @@ export function StockChart(props: {
     };
     const setR = (r: RangeId | null) => {
       if (!r) return;
-      const to = bands
-        ? (bands.points[bands.points.length - 1]?.time ?? lastBar.time)
-        : lastBar.time;
-      chart.timeScale().setVisibleRange({ from: rangeStart(r, dates) as Time, to: to as Time });
+      const li = dates.length - 1;
+      const from = Math.max(0, dates.indexOf(rangeStart(r, dates)));
+      showWithForecast(chart, li, from);
     };
+    lastIdx.current = dates.length - 1;
     apiRef.current = { apply, setRange: setR };
     apply(layers);
     setR(range);
@@ -291,11 +298,18 @@ export function StockChart(props: {
     chart.subscribeCrosshairMove((p: MouseEventParams<Time>) => {
       const tm = p.time ? String(p.time) : null;
       const b = tm ? bars.find((x) => x.time === tm) : undefined;
-      if (b)
+      if (b) {
+        const mine = trades.filter((x) => dates.find((d) => d >= x.date) === b.time);
+        setTrade(
+          mine.map((x) => ({
+            kind: x.kind,
+            text: `${x.kind === "buy" ? t("stock.bought") : t("stock.sold")} ${x.qty} × ${inr(b.close)} = ${inr(x.qty * b.close)}`,
+          })),
+        );
         setReadout(
           `${b.time}  ${t("stock.open")} ${inr(b.open)} · ${t("stock.high")} ${inr(b.high)} · ${t("stock.low")} ${inr(b.low)} · ${t("stock.close")} ${inr(b.close)}`,
         );
-      else if (tm && bands) {
+      } else if (tm && bands) {
         const f = bands.points.find((x) => x.time === tm);
         setReadout(
           f
@@ -308,7 +322,7 @@ export function StockChart(props: {
       const f = wheelZoom(e);
       if (f === null) return; // plain scroll: the page scrolls, the chart stays
       e.preventDefault();
-      zoom(chart, f, e.clientX - el.getBoundingClientRect().left);
+      zoom(chart, f, dates.length - 1);
       setRange(null);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -318,7 +332,7 @@ export function StockChart(props: {
       chartRef.current = null;
       apiRef.current = null;
     };
-  }, [bars, call, trades, theme, t]);
+  }, [bars, call, trades, theme, t, langKey]);
 
   useEffect(() => {
     apiRef.current?.apply(layers);
@@ -332,7 +346,7 @@ export function StockChart(props: {
   }, [range]);
 
   const step = useCallback((f: number) => {
-    if (chartRef.current) zoom(chartRef.current, f);
+    if (chartRef.current) zoom(chartRef.current, f, lastIdx.current);
     setRange(null);
   }, []);
   const last = bars[bars.length - 1];
@@ -409,6 +423,13 @@ export function StockChart(props: {
         <div className="sk-cv" ref={host} data-testid="chart" />
         <div className="sk-readout" aria-live="off">
           {readout}
+          {readout &&
+            trade.map((x) => (
+              <b key={x.text} className={x.kind === "buy" ? "up" : "dn"}>
+                {" · "}
+                {x.text}
+              </b>
+            ))}
         </div>
       </div>
       <div className="sk-legend">
@@ -437,15 +458,20 @@ export function StockChart(props: {
   );
 }
 
-function zoom(chart: IChartApi, k: number, x?: number) {
-  const ts = chart.timeScale();
-  const r = ts.getVisibleLogicalRange();
+/** History takes 70% of the width and the forecast 30%, whatever the zoom. */
+const FORECAST_SHARE = 0.3;
+function showWithForecast(chart: IChartApi, last: number, from: number) {
+  const hist = Math.max(4, last - from);
+  chart.timeScale().setVisibleLogicalRange({
+    from: last - hist,
+    to: last + (hist * FORECAST_SHARE) / (1 - FORECAST_SHARE),
+  });
+}
+function zoom(chart: IChartApi, k: number, last: number) {
+  const r = chart.timeScale().getVisibleLogicalRange();
   if (!r) return;
-  const at = x === undefined ? null : ts.coordinateToLogical(x);
-  const mid = at ?? (r.from + r.to) / 2;
-  const from = mid - (mid - r.from) * k;
-  const to = mid + (r.to - mid) * k;
-  if (to - from < 8) return;
-  ts.setVisibleLogicalRange({ from, to });
+  const hist = (last - r.from) * k;
+  if (hist < 4 || hist > last + 1) return;
+  showWithForecast(chart, last, last - hist);
 }
 export { addDays };

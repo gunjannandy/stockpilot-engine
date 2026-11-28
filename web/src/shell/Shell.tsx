@@ -98,7 +98,7 @@ export function Shell({ panes, syncedAt }: { panes: Pane[]; syncedAt?: string })
       </a>
       <nav className="rail" aria-label={t("shell.nav.label")}>
         <div className="brand">
-          <i aria-hidden="true">s</i>
+          <img src="/logo.svg" alt="" width="36" height="36" />
           <span>{t("shell.brand")}</span>
         </div>
         {daily.map(item)}
