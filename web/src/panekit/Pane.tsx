@@ -1,6 +1,7 @@
 // The pane wrapper: its own query and boundary; loading, empty, stale and failed states; the
 // freshness chip; the calm updating state. A pane gives a route, a way to read the updated time
 // and its rows, and how to draw them.
+import { routePath, type ScreenRoute } from "@stockpilot/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useWords } from "../words";
@@ -11,8 +12,12 @@ import { FreshnessChip } from "./parts";
 export type PaneProps<T> = {
   id: string;
   title: string;
-  /** The pane's one API route. */
-  path: string;
+  /** The pane's one API route, as a path. Give this or `route`. */
+  path?: string;
+  /** The pane's one route from the contract's `screenRoutes` (typed: the answer is checked against it). */
+  route?: ScreenRoute;
+  /** Fills `:name` in the route's path, e.g. { symbol }. */
+  params?: Record<string, string>;
   /** The dataset's updated time (IST text) in an answer. */
   updatedAt: (data: T) => string | null | undefined;
   /** How long the dataset may go before the chip turns amber. */
@@ -37,10 +42,14 @@ function Failed({ id, retry }: { id: string; retry: () => void }) {
 function Inner<T>(p: PaneProps<T>) {
   const t = useWords();
   const qc = useQueryClient();
+  const path = p.path ?? (p.route ? routePath(p.route, p.params) : "");
   const q = useQuery({
-    queryKey: ["pane", p.path],
+    queryKey: ["pane", path],
     // The cache keeps the ETag next to the body, so a persisted answer can be revalidated too.
-    queryFn: () => fetchPane<T>(p.path, qc.getQueryData<Held<T>>(["pane", p.path]), p.fetcher),
+    queryFn: async () => {
+      const got = await fetchPane<T>(path, qc.getQueryData<Held<T>>(["pane", path]), p.fetcher);
+      return p.route ? { ...got, data: p.route.response.parse(got.data) as T } : got;
+    },
     retry: (n, err) => !(err instanceof PaneUpdating) && n < 1,
     retryDelay: 300,
     staleTime: 15_000,

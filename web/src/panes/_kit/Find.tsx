@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { createSearch } from "../../search/core";
 import { useWords } from "../../words";
-import { UNIVERSE } from "./data";
+import { UNIVERSE } from "./pending";
 
 export function Find({
   placeholder,

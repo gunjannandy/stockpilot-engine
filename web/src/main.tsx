@@ -11,7 +11,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { discoverPanes, discoverWords } from "./areas";
 import { makeClient, persistClient } from "./cache/persist";
-import { installErrorReporting } from "./panekit";
+import { Bannered, installErrorReporting } from "./panekit";
 import { morePane, Shell, samplePanes } from "./shell";
 import "./shell/shell.css";
 import { registerApp } from "./sw/register";
@@ -46,7 +46,16 @@ const root = createRootRoute({
   ),
 });
 const children = panes.map((p) =>
-  createRoute({ getParentRoute: () => root, path: p.path, component: p.Component }),
+  createRoute({
+    getParentRoute: () => root,
+    path: p.path,
+    // Every screen sits behind its banner flag (panekit/Banner.tsx).
+    component: () => (
+      <Bannered screen={p.id}>
+        <p.Component />
+      </Bannered>
+    ),
+  }),
 );
 const home = createRoute({
   getParentRoute: () => root,

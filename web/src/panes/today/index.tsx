@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
+import { todayLine } from "../_kit/hooks";
 import {
   barsOf,
   callCard,
@@ -12,8 +13,7 @@ import {
   stockById,
   todayGroups,
   UNUSUAL,
-} from "../_kit/data";
-import { todayLine } from "../_kit/hooks";
+} from "../_kit/pending";
 import { Toast } from "../_kit/Toast";
 import { Seg, StockRow, StockTable, VChip } from "../_kit/ui";
 import { useWatch, watch } from "../_kit/watch";

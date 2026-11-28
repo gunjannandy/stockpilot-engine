@@ -1,8 +1,8 @@
 // Worth following: one list (Top 10, Just missed, has our view, you hold, falling, busy today) and the Table screener over every stock.
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
-import { isHeld, type Reason, reasonsOf, STOCKS, UNIVERSE } from "../_kit/data";
 import { ListPage } from "../_kit/ListPage";
+import { isHeld, type Reason, reasonsOf, STOCKS, UNIVERSE } from "../_kit/pending";
 
 // Needs data: the real count of stocks analysed and the count that passed the filters; these two are placeholders.
 const UNIVERSE_N = 4832;

@@ -538,3 +538,17 @@
   color: var(--primary);
   font-size: 0.7em;
 }
+
+.ad-screens ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.ad-screens li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}

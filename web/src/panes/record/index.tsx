@@ -1,7 +1,7 @@
 // Record: our forecasts against the Nifty, are we adding value, our own trading, Smallcase against our own trades.
 import type { Pane } from "../../areas";
+import { money } from "../../format";
 import { useWords } from "../../words";
-import { money } from "../_kit/data";
 import { useCountUp } from "../_kit/hooks";
 import { Tile } from "../_kit/ui";
 import "./record.css";

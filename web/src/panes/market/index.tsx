@@ -1,8 +1,9 @@
 // Market & news: ranked news cards with the stocks each affects, sector mood, coming up, big-fund money, exposure per holding.
 import { useEffect, useState } from "react";
 import type { Pane } from "../../areas";
+import { money, pct } from "../../format";
 import { useWords } from "../../words";
-import { HOLDINGS, money, NEWS, type NewsItem, pct, quote, stockById } from "../_kit/data";
+import { HOLDINGS, NEWS, type NewsItem, quote, stockById } from "../_kit/pending";
 import { Toast } from "../_kit/Toast";
 import { Spark, Tile, VChip } from "../_kit/ui";
 import "./market.css";

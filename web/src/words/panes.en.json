@@ -10,5 +10,9 @@
   "fresh.now": "Updated just now",
   "fresh.today": "Updated {time} today",
   "fresh.on": "Updated {day} {time}",
-  "offline": "You are offline. Showing the last numbers."
+  "offline": "You are offline. Showing the last numbers.",
+  "banner.title": "This part is being fixed",
+  "banner.body": "We have switched this off for now while it is made right. It will be back soon. Nothing is lost.",
+  "indices.title": "Market indices",
+  "indices.none": "not given"
 }

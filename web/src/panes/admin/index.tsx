@@ -17,6 +17,7 @@ import { useWords } from "../../words";
 import { Toast } from "../_kit/Toast";
 import { Seg } from "../_kit/ui";
 import { watch } from "../_kit/watch";
+import { Screens } from "./Screens";
 
 type Run = AdminOverview["runs"][number];
 type Fresh = AdminOverview["freshness"][number];
@@ -765,6 +766,7 @@ function AdminPane() {
             <Board asks={a.asks.data.asks} owner={a.asks.data.person === "owner"} />
           ) : null}
           <Jobs d={d} state={a.state.data} again={a.again} />
+          <Screens flags={a.state.data?.flags} again={a.again} />
         </div>
       ) : null}
       {d && view === "details" ? <Details d={d} monitor={a.monitor.data} /> : null}
