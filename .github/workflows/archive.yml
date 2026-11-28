@@ -28,3 +28,6 @@ jobs:
       timeout-minutes: 30
     secrets:
       INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      D1_PRODUCTION_ID: ${{ secrets.D1_PRODUCTION_ID }}
+      CF_D1_ARCHIVE_TOKEN: ${{ secrets.CF_D1_ARCHIVE_TOKEN }}
