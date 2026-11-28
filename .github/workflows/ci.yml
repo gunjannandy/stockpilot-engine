@@ -128,9 +128,8 @@ jobs:
           name: check-status
           path: checks/status.json
   gate:
-    # The one required check on main: green only when every safety job is. trace and check-status run for
-    # information only; the planner-label gate was removed (owner decision 2026-11-28: no gate may wait on a label).
-    needs: [py, ts, privacy, never-order, workflow-triggers, contract-additive]
+    # The one required check on main: green only when every job above is. The planner-label gate was removed
+    needs: [py, ts, privacy, never-order, workflow-triggers, contract-additive, trace, check-status]
     if: always()
     runs-on: ubuntu-latest
     steps:
