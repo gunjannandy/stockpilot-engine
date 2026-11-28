@@ -1,0 +1,12 @@
+{
+  "title": "Notes",
+  "postmortem": "Why it missed",
+  "postmortem.none": "No missed calls to explain yet",
+  "cause.thesis_wrong": "The reasons were wrong",
+  "cause.risk_hit": "A named risk happened",
+  "cause.news_after": "News after the call moved it",
+  "cause.market": "The market moved it",
+  "cause.unknown": "Not clear",
+  "nightly": "Tonight's note",
+  "nightly.none": "No note yet"
+}

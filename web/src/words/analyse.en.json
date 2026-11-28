@@ -1,0 +1,22 @@
+{
+  "title": "Analyse",
+  "press": "Analyse this stock",
+  "press.fund": "Analyse this fund",
+  "running": "Analysing on public data",
+  "running.about": "Usually about {seconds} seconds",
+  "done": "Call ready",
+  "failed": "Analyse did not finish",
+  "tomorrow": "Next update tomorrow",
+  "call.buy": "Buy",
+  "call.watch": "Watch",
+  "call.avoid": "Avoid",
+  "chance": "Chance of beating the Nifty 50 over about three months",
+  "chance.fund": "Chance of beating the category's middle fund over 12 months",
+  "source.model": "Read by the model and checked",
+  "source.code": "From the numbers alone",
+  "reasons": "Why",
+  "risks": "What could go wrong",
+  "tax": "If you sold today",
+  "act": "If you act",
+  "code.note": "The model's answer did not pass its checks, so the numbers alone stand."
+}

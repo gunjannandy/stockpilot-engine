@@ -40,3 +40,45 @@ export function analyseCallCheck(c: AnalyseCall): string | null {
     return "a code-only call carries no model text";
   return null;
 }
+
+const Rate = z.number().min(0).max(1);
+
+/** What the bench Job reports after scoring the Analyse method on its past public briefs. `red` holds the plain
+ * reasons it failed (empty when green); a red report pauses releases. `comparison` is the Haiku comparison from the
+ * first run: `forecast_model` is the model forecasts use (Haiku only above both lines). */
+export const BenchReport = z.object({
+  fingerprint: z.string().min(1),
+  model: z.string().min(1),
+  scores: z.object({
+    n: z.number().int().min(1),
+    form_ok: z.number().int().min(0),
+    form_rate: Rate,
+    hit_rate: Rate.nullable(),
+    decided: z.number().int().min(0),
+    code_hit_rate: Rate.nullable(),
+  }),
+  problems: z.record(z.string(), z.array(z.string())),
+  comparison: z
+    .object({
+      form_rate: Rate,
+      agreement: Rate,
+      passed: z.boolean(),
+      forecast_model: z.enum(["haiku", "sonnet"]),
+    })
+    .nullable(),
+  forecast_model: z.enum(["haiku", "sonnet"]),
+  red: z.array(z.string()),
+});
+export type BenchReport = z.infer<typeof BenchReport>;
+
+/** The comparison's verdict, from its two numbers. The Job and the Worker both use this one rule. */
+export function benchComparisonPasses(formRate: number, agreement: number): boolean {
+  return formRate >= BENCH_FORM_MIN && agreement >= BENCH_VERDICT_MIN;
+}
+
+/** What the fund Analyse Job writes for one fund and day: the same shape as a stock call, with buy or watch only. */
+export const FundAnalyseCall = AnalyseCall.omit({ symbol: true, call: true }).extend({
+  fund: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_.-]{0,60}$/),
+  call: z.enum(["buy", "watch"]),
+});
+export type FundAnalyseCall = z.infer<typeof FundAnalyseCall>;

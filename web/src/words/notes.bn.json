@@ -1,0 +1,12 @@
+{
+  "title": "নোট",
+  "postmortem": "কেন ভুল হল",
+  "postmortem.none": "এখনও ব্যাখ্যা করার মতো ভুল কল নেই",
+  "cause.thesis_wrong": "কারণগুলো ভুল ছিল",
+  "cause.risk_hit": "নামকরা ঝুঁকিটাই ঘটেছে",
+  "cause.news_after": "কলের পরের খবরে দাম নড়েছে",
+  "cause.market": "বাজারই দাম নড়িয়েছে",
+  "cause.unknown": "পরিষ্কার নয়",
+  "nightly": "আজ রাতের নোট",
+  "nightly.none": "এখনও কোনো নোট নেই"
+}
