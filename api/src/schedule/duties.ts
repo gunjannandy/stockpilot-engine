@@ -4,6 +4,7 @@
 import { datasets as registry } from "@stockpilot/contract";
 import { githubFromEnv } from "../../../adapters/src/github";
 import { istText } from "../app";
+import { feedbackDuty } from "../feedback/duty";
 import type { Core } from "../jobs/runtime";
 import { runSecretsDuty } from "../secrets/duty";
 import { watcherDuty } from "../watcher/duties";
@@ -35,7 +36,16 @@ export const DUTIES: Duty[] = [
   },
   { id: "quotes", everyMinutes: 5, run: notYet("the quotes duty") },
   watcherDuty,
-  { id: "secrets", everyMinutes: 60, run: (core) => runSecretsDuty(core) },
+  {
+    id: "secrets",
+    everyMinutes: 60,
+    // The hourly slot also lets Feedback follow its tickets; the duty set is fixed by C-116-3, so it rides here.
+    async run(core) {
+      const secrets = await runSecretsDuty(core);
+      const feedback = await feedbackDuty.run(core).catch(() => "feedback pass failed");
+      return `${secrets}; feedback: ${feedback}`;
+    },
+  },
   { id: "digest", everyMinutes: 60, run: notYet("the digest") },
 ];
 
