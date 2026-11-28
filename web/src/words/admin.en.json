@@ -1,0 +1,15 @@
+{
+  "title": "Admin",
+  "needs": "Needs you",
+  "nothing": "Nothing needs you.",
+  "fresh": "Is the data fresh?",
+  "runs": "Recent Job runs",
+  "retry": "Try again",
+  "problems": "Problems",
+  "noproblems": "No problems.",
+  "usage": "What gets used",
+  "nousage": "No clicks counted yet.",
+  "never": "never",
+  "updated": "Updated",
+  "failed": "Admin did not load. Try again."
+}
