@@ -35,7 +35,12 @@ export const AdminProblem = z.object({
   pane: z.string().nullable(),
   url: z.string().nullable(),
 });
-export const AdminNeed = z.object({ id: z.string(), text: z.string(), kind: z.string() });
+export const AdminNeed = z.object({
+  id: z.string(),
+  text: z.string(),
+  kind: z.string(),
+  url: z.string().optional(),
+});
 export const AdminUsage = z.object({ screen: z.string(), button: z.string(), n: z.number() });
 
 export const AdminOverview = z.object({
