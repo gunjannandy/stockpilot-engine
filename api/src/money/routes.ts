@@ -12,10 +12,12 @@ import {
   XirrResponse,
 } from "@stockpilot/contract";
 import { Hono } from "hono";
+import { addYears } from "../../../money/src/core/dates";
 import { concentration, type Exposure, niftyShock } from "../../../money/src/risk/risk";
 import { expectedVests, type RsuLot, rsuView, type Vest } from "../../../money/src/rsu/rsu";
 import {
   fyLabel,
+  fyOf,
   harvest,
   incomeTax,
   inputs,
@@ -28,7 +30,7 @@ import {
   type TaxSale,
 } from "../../../money/src/tax/tax";
 import { type Flow, returnVsNifty, xirr } from "../../../money/src/xirr/xirr";
-import { type Ctx, rawBody } from "../app";
+import { type Ctx, istDay, rawBody } from "../app";
 import { loadRateOn, refreshRates } from "../fx/rates";
 import { loadRebuild } from "../lots/load";
 
@@ -72,15 +74,31 @@ export default function routes(ctx: Ctx) {
       );
       const net = netGains(rows, rules, fy, null);
       const est = incomeTax(inputs(net), rules);
-      // Harvest ideas use the newest stored close of each stock still held, and today's rules and date.
+      const warnings = [...est.warnings];
+      if (fy === 2024)
+        warnings.push(
+          "FY 2024-25 is worked out with the later slabs and the rates from 23 July 2024; sales before that day paid 15% short-term and 10% long-term, and that year's slabs and rebate were lower.",
+        );
+      // Harvest ideas are for today: the newest stored close of each stock still held, today's tax year (its
+      // rules and the long-term gain already booked in it), whatever year was asked for above.
+      const today = istDay(ctx.now());
+      const nowFy = fyOf(today);
+      let bookedNow = net.ltcg_equity;
+      let nowRules = rules;
+      if (nowFy !== fy) {
+        nowRules = rulesFor(nowFy);
+        const nowRows = realise(lots, sales, {}, rateOn).filter(
+          (r) => r.sold_on >= `${nowFy}-04-01` && r.sold_on <= `${nowFy + 1}-03-31`,
+        );
+        bookedNow = netGains(nowRows, nowRules, nowFy, null).ltcg_equity;
+      }
       const open = openLots(lots, sales);
       const prices: Record<string, number> = {};
       for (const sym of new Set(open.map((l) => l.symbol))) {
         const p = await latestClose(sym);
         if (p) prices[sym] = p.close;
       }
-      const today = ctx.now().toISOString().slice(0, 10);
-      const ideas = harvest(open, prices, today, rules, Math.max(net.ltcg_equity, 0));
+      const ideas = harvest(open, prices, today, nowRules, Math.max(bookedNow, 0), true);
       return c.json(
         TaxResponse.parse({
           harvest: ideas,
@@ -91,7 +109,7 @@ export default function routes(ctx: Ctx) {
           tax: { total: est.total, surcharge: est.surcharge, cess: est.cess },
           ltcg_equity_exempt: rules.ltcg_exempt,
           ltcg_equity_room_left: Math.max(rules.ltcg_exempt - net.ltcg_equity, 0),
-          warnings: est.warnings,
+          warnings,
         }),
       );
     } catch (e) {
@@ -104,17 +122,23 @@ export default function routes(ctx: Ctx) {
     }
   });
 
-  // Stock trades only (INR; dollar trades are valued on the RSU view). Today's value of what is still held
-  // is the newest stored close; the Nifty is read from the same history table when it holds the index.
+  // Rupee stock lots and sales from the rebuild, so splits, bonuses and demergers are already applied (raw trade
+  // quantities would value a split stock at half or less). Cash flows: each lot's cost on its day (a bonus lot costs
+  // nothing; a demerged lot keeps its share of the parent's cost and date), each sale's proceeds on its day. Lots
+  // only Kite explains (estimated) have no known cash flow and are left out, with a warning. Today's value of what
+  // is still held is the newest stored close; the Nifty is read from the same history table when it holds the index.
+  const inrStocks = async () => {
+    const built = await loadRebuild(ctx.d1, {});
+    const stock = (x: { kind: string; currency: string }) =>
+      x.kind === "stock" && (x.currency || "INR") === "INR";
+    return {
+      lots: built.lots.filter(stock),
+      sales: built.sales.filter(stock),
+    };
+  };
+
   app.get("/api/money/xirr", ctx.guard.person, async (c) => {
-    const rows =
-      (
-        (await ctx.d1
-          .prepare(
-            "select symbol, side, trade_date, quantity, price from trades where kind = 'stock' and currency = 'INR' and status = 'confirmed' order by trade_date",
-          )
-          .all()) as { results?: Record<string, unknown>[] }
-      ).results ?? [];
+    const { lots, sales } = await inrStocks();
     const warnings: string[] = [];
     const close = async (symbol: string, day?: string) => {
       const r = (await ctx.d1
@@ -126,22 +150,34 @@ export default function routes(ctx: Ctx) {
       return r;
     };
     const bySymbol = new Map<string, { flows: Flow[]; qty: number }>();
-    for (const r of rows) {
-      const sym = String(r.symbol);
-      const q = Number(r.quantity);
-      const amt = q * Number(r.price);
+    const entry = (sym: string) => {
       const e = bySymbol.get(sym) ?? { flows: [], qty: 0 };
-      const buy = r.side === "buy";
-      e.flows.push({ day: String(r.trade_date), amount: buy ? -amt : amt });
-      e.qty += buy ? q : -q;
       bySymbol.set(sym, e);
+      return e;
+    };
+    const estimated = new Set<string>();
+    for (const l of lots) {
+      if (l.estimated) {
+        estimated.add(l.symbol);
+        continue;
+      }
+      const e = entry(l.symbol);
+      if (l.quantity * l.costPerUnit > 0)
+        e.flows.push({ day: l.acquiredOn, amount: -l.quantity * l.costPerUnit });
+      e.qty += l.quantity - l.closedQuantity;
     }
+    for (const s of sales)
+      entry(s.symbol).flows.push({ day: s.soldOn, amount: s.quantity * s.pricePerUnit });
+    for (const sym of [...estimated].sort())
+      warnings.push(`Some ${sym} shares have no known buy, so they are left out of the return.`);
+    for (const e of bySymbol.values())
+      e.flows.sort((x, y) => (x.day < y.day ? -1 : x.day > y.day ? 1 : 0));
     let asOf: string | null = null;
     const all: Flow[] = [];
     let total = 0;
     let complete = true;
     const holdings = [];
-    for (const [symbol, e] of bySymbol) {
+    for (const [symbol, e] of [...bySymbol].sort((x, y) => (x[0] < y[0] ? -1 : 1))) {
       all.push(...e.flows);
       const last = e.qty > 1e-9 ? await close(symbol) : null;
       if (e.qty > 1e-9 && !last) {
@@ -183,23 +219,14 @@ export default function routes(ctx: Ctx) {
     );
   });
 
-  // Concentration and the Nifty −10% view over held INR stocks at the newest close. Sector comes from the newest
-  // `facts` row; beta is not stored yet, so every stock moves with the market (beta 1) and the response says so.
+  // Concentration and the Nifty −10% view over held INR stocks (rebuilt lots, so corporate actions and the shares
+  // only Kite shows count) at the newest close. Sector comes from the newest `facts` row; beta is not stored yet,
+  // so every stock moves with the market (beta 1) and the response says so.
   app.get("/api/money/risk", ctx.guard.person, async (c) => {
-    const rows =
-      (
-        (await ctx.d1
-          .prepare(
-            "select symbol, side, quantity from trades where kind = 'stock' and currency = 'INR' and status = 'confirmed'",
-          )
-          .all()) as { results?: Record<string, unknown>[] }
-      ).results ?? [];
+    const { lots } = await inrStocks();
     const qty = new Map<string, number>();
-    for (const r of rows)
-      qty.set(
-        String(r.symbol),
-        (qty.get(String(r.symbol)) ?? 0) + (r.side === "buy" ? 1 : -1) * Number(r.quantity),
-      );
+    for (const l of lots)
+      qty.set(l.symbol, (qty.get(l.symbol) ?? 0) + l.quantity - l.closedQuantity);
     const items: Exposure[] = [];
     const warnings: string[] = [];
     const sectorOf = async (symbol: string): Promise<string | null> => {
@@ -213,7 +240,7 @@ export default function routes(ctx: Ctx) {
         return null; // facts not stored yet
       }
     };
-    for (const [symbol, q] of qty) {
+    for (const [symbol, q] of [...qty].sort((x, y) => (x[0] < y[0] ? -1 : 1))) {
       if (q <= 1e-9) continue;
       const p = await latestClose(symbol);
       if (!p) {
@@ -254,7 +281,7 @@ export default function routes(ctx: Ctx) {
     const open = built.lots.filter(
       (l) => l.currency !== "INR" && l.quantity - l.closedQuantity > 1e-9,
     );
-    const first = open.map((l) => l.acquiredOn).sort()[0] ?? ctx.now().toISOString().slice(0, 10);
+    const first = open.map((l) => l.acquiredOn).sort()[0] ?? istDay(ctx.now());
     return c.json(
       UsSymbols.parse({
         symbols: [...new Set(open.map((l) => l.symbol))].sort(),
@@ -266,7 +293,7 @@ export default function routes(ctx: Ctx) {
 
   // The Job asks for USD/INR to be filled up to today, from the free ECB feed (best effort, rows added).
   app.post("/api/money/fx-refresh", ctx.guard.ingest, async (c) => {
-    const today = ctx.now().toISOString().slice(0, 10);
+    const today = istDay(ctx.now());
     let since = today;
     try {
       const body = JSON.parse(rawBody(c)) as { since?: unknown };
@@ -276,21 +303,21 @@ export default function routes(ctx: Ctx) {
     return c.json({ added: await refreshRates(ctx.d1, today, since) });
   });
 
-  // The dollar holding (RSUs and any other USD lot) valued at the newest stored close and rate. Tax assumes the
-  // top slab on a short-term gain and the long-term rate after 24 months, as for unlisted foreign shares.
+  // The dollar holding (RSUs and any other USD lot) valued at the newest stored close and rate. Tax if all were sold
+  // today: the top slab on a short-term gain, the long-term rate once held more than 24 months (unlisted foreign
+  // shares), losses set off as in one year's return, plus cess; surcharge depends on other income and is left out.
   app.get("/api/money/rsu", ctx.guard.person, async (c) => {
-    const today = ctx.now().toISOString().slice(0, 10);
+    const today = istDay(ctx.now());
     const rateOn = await loadRateOn(ctx.d1);
     const built = await loadRebuild(ctx.d1, { rateOn });
     const warnings: string[] = [];
     const fx = (await ctx.d1
       .prepare("select day, usd_inr from fx_rates order by day desc limit 1")
       .first()) as { day: string; usd_inr: number } | null;
-    const rules = rulesFor(Number(today.slice(0, 4)) - (today.slice(5) < "04-01" ? 1 : 0));
+    const rules = rulesFor(fyOf(today));
     const topSlab = rules.slabs[rules.slabs.length - 1]?.[1] ?? 0.3;
-    const open = built.lots.filter(
-      (l) => l.currency !== "INR" && l.quantity - l.closedQuantity > 1e-9,
-    );
+    const dollar = built.lots.filter((l) => l.currency !== "INR");
+    const open = dollar.filter((l) => l.quantity - l.closedQuantity > 1e-9);
     const symbols = [...new Set(open.map((l) => l.symbol))].sort();
     if (symbols.length && !fx) warnings.push("No USD/INR rate stored yet.");
     const out = [];
@@ -314,28 +341,33 @@ export default function routes(ctx: Ctx) {
               priceUsd: p.close,
               rate: fx.usd_inr,
               rateOn: (d) => rateOn?.(d) ?? null,
-              rule: { longTermDays: 730, shortRate: topSlab, longRate: rules.ltcg_other_rate },
+              rule: {
+                longTermMonths: 24,
+                shortRate: topSlab * (1 + rules.cess),
+                longRate: rules.ltcg_other_rate * (1 + rules.cess),
+              },
               asOf: today,
+              net: true,
             })
           : null;
-      const confirmed: Vest[] = mine
-        .filter((l) => !l.estimated)
+      // Every documented vest counts, sold or not, so the schedule runs on from the latest one.
+      const confirmed: Vest[] = dollar
+        .filter((l) => l.symbol === symbol && !l.estimated)
         .map((l) => ({
           day: l.acquiredOn,
           quantity: l.quantity,
           priceUsd: l.costPerUnit || null,
           status: "confirmed" as const,
         }));
-      const through = `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`;
+      const through = addYears(today, 1);
       out.push({
         symbol,
         priceUsd: p?.close ?? null,
         priceDate: p?.date ?? null,
         view,
-        expectedVests: expectedVests(confirmed, through).map((v) => ({
-          day: v.day,
-          quantity: v.quantity,
-        })),
+        expectedVests: expectedVests(confirmed, through)
+          .filter((v) => v.day > today)
+          .map((v) => ({ day: v.day, quantity: v.quantity })),
       });
     }
     return c.json(
@@ -351,7 +383,7 @@ export default function routes(ctx: Ctx) {
   const heldInr = async () => {
     const built = await loadRebuild(ctx.d1, {});
     const held = new Map<string, number>();
-    let first = ctx.now().toISOString().slice(0, 10);
+    let first = istDay(ctx.now());
     for (const l of built.lots) {
       const q = l.quantity - l.closedQuantity;
       if (l.currency !== "INR" || l.kind !== "stock" || q <= 1e-9) continue;
@@ -386,7 +418,7 @@ export default function routes(ctx: Ctx) {
   // Dated corporate actions for held stocks, and expected dividend cash: each ex-date of the last year,
   // one year on, times the shares held now. An estimate; the company may pay more, less or nothing.
   app.get("/api/money/calendar", ctx.guard.person, async (c) => {
-    const today = ctx.now().toISOString().slice(0, 10);
+    const today = istDay(ctx.now());
     const { held } = await heldInr();
     const warnings: string[] = [];
     const rows = async (sql: string, ...args: unknown[]) =>
@@ -414,7 +446,7 @@ export default function routes(ctx: Ctx) {
               ? `${r.old_shares} to ${r.new_shares}`
               : ((r.reason as string | null) ?? null),
       }));
-    const yearAgo = `${Number(today.slice(0, 4)) - 1}${today.slice(4)}`;
+    const yearAgo = addYears(today, -1);
     const dividends = (
       await rows(
         "select symbol, ex_date, per_share from dividends where ex_date > ? and ex_date <= ? order by ex_date, symbol",
@@ -427,7 +459,7 @@ export default function routes(ctx: Ctx) {
         const shares = held.get(String(r.symbol)) ?? 0;
         const perShare = Number(r.per_share);
         return {
-          date: `${Number(String(r.ex_date).slice(0, 4)) + 1}${String(r.ex_date).slice(4)}`,
+          date: addYears(String(r.ex_date), 1), // 29 February becomes 1 March
           symbol: String(r.symbol),
           perShare,
           shares,

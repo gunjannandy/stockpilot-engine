@@ -482,6 +482,9 @@ export function harvest(
   asOf: Day,
   rules: TaxRules,
   realisedLtcgEquity = 0,
+  /** True: a stock that is not suggested (its oldest long-term lots net to a loss) frees no room for the
+   *  next one. The Python port (false) lets that unsold loss raise the room left; the captured check pins it. */
+  spendOnlySuggested = false,
 ): Harvest {
   const room = Math.max(rules.ltcg_exempt - realisedLtcgEquity, 0);
   const bySymbol = new Map<string, TaxLot[]>();
@@ -501,15 +504,17 @@ export function harvest(
     const price = prices[symbol] as number;
     let qty = 0;
     let gain = 0;
+    let roomHere = left;
     for (const lot of lots) {
-      if (term("equity", lot.acquired_on, asOf) !== "long" || left <= 0) break;
+      if (term("equity", lot.acquired_on, asOf) !== "long" || roomHere <= 0) break;
       const unit = price - lot.cost_per_unit;
-      const take = unit <= 0 ? lot.quantity : Math.min(lot.quantity, Math.floor(left / unit));
+      const take = unit <= 0 ? lot.quantity : Math.min(lot.quantity, Math.floor(roomHere / unit));
       qty += take;
       gain += take * unit;
-      left -= take * unit;
+      roomHere -= take * unit;
       if (take < lot.quantity) break;
     }
+    if (!spendOnlySuggested || (qty > 0 && gain > 0)) left = roomHere;
     if (qty > 0 && gain > 0)
       candidates.push({
         symbol,
