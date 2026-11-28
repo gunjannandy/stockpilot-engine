@@ -1,6 +1,6 @@
 # MODELS: Analyse in 5 minutes, fund calls, post-mortems, nightly notes
 
-Status: building
+Status: done
 
 ## Done
 - Analyse Job `py/stockpilot/jobs/analyse/` (`brief.py` public-only brief and private-field lock, `answer.py` answer checks, `__init__.py` run), prompt `py/stockpilot/prompts/analyse.md`, workflow `.github/workflows/analyse.yml` (protected `models` environment, main only).
@@ -14,7 +14,7 @@ Status: building
 - C-037-2 (Analyse promise measured daily) already exists in `api/src/promises/`.
 
 ## Next
-- [ ] Set Status: done when all green.
+- [ ] After merge: watch the first bench run (Haiku comparison, C-130-1, C-131-1) and the daily Analyse promise (C-037-2) in production.
 
 ## Decisions
 - Analyse stores its own table (`analyse_calls`, one per stock and day) rather than a dataset: a dataset run replaces the whole set, and calls accumulate per press.
@@ -37,3 +37,7 @@ Status: building
 ## Blocked
 - cockpit: set the Worker secret `NOTE_TASK_KEY` and create the Claude scheduled task with its prompt in the private repo `ops/note-task/` (Haiku, deeper on Saturday; reads `/api/summary`, runs `money`, posts `/api/notes/nightly`).
 - cockpit: confirm the `models` environment holds `CLAUDE_CODE_OAUTH_TOKEN` for `analyse.yml`, `fundcall.yml`, `postmortem.yml` and `bench.yml` (all main only); the first bench run after merge is the Haiku comparison and sets `forecast_model`.
+
+Left over: browser call card adds the tax and "if you act" lines on the device (web/src/panes/analyse, designed in the UI review); real past briefs replace the made-up bench cases when the archive has them.
+
+Chapter end: 1
