@@ -346,6 +346,10 @@ export default function routes(ctx: Ctx) {
         .bind(symbol)
         .first()) as { date: string; close: number } | null;
       if (!p) warnings.push(`No price for ${symbol}.`);
+      if (fx && lots.some((l) => l.costUsd !== null && !rateOn?.(l.acquiredOn)))
+        warnings.push(
+          `No USD/INR rate stored for the day some ${symbol} shares were acquired; their cost uses today's rate.`,
+        );
       const view =
         p && fx
           ? rsuView({

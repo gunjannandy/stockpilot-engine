@@ -155,3 +155,20 @@ describe("review: grandfathering", () => {
     expect(t.warnings.some((w) => w.includes("1 Feb 2018") && w.includes("AAA"))).toBe(true);
   });
 });
+
+describe("review: missing USD/INR for a lot's day", () => {
+  it("says so on the RSU view", async () => {
+    const { app, db, signed } = await makeApp({ now: () => new Date("2026-06-01T06:00:00Z") });
+    await app.request("/api/money/rsu");
+    await db.exec(
+      trade("v1", "buy", "2023-01-10", 10, 100, "USX", "USD") +
+        "insert into fx_rates (day, usd_inr) values ('2026-05-29', 90);",
+    );
+    await signed("POST", "/api/money/us-prices", {
+      symbol: "USX",
+      rows: [{ date: "2026-05-29", close: 150 }],
+    });
+    const j = (await (await app.request("/api/money/rsu")).json()) as { warnings: string[] };
+    expect(j.warnings.some((w) => w.includes("No USD/INR rate stored"))).toBe(true);
+  });
+});

@@ -36,7 +36,7 @@ parity checks stay as they are.
 | O6 | calendar | Expected dividend cash uses shares held now. A split or bonus between now and the expected date is not applied. | Small. It is an estimate and labelled so. |
 | O7 | XIRR | Dividends received are not cash flows, so XIRR understates the return for dividend payers. | Needs dividends paid per holding (the `dividends` table has per-share amounts, but not received cash or record-date holdings). |
 | O8 | `scheduleFa` | `initial_value` takes the whole lot even when part of it was sold before the year began. | Matches the Python (C-060-1). Low impact. |
-| O9 | rsuView / positions | A missing rate for a lot's day silently falls back to today's rate. | The fx Job fills from the first lot's day. A warning would be better. |
+| O9 | rsuView / positions | A missing rate for a lot's day falls back to today's rate. | The RSU route now warns (chapter 10). The positions module still falls back silently. |
 
 ## Checked and right
 
