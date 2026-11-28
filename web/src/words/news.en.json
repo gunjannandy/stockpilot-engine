@@ -1,0 +1,15 @@
+{
+  "nlT": "Market news, live",
+  "nlS": "Collected every 15 minutes from the exchanges and the news sites. Ranked by how much it matters to your stocks.",
+  "nlNone": "No news has come in yet. The collector runs every 15 minutes.",
+  "nlFail": "The news did not load. It will try again in a few minutes.",
+  "nlStocks": "In today's news",
+  "nlStocksNone": "No stock is in the news right now.",
+  "nlHeld": "You hold it",
+  "nlGood": "Good",
+  "nlBad": "Bad",
+  "nlMixed": "Mixed",
+  "nlRefresh": "Refresh",
+  "nlChangesCall": "Changes our view",
+  "nlAgoNow": "just now"
+}

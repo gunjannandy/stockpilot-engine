@@ -5,12 +5,13 @@ import {
   Heartbeat,
   PARTS,
   PAUSE_RELEASES,
-  WhatsNewPost,
 } from "@stockpilot/contract";
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { checkResults, flags, heartbeats, whatsnew, writeBudget } from "../../drizzle/core";
+import { checkResults, flags, heartbeats, writeBudget } from "../../drizzle/core";
 import { type Ctx, istDay, istText, rawBody } from "../app";
+import { latest as latestBackup } from "../backup/routes";
+import { calendarStatus, loadCalendar } from "../calendar/routes";
 
 const RANK: Record<Colour, number> = { green: 0, amber: 1, red: 2 };
 
@@ -86,6 +87,13 @@ export default function routes(ctx: Ctx) {
 
   app.get("/api/health", ctx.guard.secret, async (c) => {
     const parts = await healthParts(ctx);
+    // The calendar's own coverage check folds into its part: too few days ahead turns it amber.
+    const cal = calendarStatus(await loadCalendar(ctx), istDay(ctx.now()));
+    const calPart = parts.find((p) => p.part === "job.calendar");
+    if (calPart && cal.status !== "green") {
+      if (RANK[cal.status] > RANK[calPart.status]) calPart.status = cal.status;
+      calPart.error = calPart.error ? `${calPart.error}; ${cal.message}` : cal.message;
+    }
     const checks = (await ctx.db.select().from(checkResults).orderBy(checkResults.checkId)).map(
       (r) => ({
         id: r.checkId,
@@ -99,7 +107,18 @@ export default function routes(ctx: Ctx) {
       "green",
     );
     const overall: Colour = checks.some((k) => !k.ok) ? "red" : worst;
-    return c.json({ at: istText(ctx.now()), version: ctx.version, overall, parts, checks });
+    const backup = (await latestBackup(ctx)) as {
+      backup: unknown;
+      drill: unknown;
+    };
+    return c.json({
+      at: istText(ctx.now()),
+      version: ctx.version,
+      overall,
+      parts,
+      checks,
+      backup,
+    });
   });
 
   // Public, no secret, no data: builders and dispatchers read check results and budgets here.
@@ -132,22 +151,6 @@ export default function routes(ctx: Ctx) {
       checks,
       budgets,
     });
-  });
-
-  app.post("/api/whatsnew", ctx.guard.ingest, async (c) => {
-    const req = WhatsNewPost.safeParse(JSON.parse(rawBody(c) || "null"));
-    if (!req.success) return c.json({ error: "bad body" }, 400);
-    const at = istText(ctx.now());
-    for (const l of req.data.lines)
-      await ctx.db
-        .insert(whatsnew)
-        .values({ ...l, at })
-        .onConflictDoUpdate({ target: whatsnew.pr, set: { en: l.en, bn: l.bn, at } });
-    return c.json({ stored: req.data.lines.length });
-  });
-  app.get("/api/whatsnew", ctx.guard.person, async (c) => {
-    const rows = await ctx.db.select().from(whatsnew).orderBy(desc(whatsnew.at), desc(whatsnew.pr));
-    return c.json({ lines: rows });
   });
 
   return app;

@@ -82,12 +82,38 @@ export type StoredLot = {
   estimated: boolean;
 };
 
+/** USD/INR on or before a day; null or absent when there is none. */
+export type RateOn = ((day: Day) => number | null | undefined) | null | undefined;
+
+/** One row of Fidelity's "Current Shares" export: a lot as it stood on `asOf`, its cost in rupees. */
+export type FidelityStatementLot = {
+  asOf: Day;
+  symbol: string;
+  isin: string | null;
+  acquiredOn: Day;
+  quantity: number;
+  costBasisInr: number;
+};
+
+/** One row of Fidelity's Stock Plan statement: shares held on `asOf` and what they cost in rupees. */
+export type FidelityHolding = {
+  asOf: Day;
+  symbol: string;
+  isin: string | null;
+  quantity: number;
+  costBasisInr: number | null;
+};
+
 export type RebuildInput = {
   trades: Trade[]; // in the order they were saved: ties on a date keep it
   actions: Action[];
   /** symbol -> ISIN as the exchange lists it today (the `stocks` table). */
   stocks?: Record<string, string>;
   kite?: KiteSnapshot | null;
+  /** Fidelity's statement lots and holdings (all stored rows) and the dollar rate; absent means no Fidelity data. */
+  fidelityLots?: FidelityStatementLot[];
+  fidelityHoldings?: FidelityHolding[];
+  rateOn?: RateOn;
 };
 
 export type RebuildResult = {

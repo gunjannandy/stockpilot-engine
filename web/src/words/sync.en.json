@@ -1,0 +1,18 @@
+{
+  "title": "Sync",
+  "press": "Sync with Kite",
+  "last": "Last synced",
+  "never": "Not synced yet",
+  "step.login": "Logged in to Kite",
+  "step.holdings": "Holdings read",
+  "step.trades": "Trades read",
+  "step.done": "Done",
+  "change": "change",
+  "changes": "changes",
+  "refresh.title": "Documents",
+  "refresh.about": "Read any new statements from Google Drive and email.",
+  "refresh.press": "Refresh documents",
+  "refresh.pressing": "Starting…",
+  "refresh.started": "Started. New statements show up in a few minutes.",
+  "refresh.failed": "Could not start it. Try again in a minute."
+}

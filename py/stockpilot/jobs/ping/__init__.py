@@ -14,16 +14,16 @@ DATASET = "ping"
 def run(door: Door) -> str:
     """Start, write one row, finish, beat. Returns the run id; a failure finishes the run failed and re-raises."""
     run_id = new_run_id(KIND)
-    door.job_start(KIND, run_id)
+    door.job_begin(KIND, run_id)
     try:
         now = ist_now()
         row = {"id": f"{run_id}-1", "at": ist_text(now), "source": "job"}
         door.write_rows(DATASET, run_id, [row])
     except Exception as err:
-        door.job_finish(run_id, ok=False, error=str(err))
+        door.job_end(run_id, ok=False, error=str(err))
         beat(door, "job.ping", ok=False, error=str(err), every=timedelta(days=1))
         raise
-    door.job_finish(run_id, ok=True, result="Wrote 1 ping")
+    door.job_end(run_id, ok=True, result="Wrote 1 ping")
     beat(door, "job.ping", ok=True, every=timedelta(days=1))
     return run_id
 

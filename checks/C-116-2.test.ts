@@ -1,6 +1,7 @@
 // C-116-2: a button Job is dispatched at once; a dispatched Job not started within 3 minutes is dispatched again.
 import { expect, it } from "vitest";
 import { scheduleApp } from "../api/src/schedule/testkit";
+import { queueJob } from "../api/src/schedule/tick";
 
 const IST = (hhmm: string, day = "2026-11-26") => new Date(`${day}T${hhmm}:00+05:30`);
 
@@ -62,4 +63,14 @@ it("C-116-2 a press needs a signed-in person, and a paused kind refuses", async 
   const u = await scheduleApp({ datasets: [], now: () => IST("10:00") });
   await u.db.prepare("insert into job_pauses (kind, paused_at) values ('analyse', 'x')").run();
   expect((await u.press({ kind: "analyse", subject: "ABC" })).status).toBe(423);
+});
+
+it("C-116-2 a stuck documents Refresh is dispatched again to the private repo", async () => {
+  const t = await scheduleApp({ datasets: [], now: () => IST("10:00") });
+  await queueJob(t.core(IST("10:00")), { kind: "documents", subject: "drive", day: "2026-11-26" });
+  expect((await t.tick(IST("10:03"))).redispatched).toEqual(["documents|drive|2026-11-26"]);
+  expect(t.github.dispatched[0]).toMatchObject({
+    repo: "stockpilot-hq/stockpilot",
+    workflow: "documents.yml",
+  });
 });

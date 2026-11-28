@@ -1,9 +1,11 @@
+// @vitest-environment node
 // C-015: the manifest installs (name, start url, icons that exist) and the worker answers offline
 // from what it kept.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
 import { describe, expect, it } from "vitest";
+import { compileWorker } from "../../sw-plugin";
 
 const pub = join(__dirname, "../../public");
 
@@ -25,7 +27,7 @@ describe("manifest", () => {
   });
 });
 
-function loadWorker() {
+async function loadWorker() {
   const store = new Map<string, Response>();
   const listeners: Record<string, (e: unknown) => void> = {};
   let online = true;
@@ -53,7 +55,7 @@ function loadWorker() {
     URL,
     Promise,
   };
-  vm.runInNewContext(readFileSync(join(pub, "sw.js"), "utf8"), ctx);
+  vm.runInNewContext(await compileWorker(), ctx);
   const ask = async (path: string, mode = "cors") => {
     let out: Promise<Response> | undefined;
     listeners.fetch?.({
@@ -74,7 +76,7 @@ function loadWorker() {
 
 describe("service worker", () => {
   it("shows the last pane data and the page when the network is gone", async () => {
-    const w = loadWorker();
+    const w = await loadWorker();
     expect(await w.ask("/api/data/ping")).toBe("live:/api/data/ping");
     expect(await w.ask("/", "navigate")).toBe("live:/");
     w.offline();
@@ -82,7 +84,7 @@ describe("service worker", () => {
     expect(await w.ask("/holdings", "navigate")).toBe("live:/");
   });
   it("leaves sign-in and writes alone", async () => {
-    const w = loadWorker();
+    const w = await loadWorker();
     expect(await w.ask("/api/auth/session")).toBeNull();
   });
 });
