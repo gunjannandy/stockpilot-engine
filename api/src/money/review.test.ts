@@ -141,3 +141,17 @@ describe("review: dividend calendar", () => {
     expect(j.dividends).toEqual([expect.objectContaining({ date: "2025-03-01", cash: 20 })]);
   });
 });
+
+describe("review: grandfathering", () => {
+  it("warns when a pre-2018 equity lot is sold at actual cost", async () => {
+    const { app, db } = await makeApp({ now: () => new Date("2026-06-01T06:00:00Z") });
+    await app.request("/api/money/tax?fy=2025");
+    await db.exec(
+      trade("b", "buy", "2017-05-01", 10, 100) + trade("s", "sell", "2025-08-01", 10, 300),
+    );
+    const t = (await (await app.request("/api/money/tax?fy=2025")).json()) as {
+      warnings: string[];
+    };
+    expect(t.warnings.some((w) => w.includes("1 Feb 2018") && w.includes("AAA"))).toBe(true);
+  });
+});

@@ -18,6 +18,7 @@ import { expectedVests, type RsuLot, rsuView, type Vest } from "../../../money/s
 import {
   fyLabel,
   fyOf,
+  GRANDFATHER_DATE,
   harvest,
   incomeTax,
   inputs,
@@ -75,6 +76,17 @@ export default function routes(ctx: Ctx) {
       const net = netGains(rows, rules, fy, null);
       const est = incomeTax(inputs(net), rules);
       const warnings = [...est.warnings];
+      const pre2018 = [
+        ...new Set(
+          rows
+            .filter((r) => r.bucket === "equity" && r.acquired_on < GRANDFATHER_DATE)
+            .map((r) => r.symbol),
+        ),
+      ].sort();
+      if (pre2018.length)
+        warnings.push(
+          `Bought before 1 Feb 2018 with no 31 Jan 2018 price on file, so actual cost was used and the gain may be overstated: ${pre2018.join(", ")}.`,
+        );
       if (fy === 2024)
         warnings.push(
           "FY 2024-25 is worked out with the later slabs and the rates from 23 July 2024; sales before that day paid 15% short-term and 10% long-term, and that year's slabs and rebate were lower.",
