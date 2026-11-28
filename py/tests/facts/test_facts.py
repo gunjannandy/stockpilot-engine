@@ -97,3 +97,26 @@ def test_coverage_counts_symbols_with_each_metric():
     assert c["universe"] == 3 and c["with_facts"] == 2
     assert c["metrics"]["pe"] == {"count": 1, "pct": 33.3}
     assert c["metrics"]["roe_pct"]["count"] == 2
+
+
+def test_collect_leaves_out_a_stock_with_no_raw_figure():
+    from stockpilot.jobs.facts import collect
+    day = date(2026, 11, 27)
+    universe = [{"symbol": "AAA", "exchange": "NSE", "name": "A", "sector": ""},
+                {"symbol": "BBB", "exchange": "NSE", "name": "B", "sector": ""}]
+    # BBB's only record is not yet available on the day, so it has no figure
+    later = [REC("sales", 1.0, period_end=date(2026, 9, 30), available_on=date(2027, 1, 1), source="nse")]
+    out = collect(universe, lambda s: recs() if s == "AAA" else later, {}, day)
+    assert [r["symbol"] for r in out] == ["AAA"]
+
+
+def test_a_refused_publish_names_its_reason():
+    import pytest
+
+    from stockpilot.runtime.client import JobClient
+
+    class Door:
+        key, base_url = "k", "http://x"
+        transport = staticmethod(lambda *a: (422, {"published": False, "reason": "fewer than 100 stocks"}))
+    with pytest.raises(RuntimeError, match="fewer than 100 stocks"):
+        JobClient(Door()).publish_finish("facts", "r1")

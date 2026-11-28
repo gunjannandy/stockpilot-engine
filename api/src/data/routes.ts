@@ -1,6 +1,6 @@
 // Reading what was published: a dataset's current run to the screens, and the engine's release
 // files passed through with content-hashed names and year-long caching. The bundle holds no data.
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import type { Ctx } from "../app";
 import { type Datasets, defaultDatasets, lookup, servePane } from "../publish/lib";
 
@@ -12,8 +12,8 @@ export function dataRoutes(ctx: Ctx, opts: { datasets?: Datasets; fetch?: typeof
   const all = opts.datasets ?? defaultDatasets;
   const app = new Hono();
 
-  app.get("/api/data/:dataset", ctx.guard.person, async (c) => {
-    const ds = lookup(all, c.req.param("dataset"));
+  const read = async (c: Context) => {
+    const ds = lookup(all, c.req.param("dataset") ?? "");
     if (!ds) return c.json({ error: "no such dataset" }, 404);
     const previous = c.req.query("run") === "previous";
     return servePane(
@@ -45,7 +45,10 @@ export function dataRoutes(ctx: Ctx, opts: { datasets?: Datasets; fetch?: typeof
       },
       previous ? "previous" : "",
     );
-  });
+  };
+  app.get("/api/data/:dataset", ctx.guard.person, read);
+  // The same read for Jobs, which sign their calls instead of signing in (screen and market read the facts).
+  app.get("/api/job-data/:dataset", ctx.guard.ingest, read);
 
   app.get("/data/:file", async (c) => {
     const name = c.req.param("file");

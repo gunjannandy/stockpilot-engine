@@ -34,7 +34,7 @@ class JobClient:
     def _ok(self, path: str, payload: dict | None = None, method: str = "POST") -> dict:
         status, data = self.post(path, payload, method)
         if status >= 300:
-            raise RuntimeError(f"{method} {path} answered {status}: {data.get('error', '')}")
+            raise RuntimeError(f"{method} {path} answered {status}: {data.get('error') or data.get('reason') or ''}")
         return data
 
     def begin(self, kind: str, run_id: str, *, subject: str = "all", day: str | None = None,
