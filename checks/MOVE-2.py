@@ -8,7 +8,7 @@ CI = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
 
 
 def test_only_the_allowed_workflows_are_in_github_workflows():
-    allowed = {"ci.yml", "promote.yml", "calendar.yml", "_job.yml", "archive.yml", "funds.yml", "fundholdings.yml", "facts.yml", "history.yml", "universe.yml", "news.yml"}
+    allowed = {"ci.yml", "promote.yml", "calendar.yml", "_job.yml", "archive.yml", "funds.yml", "fundholdings.yml", "facts.yml", "history.yml", "universe.yml", "usprices.yml", "dividends.yml", "news.yml"}
     found = {p.name for p in (ROOT / ".github/workflows").glob("*.yml")}
     assert {"ci.yml", "promote.yml"} <= found <= allowed
 

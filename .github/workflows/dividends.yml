@@ -1,0 +1,24 @@
+# The dividends Job: cash dividends of held Indian stocks. Public data only, so no model token and no private repo.
+# The daily run is the `dividends` dataset's slot (06:45 IST). The steps live in _job.yml.
+name: dividends
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: The Job's day, YYYY-MM-DD (empty = today, IST)
+        default: ""
+concurrency:
+  group: job-dividends
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  dividends:
+    uses: ./.github/workflows/_job.yml
+    with:
+      kind: dividends
+      subject: all
+      day: ${{ inputs.day }}
+      timeout-minutes: 15
+    secrets:
+      INGEST_HMAC_KEY: ${{ secrets.INGEST_HMAC_KEY }}
