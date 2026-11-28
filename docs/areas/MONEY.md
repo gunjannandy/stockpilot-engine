@@ -17,10 +17,10 @@ Status: building
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
 
 ## Next
-- [ ] Register `money_budgets` / `money_mix` as private datasets if the migrate sink needs them (check `contract/src/datasets.ts` rules).
 - [ ] Store sector and beta (stocks area) so risk stops reading "Unknown" and beta 1.
 - [ ] RSU: splits for expected vests (corporate-action terms of US symbols); payslip vests.
 - [ ] Fidelity fixtures (#250) and deleting the ported Python (#218, #233): only after the private real-data check matches; both held.
+- [ ] Sector and beta need the stocks area's data first; RSU splits need US corporate-action terms.
 - [ ] Opus review chapter over the whole diff for money correctness.
 
 ## Decisions
@@ -35,9 +35,11 @@ Status: building
 - RSU tax: top slab on short-term gain, long-term after 730 days at the other-assets rate (unlisted foreign shares); US closes live in own table `us_prices`, since `stock_history` only allows NSE/BSE (stocks area's file untouched).
 - Added `usprices.yml` to the allow-list in `checks/MOVE-2.py` (shared file, one word) and `usprices` to `JobKind` in contract core.
 - Dividends and `calendar` rows are expected cash only as an estimate (repeat last year); `dividends.yml` also added to the MOVE-2 allow-list.
+- `money_budgets` / `money_mix` are not datasets (written by owner routes, no Job), so no registry entry.
 - Tax/ITR Python (#233) stays: C-069-2 does not cover it and no private check exists.
 
 ## Blocked
 - Private real-data match (needed to delete the ported Python and capture Fidelity fixtures) needs the owner's vault rows, which exist nowhere a cloud builder can reach.
 
-Chapter end: 3
+
+Chapter end: 4
