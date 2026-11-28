@@ -85,8 +85,10 @@ export function withEstimatedGap(
 }
 
 export type RsuTaxRule = {
-  /** Days held after which a gain is long term. */
-  longTermDays: number;
+  /** Days held after which a gain is long term (used when `longTermMonths` is not given). */
+  longTermDays?: number;
+  /** Calendar months held after which a gain is long term (the Act counts months: 24 for foreign shares). */
+  longTermMonths?: number;
   /** Rates on the rupee gain: short and long term (fractions, e.g. 0.3 and 0.125). */
   shortRate: number;
   longRate: number;
@@ -116,6 +118,9 @@ export function rsuView(input: {
   rateOn: (day: Day) => number | null;
   rule: RsuTaxRule;
   asOf: Day;
+  /** True: the total tax sets losses off as a sale of everything in one year would (s.70, s.74): a short-term
+   *  loss meets short-term then long-term gain, a long-term loss only long-term gain. Per-lot tax is unchanged. */
+  net?: boolean;
 }): RsuView {
   const view: RsuView = {
     shares: 0,
@@ -125,14 +130,18 @@ export function rsuView(input: {
     estimatedShares: 0,
     lots: [],
   };
+  let shortGain = 0;
+  let longGain = 0;
   for (const l of input.lots) {
     const value = l.quantity * input.priceUsd * input.rate;
     const costRate = input.rateOn(l.acquiredOn) || input.rate;
     const cost = l.costUsd === null ? value : l.quantity * l.costUsd * costRate;
     const gain = value - cost;
-    const held = toOrdinal(input.asOf) - toOrdinal(l.acquiredOn);
-    const rate = held > input.rule.longTermDays ? input.rule.longRate : input.rule.shortRate;
+    const isLong = isLongTerm(l.acquiredOn, input.asOf, input.rule);
+    const rate = isLong ? input.rule.longRate : input.rule.shortRate;
     const tax = gain > 0 ? gain * rate : 0;
+    if (isLong) longGain += gain;
+    else shortGain += gain;
     view.shares += l.quantity;
     view.valueInr += value;
     view.gainInr += gain;
@@ -147,5 +156,19 @@ export function rsuView(input: {
       estimated: Boolean(l.estimated),
     });
   }
+  if (input.net) {
+    let st = shortGain;
+    let lt = longGain;
+    if (st < 0) {
+      lt += st; // a short-term loss also meets long-term gain
+      st = 0;
+    }
+    view.taxInr = Math.max(st, 0) * input.rule.shortRate + Math.max(lt, 0) * input.rule.longRate;
+  }
   return view;
+}
+
+function isLongTerm(acquiredOn: Day, asOf: Day, rule: RsuTaxRule): boolean {
+  if (rule.longTermMonths !== undefined) return asOf > addMonths(acquiredOn, rule.longTermMonths);
+  return toOrdinal(asOf) - toOrdinal(acquiredOn) > (rule.longTermDays ?? 730);
 }

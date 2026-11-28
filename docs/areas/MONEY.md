@@ -1,6 +1,6 @@
 # Area MONEY
 
-Status: done
+Status: building
 
 ## Done
 - `money/src/index.ts` exports every money module as a namespace (#217).
@@ -15,9 +15,15 @@ Status: done
 - usprices Job: `py/stockpilot/jobs/usprices/`, `.github/workflows/usprices.yml`, dataset `usprices` (06:30 IST daily, budget 300), test `py/tests/usprices/`.
 - `GET /api/money/calendar` (dated actions of held stocks from `calendar`; expected dividend cash = last year's ex-dates +1y × shares held; `CalendarResponse`); dividends Job `py/stockpilot/jobs/dividends/`, `.github/workflows/dividends.yml`, dataset `dividends` (06:45 IST), ingest `POST /api/money/dividends`, `GET /api/money/held-symbols`, table `dividends`.
 - Tests: `api/src/portfolio/routes.test.ts`, `api/src/money/routes.test.ts`.
+- Chapter 10 review: `docs/areas/MONEY-review.md`. Fixed F1–F10 (XIRR and risk now see corporate actions; harvest room; RSU 24-month term, loss set-off, cess, future vests; Schedule FA closes in the ITR pack; leap-day dividend dates; IST day; pre-2018 warning). Tests in `api/src/money/review.test.ts` and `api/src/itr/itr.test.ts`.
 
 ## Next
-- [ ] Opus review chapter over the whole diff for money correctness.
+- [ ] O1: correct FY 2024-25 rule set (its own slabs and rebate; 15%/10% on equity sold before 23 Jul 2024). Fix the Python `rules_for` first, regenerate `money/captured/tax.json` with `money/src/tax/capture.py`, then the TS, so C-060-1 still compares like with like.
+- [ ] O2: carry Fidelity's rupee cost on RSU lots so tax/ITR and the RSU pane use the perquisite value, not a dollar round trip at two rates.
+- [ ] O3: store 31 Jan 2018 highest price (NSE bhavcopy, free) and pass it as `fmv2018` in the tax and ITR routes.
+- [ ] O9: warn when a dollar lot has no rate for its own day instead of using today's.
+- [ ] O6, O7: apply upcoming splits to expected dividends; dividends as XIRR cash flows once received cash is stored.
+- [ ] O4, O5, O8: charges into sale expenses (needs a column), marginal relief on special-rate tax, FA initial value for part-sold lots (low impact, see review).
 
 ## Decisions
 - Chapter 6: merged main (news area added `news` Job kind, dataset and workflow allow-list entry); kept both sides in `contract/src/core/jobs.ts`, `contract/src/datasets.ts`, `checks/MOVE-2.py`. Full `pnpm test` green. No stored beta or US corporate-action source exists yet, so nothing new could be built.
@@ -48,7 +54,14 @@ Status: done
 
 - Chapter 9: nothing new to build; branch matches the open PR, Status stays done. #218 deletion stays left out (live importers in other areas, rules forbid breaking CI). The Opus money-correctness review is the next chapter.
 
+- Chapter 10: where a captured parity check (C-060-1 harvest, C-062-1 rsuView) pins a Python mistake, the fix is an opt-in argument the route turns on; the check and the port's default stay as they are.
+- Chapter 10: RSU "tax if sold" adds cess but no surcharge (that depends on income we do not hold).
+- Chapter 10: XIRR leaves out Kite-only (estimated) lots, which have no known buy, and says so; risk counts them.
+- Chapter 10: FY 2024-25 rule set left as is (C-060-1 pins it); the tax route warns for that year.
+- Chapter 10: touched `api/src/itr/routes.ts` (ITR is this area) to pass stored dollar closes.
+
 ## Blocked
 none
 
 Chapter end: 9
+Chapter end: 10
