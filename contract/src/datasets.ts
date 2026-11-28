@@ -11,6 +11,7 @@ import {
 } from "./fundholdings/fundholdings";
 import { FUNDS_MIN, FundRow, fundRowCheck } from "./funds/funds";
 import { RawTrade } from "./kite/kite";
+import { NewsItemRow } from "./news/news";
 import { HistoryRun, UniverseRow, universeRowCheck } from "./stocks/stocks";
 
 /** One line per dataset (decisions §2 Publishing). Python validates rows against `row`'s generated
@@ -138,6 +139,18 @@ export const datasets = {
     rowCheck: factsRowCheck,
     run: { at: "03:00", on: "every" },
     runCheck: (run) => (run.rowCount < FACTS_MIN ? "fewer than 100 stocks" : null),
+  },
+  news_items: {
+    name: "news_items",
+    job: "news",
+    table: "news_items",
+    schedule: "every 15 minutes, all day",
+    freshnessHours: 2,
+    checks: { row: ["id, link and title are present"], run: [] },
+    visibility: "public",
+    recomputable: true,
+    writeBudget: 4000,
+    row: NewsItemRow,
   },
   history: {
     name: "history",
