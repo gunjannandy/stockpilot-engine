@@ -23,6 +23,7 @@ import {
   ownerOnly,
   people,
   personForEmail,
+  publicOrigin,
   readCookie,
   safeNext,
   sessionCookie,
@@ -73,7 +74,7 @@ export default function routes(ctx: Ctx) {
       const origin = c.req.header("Origin");
       const same =
         origin !== undefined && origin !== "null"
-          ? origin === new URL(c.req.url).origin
+          ? origin === new URL(c.req.url).origin || origin === publicOrigin(env)
           : c.req.header("Sec-Fetch-Site") === "same-origin";
       if (!same) return c.json({ error: "cross_site" }, 403);
     }
@@ -162,7 +163,12 @@ export default function routes(ctx: Ctx) {
     );
     const who = wellFormed ? await personForEmail(env, email) : null;
     if (who && addrOk) {
-      const work = issueLink(who, people(env)[who] as string, next, new URL(c.req.url).origin);
+      const work = issueLink(
+        who,
+        people(env)[who] as string,
+        next,
+        publicOrigin(env) ?? new URL(c.req.url).origin,
+      );
       try {
         c.executionCtx.waitUntil(work);
       } catch {
