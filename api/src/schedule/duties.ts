@@ -6,6 +6,7 @@ import { githubFromEnv } from "../../../adapters/src/github";
 import { istText } from "../app";
 import { feedbackDuty } from "../feedback/duty";
 import type { Core } from "../jobs/runtime";
+import { quotesDuty } from "../quotes/duty";
 import { runSecretsDuty } from "../secrets/duty";
 import { watcherDuty } from "../watcher/duties";
 import { tick } from "./tick";
@@ -34,7 +35,7 @@ export const DUTIES: Duty[] = [
       return `dispatched ${r.dispatched.length}, again ${r.redispatched.length}, retried ${r.retried.length}, refused ${r.failed.length}`;
     },
   },
-  { id: "quotes", everyMinutes: 5, run: notYet("the quotes duty") },
+  quotesDuty,
   watcherDuty,
   {
     id: "secrets",
