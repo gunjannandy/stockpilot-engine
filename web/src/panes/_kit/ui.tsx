@@ -194,7 +194,7 @@ export function StockRow({
           <Spark closes={q.closes} />
         </span>
         <span className="lr num">
-          {money(q.last)}
+          {q.last > 0 ? money(q.last) : "–"}
           <Meter v={st.strength} />
         </span>
       </button>

@@ -24,6 +24,7 @@ export function ListPage({
   empty,
   updated,
   rowExtra,
+  live,
 }: {
   eyebrow: string;
   title: string;
@@ -38,6 +39,8 @@ export function ListPage({
   empty: string;
   updated?: string;
   rowExtra?: (s: StockView) => ReactNode;
+  /** True when the rows come from the API: the prototype note is not shown. */
+  live?: boolean;
 }) {
   const t = useWords();
   const w = useWatch();
@@ -172,7 +175,9 @@ export function ListPage({
                         className="k-star"
                         aria-pressed={w.star.has(s.id)}
                         aria-label={t("v2.watchStar")}
-                        onClick={() => watch.toggleStar(s.id, t("v2.added"), t("v2.removed"))}
+                        onClick={() =>
+                          watch.toggleStar(s.id, t("v2.added"), t("v2.removed"), s.name)
+                        }
                       >
                         {w.star.has(s.id) ? "★" : "☆"}
                       </button>
@@ -196,7 +201,7 @@ export function ListPage({
         </div>
       )}
       <Toast />
-      <p className="k-sample">{t("v2.proto")}</p>
+      {live ? null : <p className="k-sample">{t("v2.proto")}</p>}
     </section>
   );
 }
