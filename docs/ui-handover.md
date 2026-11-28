@@ -106,7 +106,7 @@ Round 3: owner agreed every recommendation; verdict words follow the engine (tra
 - Funds: own search box removed (top search is the one search); This week's call strip (call, chance against the middle fund with base rate marker, one line); owned funds show their call in the list.
 
 ## Next
-- Owner reviews this round; apply feedback the same way.
+- Owner approved the round 4 screens; the UI prototype is complete. The merge of PR #75 is handled outside this session. The five open confirmations and the Needs data list below stay open for the build.
 
 ## Decisions to confirm
 - Bengali screens also show the English call words (Sell, Trim, Hold…).
