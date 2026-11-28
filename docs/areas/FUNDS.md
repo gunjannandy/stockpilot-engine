@@ -12,8 +12,8 @@ Status: building
 ## Next
 - [ ] Confirm `gate` is green on PR #69 and it merges.
 - [ ] Find a source each of the 10 houses serves to Actions (`config/fund_house_sources.json` has 5 of 10 unfound); until then they report 'cannot be fetched' in the run's lines.
-- [ ] Weekly fund forecast and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
-- [ ] Report which fund detail the data can and cannot support (free additions).
+- [ ] Weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
+- [ ] Report on issue #283 which fund detail (free today: NAV, TER Direct/Regular, size, 1/3/5y returns, category middle, worst fall, rolling returns; not free: exit load, manager, benchmark, portfolio turnover, ratings) the data can and cannot support (free additions).
 - [ ] Unit checks: overlap from fixtures, returns/rolling/falls/cost/size from fixtures.
 
 ## Decisions
