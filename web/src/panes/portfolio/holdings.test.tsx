@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { discoverWords } from "../../areas";
+import { RS } from "../../format";
 import { WordsProvider } from "../../words";
 import { SyncDot } from "../sync/SyncDot";
 import { asOfDay, callWord, Holdings } from "./Holdings";
@@ -89,7 +90,9 @@ it("shows what is owned with price, gain, call and the as-of date", async () => 
   expect(screen.getByTestId("holdings-asof").textContent).toContain("Thu 26 Nov");
   expect(screen.getByTestId("holdings-table").textContent).toContain("ALFA");
   // (120 - 100) * 10
-  await waitFor(() => expect(screen.getByTestId("holdings-table").textContent).toContain("₹200"));
+  await waitFor(() =>
+    expect(screen.getByTestId("holdings-table").textContent).toContain(`${RS}200`),
+  );
   await waitFor(() => expect(screen.getByTestId("holdings-table").textContent).toContain("Sell"));
   expect(screen.getByTestId("holdings-table").textContent).toContain("no price yet"); // the fund
 });
