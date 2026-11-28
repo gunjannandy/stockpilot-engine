@@ -12,6 +12,7 @@ import {
   HoldingSec,
   NewsSec,
   PeersSec,
+  RawSec,
 } from "../_kit/StockSections";
 import { Toast } from "../_kit/Toast";
 import { StockRow } from "../_kit/ui";
@@ -152,6 +153,7 @@ export function Detail({
       <FactsSec st={st} />
       <HoldingSec st={st} />
       <NewsSec st={st} />
+      <RawSec st={st} />
       <PeersSec st={st} onPick={(id) => onPick?.(id)} />
     </article>
   );

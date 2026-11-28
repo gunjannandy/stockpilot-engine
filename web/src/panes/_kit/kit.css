@@ -1102,3 +1102,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Glance cards: a few numbers read before a list */
+.wl-glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.wl-g {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  animation: k-fade 0.4s var(--ease) both;
+  transition:
+    border-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+.wl-g:hover {
+  border-color: var(--line);
+  transform: translateY(-2px);
+}
+.wl-g b {
+  font-size: var(--fs-title);
+  font-weight: 800;
+}
+.wl-g .k-eyebrow {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-g {
+    animation: none;
+    transition: none;
+  }
+}

@@ -32,6 +32,19 @@ import {
 } from "./series";
 
 export type Layer = "vol" | "avg" | "band" | "levels" | "trades";
+const SWATCH: Record<Layer, [string, string][]> = {
+  vol: [["bx", "var(--c3)"]],
+  avg: [
+    ["ln", "var(--warn)"],
+    ["ln dash", "var(--text-2)"],
+  ],
+  band: [["bx", "color-mix(in srgb, var(--primary) 30%, transparent)"]],
+  levels: [["ln dash", "var(--loss)"]],
+  trades: [
+    ["dot", "var(--gain)"],
+    ["dot", "var(--loss)"],
+  ],
+};
 export const LAYERS: Layer[] = ["vol", "avg", "band", "levels", "trades"];
 export type ChartTrade = { date: string; kind: "buy" | "sell"; qty: number };
 const css = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -67,7 +80,6 @@ export function StockChart(props: {
   const [layers, setLayers] = useState<Record<Layer, boolean>>(() =>
     load("sk-layers", { vol: true, avg: true, band: true, levels: true, trades: true }),
   );
-  const [menu, setMenu] = useState(false);
   const [theme, setTheme] = useState(0);
   const [readout, setReadout] = useState("");
   const apiRef = useRef<{
@@ -247,7 +259,7 @@ export function StockChart(props: {
                     shape: "arrowUp" as const,
                     color: c.gain,
                     text: `${t("stock.bought")} ${tr.qty}`,
-                    size: 1.4,
+                    size: 2,
                   },
                 ]
               : [
@@ -257,7 +269,7 @@ export function StockChart(props: {
                     shape: "arrowDown" as const,
                     color: c.loss,
                     text: `${t("stock.sold")} ${tr.qty}`,
-                    size: 1.4,
+                    size: 2,
                   },
                 ];
           })
@@ -323,18 +335,6 @@ export function StockChart(props: {
     setRange(null);
   }, []);
   const last = bars[bars.length - 1];
-  const legend = (cls: string, color: string, word: string) => (
-    <span key={word}>
-      <i
-        className={cls}
-        style={{
-          borderColor: color,
-          background: cls.includes("bx") || cls.includes("dot") ? color : undefined,
-        }}
-      />
-      {t(word)}
-    </span>
-  );
   return (
     <div className="sk-chart">
       <div className="sk-tools">
@@ -372,39 +372,7 @@ export function StockChart(props: {
             {t("stock.reset")}
           </button>
         </span>
-        <span className="sk-tr">
-          <span className="sk-lyr">
-            <button
-              type="button"
-              className="sk-btn"
-              aria-expanded={menu}
-              onClick={() => setMenu((m) => !m)}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path
-                  d="M12 3 2 8l10 5 10-5-10-5Zm0 12L4.6 11.3 2 12.6l10 5 10-5-2.6-1.3L12 15Zm0 4-7.4-3.7L2 16.6l10 5 10-5-2.6-1.3L12 19Z"
-                  fill="currentColor"
-                />
-              </svg>
-              {t("stock.layers")}
-            </button>
-            {menu && (
-              <div className="sk-menu">
-                {LAYERS.map((k) => (
-                  <label key={k} className="sk-mi">
-                    <input
-                      type="checkbox"
-                      checked={layers[k]}
-                      onChange={(e) => setLayers((l) => ({ ...l, [k]: e.target.checked }))}
-                    />
-                    <span>{t(`stock.layer.${k}`)}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </span>
-          {extra}
-        </span>
+        <span className="sk-tr">{extra}</span>
       </div>
       <div className="sk-cvw">
         <div className="sk-cv" ref={host} data-testid="chart" />
@@ -412,19 +380,29 @@ export function StockChart(props: {
           {readout}
         </div>
       </div>
-      <div className="sk-legend">
-        {legend("ln", "var(--primary)", "stock.price")}
-        {layers.avg && legend("ln", "var(--warn)", "stock.avg2")}
-        {layers.avg && legend("ln dash", "var(--text-2)", "stock.avg10")}
-        {layers.vol && legend("bx", "var(--c3)", "stock.layer.vol")}
-        {layers.band &&
-          call &&
-          legend("bx", "color-mix(in srgb, var(--primary) 30%, transparent)", "stock.range50")}
-        {layers.band &&
-          call &&
-          legend("bx", "color-mix(in srgb, var(--primary) 13%, transparent)", "stock.range80")}
-        {layers.trades && legend("dot", "var(--gain)", "stock.bought")}
-        {layers.trades && legend("dot", "var(--loss)", "stock.sold")}
+      <div className="sk-legend" role="group" aria-label={t("stock.layers")}>
+        <span className="sk-lg-on">
+          <i className="ln" style={{ borderColor: "var(--primary)" }} />
+          {t("stock.price")}
+        </span>
+        {LAYERS.filter((k) => k !== "band" || call).map((k) => (
+          <button
+            key={k}
+            type="button"
+            className="sk-lg"
+            aria-pressed={layers[k]}
+            onClick={() => setLayers((l) => ({ ...l, [k]: !l[k] }))}
+          >
+            {SWATCH[k].map(([cls, color]) => (
+              <i
+                key={color}
+                className={cls}
+                style={{ borderColor: color, background: cls.includes("ln") ? undefined : color }}
+              />
+            ))}
+            {t(`stock.layer.${k}`)}
+          </button>
+        ))}
       </div>
       <p className="note">
         {t("stock.hint")}

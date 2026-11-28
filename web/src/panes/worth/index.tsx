@@ -2,8 +2,12 @@
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { isHeld, type Reason, reasonsOf, STOCKS, UNIVERSE } from "../_kit/data";
+import { Find } from "../_kit/Find";
 import { ListPage } from "../_kit/ListPage";
 
+// Needs data: the real count of stocks analysed and the count that passed the filters; these two are placeholders.
+const UNIVERSE_N = 4832;
+const PASSED_N = 218;
 const fill = (s: string, v: Record<string, string | number>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
@@ -39,6 +43,23 @@ function Worth() {
       reasonsOf={reasonText}
       tableCols={["sector", "pe", "growth"]}
       empty={t("v2.noneHere")}
+      top={
+        <>
+          <div className="wl-glance wt-funnel" aria-label={t("v3.funnelT")}>
+            {[
+              [UNIVERSE_N.toLocaleString("en-IN"), t("v3.funAnalysed")],
+              [PASSED_N.toLocaleString("en-IN"), t("v3.funPassed")],
+              [String(base.length), t("v3.funShown")],
+            ].map(([n, l], i) => (
+              <div key={l} className="wl-g" style={{ animationDelay: `${i * 80}ms` }}>
+                <b className="num">{n}</b>
+                <span className="k-note">{l}</span>
+              </div>
+            ))}
+          </div>
+          <Find placeholder={t("v3.findAny")} />
+        </>
+      }
     />
   );
 }

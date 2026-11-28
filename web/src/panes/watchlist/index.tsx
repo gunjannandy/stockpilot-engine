@@ -1,8 +1,8 @@
 // Watchlist: the stocks we chose to watch. Star on, star off, add inline, Hide for 30 days, Undo.
-import { useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
-import { UNIVERSE, universeById } from "../_kit/data";
+import { pct, quote, UNIVERSE, universeById } from "../_kit/data";
+import { Find } from "../_kit/Find";
 import { ListPage } from "../_kit/ListPage";
 import { Toast } from "../_kit/Toast";
 import { useWatch, watch } from "../_kit/watch";
@@ -10,43 +10,51 @@ import { useWatch, watch } from "../_kit/watch";
 function Add() {
   const t = useWords();
   const w = useWatch();
-  const [q, setQ] = useState("");
-  const hits =
-    q.length > 0
-      ? UNIVERSE.filter(
-          (s) => !w.star.has(s.id) && (s.name + s.symbol).toLowerCase().includes(q.toLowerCase()),
-        ).slice(0, 5)
-      : [];
   return (
-    <div className="wl-add">
-      <input
-        className="k-input"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder={t("v2.watchAdd")}
-        aria-label={t("v2.searchAdd")}
-      />
-      {hits.length > 0 && (
-        <ul className="wl-hits k-in">
-          {hits.map((s) => (
-            <li key={s.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  watch.toggleStar(s.id, t("v2.added"), t("v2.removed"));
-                  setQ("");
-                }}
-              >
-                <b>{s.name}</b>{" "}
-                <span className="k-note">
-                  {s.symbol} · {s.sector}
-                </span>
-                <span className="k-link">＋ {t("v2.addWl")}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <Find
+      placeholder={t("v2.watchAdd")}
+      actionLabel={t("v2.addWl")}
+      skip={(id) => w.star.has(id)}
+      onPick={(id) => watch.toggleStar(id, t("v2.added"), t("v2.removed"))}
+    />
+  );
+}
+
+/** Four numbers to read before the list: what is close to a buy, who rose, who fell, and what needs a look. */
+function Glance({ rows }: { rows: typeof UNIVERSE }) {
+  const t = useWords();
+  const day = (s: (typeof UNIVERSE)[number]) => quote(s).day;
+  const best = [...rows].sort((a, b) => day(b) - day(a))[0];
+  const worst = [...rows].sort((a, b) => day(a) - day(b))[0];
+  const near = rows.filter((s) => s.verdict === "buy").length;
+  const flagged = rows.filter((s) => s.verdict === "sell" || s.verdict === "weak").length;
+  const cards = [
+    { k: "near", label: t("v3.wlNear"), v: String(near), tone: "up", note: t("v3.wlNearP") },
+    {
+      k: "best",
+      label: t("v3.wlBest"),
+      v: best ? pct(day(best)) : "–",
+      tone: "up",
+      note: best?.name ?? "",
+    },
+    {
+      k: "worst",
+      label: t("v3.wlWorst"),
+      v: worst ? pct(day(worst)) : "–",
+      tone: "dn",
+      note: worst?.name ?? "",
+    },
+    { k: "flag", label: t("v3.wlFlag"), v: String(flagged), tone: "", note: t("v3.wlFlagP") },
+  ];
+  return (
+    <div className="wl-glance">
+      {cards.map((c, i) => (
+        <div key={c.k} className="wl-g" style={{ animationDelay: `${i * 60}ms` }}>
+          <span className="k-eyebrow">{c.label}</span>
+          <b className={`num ${c.tone}`}>{c.v}</b>
+          <span className="k-note">{c.note}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -90,7 +98,12 @@ function Watchlist() {
         })}
         groupOrder={["sell", "weak", "buy", "keep", "watch"]}
         empty={t("v3.watchEmpty")}
-        top={<Add />}
+        top={
+          <>
+            <Glance rows={rows} />
+            <Add />
+          </>
+        }
         tableCols={["sector"]}
       />
       <Hidden />
