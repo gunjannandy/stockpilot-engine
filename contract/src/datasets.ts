@@ -115,7 +115,7 @@ export const datasets = {
       row: ["a call row has a call", "a chance has its cases"],
       run: ["at least 5 rows"],
     },
-    visibility: "public",
+    visibility: "private",
     recomputable: true,
     writeBudget: 1000,
     row: FundCallRow,

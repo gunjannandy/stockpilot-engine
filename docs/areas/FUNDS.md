@@ -31,12 +31,14 @@ Not supportable free: exit load, fund manager and tenure, official benchmark and
 - Overlap is computed in the browser; the route serves public fund portfolios only.
 - Shapes live in `contract/`; no `web/` edits.
 
-- `fund_calls` is built inside the funds Job from the rows it just read (no new workflow, no cross-dataset read); public visibility because it holds no holdings.
+- `fund_calls` is built inside the funds Job from the rows it just read (no new workflow, no cross-dataset read); private visibility: the registry rule (C-203-1) makes any dataset named like funds private.
 - Track record is a backtest on the weekly NAVs (only funds alive today, caveat carried in every row), until real past calls exist to score.
 - `held_calls` takes held ids from the caller and stores nothing, so no holdings reach the public engine; it uses the same screen and base rate as Buy/Watch rather than fundcall.py's heavier flow (switch costs, tax and model view stay on the VM).
 - Buy needs top quarter on 3 years, last year above category middle, at most 15% of rolling years lost, size 500 crore+, cost known; otherwise Watch.
 
 ## Blocked
 - Nothing yet.
+
+- Chapter 4: PR #80 `ts` was red on C-203-1 (`fund_calls` was public); set it private rather than touch the gate.
 
 Chapter end: 3
