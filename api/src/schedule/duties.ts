@@ -40,11 +40,8 @@ export const DUTIES: Duty[] = [
   },
   quotesDuty,
   newsDuty,
-<<<<<<< origin/main
   modelsDuty,
-=======
   listsDuty,
->>>>>>> origin/area/SIGNALS
   watcherDuty,
   {
     id: "secrets",
