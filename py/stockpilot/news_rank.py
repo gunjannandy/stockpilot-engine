@@ -11,8 +11,8 @@ MEDIUM_IMPACT = 3
 MARKS = {"high": "yellow_dot", "medium": "yellow_dot", "low": "newspaper"}
 
 
-def spread(items: list, holdings: set, watchlist: set, sector_map: dict) -> list[dict]:
-    """One row per (item, owned stock it reaches): directly touched, or a list stock in the item's sector."""
+def _reach(items: list, holdings: set, watchlist: set, sector_map: dict) -> list[dict]:
+    """One row per (item, owned stock it reaches): directly touched, or a list stock in the item's sector. Closeness only; never a direction."""
     rows = {}
     for it in items:
         for t in it["touches"]:
@@ -48,7 +48,7 @@ def mark(row: dict) -> str:
 def rank(items: list, holdings: set, watchlist: set, sector_map: dict, now: datetime) -> list[dict]:
     """One row per item that reaches an owned stock, best first. `symbols` lists the owned stocks it reaches."""
     by_item = {}
-    for r in spread(items, holdings, watchlist, sector_map):
+    for r in _reach(items, holdings, watchlist, sector_map):
         by_item.setdefault(r["item_id"], []).append(r)
     out = []
     for it in items:
