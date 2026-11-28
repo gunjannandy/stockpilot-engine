@@ -1,26 +1,13 @@
 // ITR pack download: lots are rebuilt from the stored trades, the pack is built in memory and sent as one zip.
-// Read-only: nothing is written and no broker is called.
+// Writes only the cached USD/INR rates (fx_rates); no broker is called.
 import { Hono } from "hono";
+import { addDays } from "../../../money/src/core/dates";
 import { buildPack, packZip } from "../../../money/src/itr";
-import { rebuild } from "../../../money/src/lots/rebuild";
-import type { Trade } from "../../../money/src/lots/types";
 import type { TaxLot, TaxSale } from "../../../money/src/tax/tax";
-import type { Ctx } from "../app";
-
-type TradeRow = {
-  source: string;
-  source_ref: string;
-  kind: string;
-  symbol: string;
-  isin: string | null;
-  side: string;
-  trade_date: string;
-  quantity: number;
-  price: number | null;
-  currency: string;
-  status: string;
-  trade_key: string;
-};
+import { MissingRate } from "../../../money/src/tax/tax";
+import { type Ctx, istDay } from "../app";
+import { loadRateOn, refreshRates } from "../fx/rates";
+import { loadRebuild } from "../lots/load";
 
 export function itrRoutes(ctx: Ctx) {
   const app = new Hono();
@@ -30,27 +17,19 @@ export function itrRoutes(ctx: Ctx) {
     if (!Number.isInteger(fy) || fy < 2018 || fy > 2100) {
       return c.json({ error: "Pick a tax year, like 2026 for 2026-27." }, 400);
     }
-    const res = (await ctx.d1
+    const foreign = (await ctx.d1
       .prepare(
-        "select source, source_ref, kind, symbol, isin, side, trade_date, quantity, price, currency, status, trade_key from trades order by trade_date, rowid",
+        "select min(d) as d from (select min(trade_date) as d from trades where currency <> 'INR' union all select min(acquired_on) from fidelity_lots)",
       )
-      .all()) as { results?: TradeRow[] };
-    const trades: Trade[] = (res.results ?? []).map((r) => ({
-      source: r.source,
-      sourceRef: r.source_ref,
-      kind: r.kind,
-      symbol: r.symbol,
-      isin: r.isin,
-      side: r.side,
-      tradeDate: r.trade_date,
-      quantity: r.quantity,
-      price: r.price,
-      currency: r.currency,
-      status: r.status,
-      tradeKey: r.trade_key,
-    }));
-    if (trades.length === 0) return c.json({ error: "No trades stored yet. Sync first." }, 404);
-    const built = rebuild({ trades, actions: [] });
+      .all()) as { results?: { d: string | null }[] };
+    const first = foreign.results?.[0]?.d;
+    if (first) {
+      const since = addDays(first.slice(0, 10), -45);
+      await refreshRates(ctx.d1, istDay(ctx.now()), since).catch(() => 0);
+    }
+    const built = await loadRebuild(ctx.d1, { rateOn: await loadRateOn(ctx.d1) });
+    if (built.lots.length === 0 && built.sales.length === 0)
+      return c.json({ error: "No trades stored yet. Sync first." }, 404);
     const lots: TaxLot[] = built.lots.map((l, i) => ({
       id: i + 1,
       symbol: l.symbol,
@@ -69,8 +48,18 @@ export function itrRoutes(ctx: Ctx) {
       price_per_unit: s.pricePerUnit,
       currency: s.currency,
     }));
-    const pack = buildPack({ lots, sales, fy, rateOn: null, closes: {} });
-    const bytes = packZip(pack.files);
+    let bytes: Uint8Array;
+    try {
+      const pack = buildPack({ lots, sales, fy, rateOn: await loadRateOn(ctx.d1), closes: {} });
+      bytes = packZip(pack.files);
+    } catch (e) {
+      if (e instanceof MissingRate)
+        return c.json(
+          { error: "The dollar-rupee rate for a date is missing. Try again later." },
+          409,
+        );
+      throw e;
+    }
     return new Response(bytes, {
       headers: {
         "content-type": "application/zip",
