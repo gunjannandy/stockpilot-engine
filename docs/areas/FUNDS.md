@@ -12,16 +12,19 @@ Status: building
 
 - Fund calls, public part: `py/stockpilot/jobs/funds/calls.py` (screen, backtested base rate by kind and 3-year quartile, track record), published by the funds Job as dataset `fund_calls` (`contract/src/fundcalls/`, route `GET /api/fund-calls` in `api/src/fundcalls/`, tests beside each).
 
+- Fund detail extras computed in the browser from the weekly NAVs: `calendarReturns` and `sipReturn` in `contract/src/funds/derived.ts` (tests `api/src/funds/derived.test.ts`).
+
 ## Next
-- [ ] Confirm `gate` is green on PR #80 after the fund_calls privacy fix (pushed 16ea3ce) and it merges.
+- [ ] Confirm PR #80 merges (gate was green at chapter 5 start).
 - [ ] Find a source each of the 10 houses serves to Actions (`config/fund_house_sources.json` has 5 of 10 unfound); until then they report 'cannot be fetched' in the run's lines.
 - [x] Held-fund call and scored-later track record: `held_calls` and `score_calls` in `py/stockpilot/jobs/funds/calls.py` (tests beside). Remaining: the VM caller passes held ids and past published rows to them (private side, outside this repo's data). Was: weekly fund forecast (start: `py/stockpilot/fundcall.py` reads a duckdb `navs` table and the book; the engine's `funds` dataset has weekly NAVs, category middles and ranks, so port its screen/base-rate steps onto those rows; the held-fund part runs privately on the VM; publish a `fund_calls` dataset plus its track record) and call (held, buy, watch) from NAV history, with track record; extend the existing fund call code rather than duplicating it; shapes in `contract/`.
 - [x] Fund detail report: see section below.
-- [ ] Unit checks: overlap from fixtures, returns/rolling/falls/cost/size from fixtures.
+- [x] Unit checks: overlap (C-076-1) and returns/rolling/falls/cost/size (C-075-1: `py/tests/fund_stats/`, `py/tests/funds_job/`, `api/src/funds/derived.test.ts`).
+- [ ] Up/down capture against the category middle and holdings concentration (need the category line served per fund / more fetchable houses).
 
 ## Fund detail report (issue 283)
 Supported today from free data: weekly NAV chart up to 5 years, 1/3/5 year returns, category middle and count, worst fall, rolling 1-year spread and loss share, Direct and Regular yearly cost, size, top-holdings and overlap (fund_holdings, houses we can fetch), and now a buy/watch call with a measured chance.
-Free additions still open: SIP-style return over the NAV history, calendar-year returns, up/down capture against the category middle, and holdings-derived concentration (top 10 share, sector from holdings names) once more houses are fetchable.
+Free additions still open: up/down capture against the category middle, and holdings-derived concentration (top 10 share, sector from holdings names) once more houses are fetchable.
 Not supportable free: exit load, fund manager and tenure, official benchmark and its returns, portfolio turnover, star ratings. Their sources are paid or scraped from pages that block Actions; a screen should leave them out rather than show blanks.
 
 ## Decisions
@@ -40,5 +43,6 @@ Not supportable free: exit load, fund manager and tenure, official benchmark and
 - Nothing yet.
 
 - Chapter 4: PR #80 `ts` was red on C-203-1 (`fund_calls` was public); set it private rather than touch the gate.
+- `calendarReturns`/`sipReturn` are pure browser-side functions, not new dataset columns, so no migration or contract-shape change.
 
-Chapter end: 4
+Chapter end: 5
