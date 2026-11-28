@@ -8,15 +8,14 @@ import {
   callLine,
   isHeld,
   NEWS,
-  pct,
   STOCKS,
   stockById,
   todayGroups,
   UNUSUAL,
 } from "../_kit/data";
-import { todayLine, useCountUp } from "../_kit/hooks";
+import { todayLine } from "../_kit/hooks";
 import { Toast } from "../_kit/Toast";
-import { Seg, StockRow, StockTable, Tile, VChip } from "../_kit/ui";
+import { Seg, StockRow, StockTable, VChip } from "../_kit/ui";
 import { useWatch, watch } from "../_kit/watch";
 import { Detail } from "../stock";
 import "./today.css";
@@ -65,7 +64,7 @@ function TodayScreen() {
   const groups = useMemo(() => todayGroups(), []);
   const line = callLine(groups);
   const [vf, setVf] = useState<"all" | (typeof GROUPS)[number]["id"]>("all");
-  const [q, setQ] = useState("");
+  const [q, _setQ] = useState("");
   const [view, setView] = useState<"list" | "table">("list");
   const [sel, setSel] = useState(line.kind === "act" ? line.first.id : (STOCKS[0]?.id ?? ""));
   const [full, setFull] = useState(false);

@@ -3,7 +3,8 @@ import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { money } from "../_kit/data";
 import { useCountUp } from "../_kit/hooks";
-import { Group, GroupNav, Tile } from "../_kit/ui";
+import { Tile } from "../_kit/ui";
+import "./record.css";
 
 const CAL = [
   { say: 30, real: 33 },
@@ -21,7 +22,7 @@ const MISSES = [
   },
   {
     n: "Cedar Pharma",
-    call: "Weak at 36%",
+    call: "Trim at 36%",
     score: -2.3,
     why: "The stock rose on a one-off order. Our view had no way to see that order coming.",
   },
@@ -103,7 +104,7 @@ function Compare() {
     { k: "equal", v: 12.6, c: "" },
   ];
   return (
-    <Tile title={t("v3.addValue")} wide>
+    <Tile title={t("v3.addValue")}>
       <p className="k-note">{t("v3.addValueP")}</p>
       {rows.map((r) => (
         <div key={r.k} className="k-barrow rc-row">
@@ -119,12 +120,63 @@ function Compare() {
   );
 }
 
-function Ours() {
+function Misses() {
+  const t = useWords();
+  return (
+    <Tile title={t("v3.misses")}>
+      {MISSES.map((m) => (
+        <details key={m.n} className="rc-miss">
+          <summary>
+            <b>{m.n}</b> <span className="k-note">{m.call}</span>
+            <span className="dn num rc-pts">
+              {m.score.toFixed(1)} {t("v3.pts")}
+            </span>
+          </summary>
+          <p>{m.why}</p>
+        </details>
+      ))}
+    </Tile>
+  );
+}
+
+function Booked() {
+  const t = useWords();
+  const hi = Math.max(...BOOKED);
+  return (
+    <Tile title={t("v2.rMonth")}>
+      <div className="rc-months">
+        {MONTHS.map((m, i) => (
+          <div key={m}>
+            <span
+              className="rc-bar"
+              style={{ height: `${Math.max(4, ((BOOKED[i] ?? 0) / hi) * 100)}%` }}
+              title={money((BOOKED[i] ?? 0) * 1000, 0)}
+            />
+            <span className="k-note">{m}</span>
+          </div>
+        ))}
+      </div>
+      <div className="rc-wl" role="img" aria-label="13 of 19 closed trades made money">
+        <i className="k-grow" style={{ width: `${(13 / 19) * 100}%` }} />
+      </div>
+      <p className="k-note">
+        {t("v3.winLossP")} · {t("v2.rEarly")} 4 {t("v3.of")} 11
+      </p>
+    </Tile>
+  );
+}
+
+function RecordScreen() {
   const t = useWords();
   const n = useCountUp(63);
   return (
-    <div className="k-grid">
-      <div className="k-grid c3">
+    <section className="rc">
+      <header className="k-head">
+        <p className="k-eyebrow">{t("v2.record")}</p>
+        <h1>{t("v3.recordH")}</h1>
+        <p>{t("v3.recordP")}</p>
+      </header>
+      <div className="rc-layout">
         <Tile title={t("v2.rCalls")}>
           <p className="k-big num">24</p>
           <p className="k-note">{t("v2.rCallsS")}</p>
@@ -140,122 +192,35 @@ function Ours() {
           <p className="k-big num up">+2.4</p>
           <p className="k-note">{t("v3.avgGapP")}</p>
         </Tile>
-      </div>
-      <div className="k-grid c2">
-        <Calibration />
-        <Compare />
-      </div>
-      <Tile title={t("v3.misses")} wide>
-        <p className="k-note">{t("v3.missesP")}</p>
-        {MISSES.map((m) => (
-          <details key={m.n} className="rc-miss">
-            <summary>
-              <b>{m.n}</b> · {m.call} ·{" "}
-              <span className="dn num">
-                {m.score.toFixed(1)} {t("v3.pts")}
-              </span>
-            </summary>
-            <p>{m.why}</p>
-          </details>
-        ))}
-      </Tile>
-    </div>
-  );
-}
-
-function Mine() {
-  const t = useWords();
-  const hi = Math.max(...BOOKED);
-  return (
-    <div className="k-grid">
-      <div className="k-grid c4">
-        <Tile title={t("v2.rClosed")}>
-          <p className="k-big num">19</p>
+        <Tile title={t("rc.yourWin")}>
+          <p className="k-big num">
+            13 <span className="k-note">/ 19</span>
+          </p>
+          <p className="k-note">
+            {t("v2.rHeldW")} 5 · {t("v2.rHeldL")} 3
+          </p>
         </Tile>
-        <Tile title={t("v2.rWin")}>
-          <p className="k-big num up">13</p>
-          <p className="k-note">{t("v3.of19")}</p>
-        </Tile>
-        <Tile title={t("v2.rHeldW")}>
-          <p className="k-big num">5</p>
-        </Tile>
-        <Tile title={t("v2.rHeldL")}>
-          <p className="k-big num dn">3</p>
-        </Tile>
-      </div>
-      <Tile title={t("v3.winLoss")} wide>
-        <div className="rc-wl" role="img" aria-label="13 of 19 closed trades made money">
-          <i className="k-grow" style={{ width: `${(13 / 19) * 100}%` }} />
+        <div className="rc-cal-wrap">
+          <Calibration />
         </div>
-        <p className="k-note">{t("v3.winLossP")}</p>
-      </Tile>
-      <Tile title={t("v2.rEarly")}>
-        <p className="k-big num">4 {t("v3.of")} 11</p>
-        <p className="k-note">{t("v2.rEarlyS")}</p>
-      </Tile>
-      <Tile title={t("v2.rMonth")} wide>
-        <div className="rc-months">
-          {MONTHS.map((m, i) => (
-            <div key={m}>
-              <span
-                className="rc-bar"
-                style={{ height: `${Math.max(4, ((BOOKED[i] ?? 0) / hi) * 100)}%` }}
-                title={money((BOOKED[i] ?? 0) * 1000, 0)}
-              />
-              <span className="k-note">{m}</span>
-            </div>
-          ))}
+        <div className="rc-cmp-wrap">
+          <Compare />
+          <section className="k-tile card rc-sc">
+            <h2 className="k-eyebrow">{t("v2.pSc")}</h2>
+            <p>
+              {t("v3.ourTrades")} <b className="num up">15.9%</b> · {t("v3.scRoute")}{" "}
+              <b className="num">12.4%</b>
+            </p>
+            <p className="k-note">{t("v3.scVerdict")}</p>
+          </section>
         </div>
-      </Tile>
-    </div>
-  );
-}
-
-function Sc() {
-  const t = useWords();
-  return (
-    <div className="k-grid c2">
-      <Tile title={t("v3.ourTrades")}>
-        <p className="k-big num up">15.9%</p>
-        <p className="k-note">{t("v3.routeP")}</p>
-      </Tile>
-      <Tile title={t("v3.scRoute")}>
-        <p className="k-big num">12.4%</p>
-        <p className="k-note">{t("v3.routeP")}</p>
-      </Tile>
-      <Tile title={t("v3.scSay")} wide>
-        <p>{t("v3.scVerdict")}</p>
-      </Tile>
-    </div>
-  );
-}
-
-function RecordScreen() {
-  const t = useWords();
-  return (
-    <section className="rc">
-      <header className="k-head">
-        <p className="k-eyebrow">{t("v2.record")}</p>
-        <h1>{t("v3.recordH")}</h1>
-        <p>{t("v3.recordP")}</p>
-      </header>
-      <GroupNav
-        label={t("v3.groupsNav")}
-        items={[
-          { id: "ours", label: t("v2.tabOurs") },
-          { id: "mine", label: t("v2.tabMine") },
-          { id: "sc", label: t("v2.pSc") },
-        ]}
-      />
-      <Group id="ours" title={t("v2.tabOurs")} sub={t("v3.rcOursP")}>
-        <Ours />
-      </Group>
-      <Group id="mine" title={t("v2.tabMine")} sub={t("v3.rcMineP")}>
-        <Mine />
-      </Group>
-      <Group id="sc" title={t("v2.pSc")} sub={t("v3.rcScP")}>
-        <Sc />
-      </Group>
+        <div className="rc-half">
+          <Misses />
+        </div>
+        <div className="rc-half">
+          <Booked />
+        </div>
+      </div>
       <p className="k-sample">{t("v2.proto")}</p>
     </section>
   );

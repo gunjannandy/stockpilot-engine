@@ -166,9 +166,6 @@
 .k-band > b {
   flex: 1;
 }
-.k-band .k-link {
-  margin-left: auto;
-}
 .k-chgchip {
   display: inline-flex;
   align-items: center;
@@ -209,12 +206,6 @@
 .k-lrowwrap {
   position: relative;
 }
-.k-lrowwrap .k-star {
-  position: absolute;
-  right: var(--sp-2);
-  top: 50%;
-  transform: translateY(-50%);
-}
 .k-star {
   width: 36px;
   height: 36px;
@@ -232,9 +223,6 @@
 }
 .k-star[aria-pressed="true"] {
   color: var(--warn);
-}
-.k-star:active {
-  transform: translateY(-50%) scale(0.85);
 }
 .k-why {
   display: inline-flex;
@@ -926,7 +914,7 @@
     grid-template-columns: 6rem minmax(0, 1fr) 3.5rem;
   }
 }
-.k-lrowwrap .lrow {
+.lrow {
   padding-right: 48px;
 }
 .k-analyse {
@@ -1048,30 +1036,6 @@
 }
 
 /* Portfolio */
-.pf-strip {
-  display: flex;
-  gap: 2px;
-  height: var(--sp-4);
-  margin: var(--sp-2) 0 var(--sp-4);
-  border-radius: var(--r-chip);
-  overflow: hidden;
-}
-.pf-strip i {
-  display: block;
-  background: var(--hold);
-}
-.pf-strip i.v-sell {
-  background: var(--loss);
-}
-.pf-strip i.v-weak {
-  background: var(--warn);
-}
-.pf-strip i.v-buy {
-  background: var(--gain);
-}
-.pf-strip i.v-watch {
-  background: var(--watch);
-}
 .pf-table tbody tr {
   cursor: pointer;
   transition: background 0.15s var(--ease);
@@ -1091,33 +1055,6 @@
   width: 56px;
   margin-right: var(--sp-2);
   vertical-align: middle;
-}
-
-/* Settings */
-.st-mix {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-2) var(--sp-5);
-  margin: var(--sp-3) 0;
-}
-.st-row {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr 3rem;
-  align-items: center;
-  gap: var(--sp-3);
-  font-size: var(--fs-body);
-}
-.st-row input[type="range"] {
-  accent-color: var(--primary);
-  min-width: 0;
-}
-.st-row b {
-  text-align: right;
-}
-@media (max-width: 720px) {
-  .st-mix {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Glance cards: a few numbers read before a list */
@@ -1225,7 +1162,7 @@
   animation: k-up 0.36s var(--ease) both;
   animation-delay: calc(var(--i, 0) * 40ms);
 }
-.sk-list .k-lrowwrap {
+.sk-list {
   animation: k-up 0.32s var(--ease) both;
 }
 .k-lift {
@@ -1248,4 +1185,17 @@
     transition: none !important;
     transform: none !important;
   }
+}
+
+.k-band .k-link {
+  margin-left: auto;
+}
+.k-lrowwrap .k-star {
+  position: absolute;
+  right: var(--sp-2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.k-lrowwrap .k-star:active {
+  transform: translateY(-50%) scale(0.85);
 }

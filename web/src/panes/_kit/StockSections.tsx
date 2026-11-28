@@ -2,7 +2,6 @@
 import { useWords } from "../../words";
 import { Analyse } from "./Analyse";
 import {
-  barsOf,
   type CallCardData,
   callCard,
   facts,

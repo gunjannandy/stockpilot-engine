@@ -1,5 +1,5 @@
 // Market & news: ranked news cards with the stocks each affects, sector mood, coming up, big-fund money, exposure per holding.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Pane } from "../../areas";
 import { useWords } from "../../words";
 import { HOLDINGS, money, NEWS, type NewsItem, pct, quote, stockById } from "../_kit/data";
@@ -7,7 +7,6 @@ import { Toast } from "../_kit/Toast";
 import { Spark, Tile, VChip } from "../_kit/ui";
 import "./market.css";
 
-const RANK = { filing: 0, wire: 1, blog: 2 } as const;
 const NIFTY = Array.from(
   { length: 120 },
   (_, i) => 24000 + i * 20 + Math.sin(i / 5) * 180 + Math.cos(i / 11) * 140,
@@ -58,60 +57,178 @@ function Tilelet({ id, dir, size }: { id: string; dir: "helps" | "hurts" | "none
   );
 }
 
-function Card({ n }: { n: NewsItem }) {
+/** A top story: high impact, touches what we hold or watch. It stays here for 7 days whatever its age. */
+function Top({ n, i }: { n: NewsItem; i: number }) {
   const t = useWords();
-  const held = n.hits.filter((h) => HOLDINGS.some((r) => r.st.id === h.id)).length;
-  const touches = n.hits.some(
-    (h) => stockById(h.id)?.verdict === "buy" || stockById(h.id)?.verdict === "sell",
-  );
-  const hue = (n.id.charCodeAt(1) * 47) % 360;
   return (
-    <article className="mk-card card k-in">
-      <div
-        className="mk-img"
-        style={{
-          background: `linear-gradient(135deg, color-mix(in oklab, var(--primary) ${20 + (hue % 40)}%, var(--surface)), color-mix(in oklab, var(--gain) ${15 + (hue % 30)}%, var(--surface)))`,
-        }}
-        role="img"
-        aria-label={t("v3.preview")}
-      >
-        {n.source.slice(0, 1)}
+    <article className="mk-top card k-up k-lift" style={{ "--i": i } as React.CSSProperties}>
+      <div className="mk-meta">
+        <span className={`mk-kind kind-${n.kind}`}>{t(`v3.kind.${n.kind}`)}</span>
+        <span className="k-note">
+          {n.source} · {n.age}
+        </span>
       </div>
-      <div className="mk-body">
-        <div className="mk-meta">
-          <b>
-            {t("v3.matters")} {n.matters}
-          </b>
-          <span className="k-bar-h mk-m" aria-hidden="true">
-            <i style={{ width: `${n.matters}%` }} />
-          </span>
-          <span className="k-note">
-            {n.matters >= 80 ? t("v3.high") : t("v3.normal")} · {n.age}
-          </span>
-          <span className={`k-pill kind-${n.kind}`}>{t(`v3.kind.${n.kind}`)}</span>
-          <span className="k-pill mk-src">{n.source}</span>
-        </div>
-        <h3>{n.title}</h3>
-        <p>{n.line}</p>
-        <div className="mk-tiles">
-          {n.hits.map((h) => (
-            <Tilelet key={h.id} id={h.id} dir={h.dir} size={h.size} />
-          ))}
-        </div>
-        <div className="k-chips mk-chips">
-          {held > 0 && (
-            <span className="k-pill better">
-              {t("v2.youHoldT")} {held}
-            </span>
-          )}
-          <span className="k-pill">
-            {n.kind === "filing" ? `1 ${t("v3.source")}` : `3 ${t("v3.sources")}`}
-          </span>
-          <span className="k-pill">{n.age}</span>
-          {touches && <span className="k-pill">{t("v3.touchesCall")}</span>}
-        </div>
+      <h3>{n.title}</h3>
+      <p className="k-note">{n.line}</p>
+      <div className="mk-tiles">
+        {n.hits.map((h) => (
+          <Tilelet key={h.id} id={h.id} dir={h.dir} size={h.size} />
+        ))}
       </div>
     </article>
+  );
+}
+
+type Line = {
+  id: string;
+  hour: string;
+  title: string;
+  source: string;
+  kind: NewsItem["kind"];
+  age: string;
+  hits: { id: string; dir: "helps" | "hurts" }[];
+};
+// Made-up stream for the prototype: what the 5 to 15 minute news collector would add through the day.
+const STREAM: Line[] = [
+  {
+    id: "s1",
+    hour: "09:00",
+    title: "Echo Bank raises its fixed deposit rates",
+    source: "Dalal Daily",
+    kind: "wire",
+    age: "18 min ago",
+    hits: [{ id: "echo-bank", dir: "helps" }],
+  },
+  {
+    id: "s2",
+    hour: "09:00",
+    title: "Auto sales slow in November, dealers say",
+    source: "Street Notes",
+    kind: "blog",
+    age: "31 min ago",
+    hits: [{ id: "bravo-motors", dir: "hurts" }],
+  },
+  {
+    id: "s3",
+    hour: "08:00",
+    title: "Gamma Tech wins a three-year software order",
+    source: "Exchange filing",
+    kind: "filing",
+    age: "1h ago",
+    hits: [{ id: "gamma-tech", dir: "helps" }],
+  },
+  {
+    id: "s4",
+    hour: "08:00",
+    title: "Power demand hits a record in the north",
+    source: "Market Ledger",
+    kind: "wire",
+    age: "1h ago",
+    hits: [{ id: "delta-power", dir: "helps" }],
+  },
+  {
+    id: "s5",
+    hour: "07:00",
+    title: "Port volumes flat for the second month",
+    source: "Market Ledger",
+    kind: "wire",
+    age: "2h ago",
+    hits: [{ id: "harbor-ports", dir: "hurts" }],
+  },
+];
+const ARRIVING: Line[] = [
+  {
+    id: "s0",
+    hour: "09:00",
+    title: "Cement prices cut again in the south",
+    source: "Dalal Daily",
+    kind: "wire",
+    age: "just now",
+    hits: [{ id: "indigo-cement", dir: "hurts" }],
+  },
+  {
+    id: "s00",
+    hour: "09:00",
+    title: "Juno Finance board meets on 4 December",
+    source: "Exchange filing",
+    kind: "filing",
+    age: "just now",
+    hits: [{ id: "juno-finance", dir: "helps" }],
+  },
+];
+
+function StreamRow({ l, fresh, i }: { l: Line; fresh: boolean; i: number }) {
+  const t = useWords();
+  return (
+    <li
+      className={`mk-row k-up${fresh ? " is-new" : ""}`}
+      style={{ "--i": i } as React.CSSProperties}
+    >
+      <span className={`mk-kind kind-${l.kind}`}>{t(`v3.kind.${l.kind}`)}</span>
+      <span className="mk-rt">
+        <b>{l.title}</b>
+        <span className="k-note">
+          {l.source} · {l.age}
+        </span>
+      </span>
+      <span className="mk-hits">
+        {l.hits.map((h) => {
+          const st = stockById(h.id);
+          return st ? (
+            <span key={h.id} className={`mk-hit ${h.dir === "helps" ? "up" : "dn"}`}>
+              {h.dir === "helps" ? "▲" : "▼"} {st.name}
+            </span>
+          ) : null;
+        })}
+      </span>
+    </li>
+  );
+}
+
+function Latest({ f }: { f: (l: Line) => boolean }) {
+  const t = useWords();
+  const [shown, setShown] = useState<Line[]>(STREAM);
+  const [waiting, setWaiting] = useState<Line[]>([]);
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
+  // The prototype plays two arrivals a few seconds after opening, the way the collector adds them.
+  useEffect(() => {
+    const id = setTimeout(() => setWaiting(ARRIVING), 4000);
+    return () => clearTimeout(id);
+  }, []);
+  const rows = shown.filter(f);
+  const hours = [...new Set(rows.map((l) => l.hour))];
+  return (
+    <section className="mk-latest">
+      <div className="mk-lh">
+        <h2 className="k-eyebrow">{t("mk.latest")}</h2>
+        {waiting.length ? (
+          <button
+            type="button"
+            className="mk-newpill k-in"
+            onClick={() => {
+              setFresh(new Set(waiting.map((w) => w.id)));
+              setShown([...waiting, ...shown]);
+              setWaiting([]);
+            }}
+          >
+            ↑ {t("mk.newN").replace("{n}", String(waiting.length))}
+          </button>
+        ) : null}
+      </div>
+      {hours.map((h) => (
+        <div key={h} className="mk-hour">
+          <span className="mk-hh num">{h}</span>
+          <ul>
+            {rows
+              .filter((l) => l.hour === h)
+              .map((l, i) => (
+                <StreamRow key={l.id} l={l} fresh={fresh.has(l.id)} i={i} />
+              ))}
+          </ul>
+        </div>
+      ))}
+      {rows.length === 0 ? <p className="k-note">{t("v2.noneHere")}</p> : null}
+    </section>
   );
 }
 
@@ -150,34 +267,35 @@ function Exposure() {
 
 function MarketScreen() {
   const t = useWords();
-  const ranked = [...NEWS].sort((a, b) => RANK[a.kind] - RANK[b.kind] || b.matters - a.matters);
   const [f, setF] = useState<"all" | "mine" | "filing" | "wire">("all");
-  const isMine = (n: NewsItem) => n.hits.some((h) => HOLDINGS.some((r) => r.st.id === h.id));
+  const held = (id: string) => HOLDINGS.some((r) => r.st.id === id);
+  const top = [...NEWS]
+    .filter((n) => n.matters >= 80 && n.hits.some((h) => h.rel === "direct"))
+    .sort((a, b) => b.matters - a.matters)
+    .slice(0, 5);
   const test = {
     all: () => true,
-    mine: isMine,
-    filing: (n: NewsItem) => n.kind === "filing",
-    wire: (n: NewsItem) => n.kind !== "filing",
+    mine: (l: Line) => l.hits.some((h) => held(h.id)),
+    filing: (l: Line) => l.kind === "filing",
+    wire: (l: Line) => l.kind !== "filing",
   } as const;
-  const shown = ranked.filter(test[f]);
-  const mine = [
-    ...new Set(NEWS.flatMap((n) => n.hits.filter((h) => h.rel === "direct").map((h) => h.id))),
-  ];
   return (
     <section className="mk">
       <header className="k-head">
-        <h1>{t("v2.market")}</h1>
-        <p>{t("v3.marketLine")}</p>
+        <p className="k-eyebrow">{t("v2.market")}</p>
+        <h1>{t("v3.marketLine")}</h1>
         <p className="k-note">{t("v3.every15")}</p>
       </header>
       <div className="mk-grid">
         <div className="mk-main">
-          <h2 className="k-eyebrow">{t("v3.yourNews")}</h2>
-          <div className="mk-mine">
-            {mine.map((id) => {
-              const h = NEWS.flatMap((n) => n.hits).find((x) => x.id === id);
-              return h ? <Tilelet key={id} id={id} dir={h.dir} size={h.size} /> : null;
-            })}
+          <div className="mk-lh">
+            <h2 className="k-eyebrow">{t("mk.top")}</h2>
+            <span className="k-note">{t("mk.topP")}</span>
+          </div>
+          <div className="mk-tops">
+            {top.map((n, i) => (
+              <Top key={n.id} n={n} i={i} />
+            ))}
           </div>
           <div className="k-chips mk-filter">
             {(["all", "mine", "filing", "wire"] as const).map((k) => (
@@ -189,14 +307,10 @@ function MarketScreen() {
                 onClick={() => setF(k)}
               >
                 {t(`v3.nf.${k}`)}
-                <span className="num">{ranked.filter(test[k]).length}</span>
               </button>
             ))}
           </div>
-          {shown.length === 0 ? <p className="k-note">{t("v2.noneHere")}</p> : null}
-          {shown.map((n) => (
-            <Card key={n.id} n={n} />
-          ))}
+          <Latest f={test[f]} />
         </div>
         <aside className="mk-side">
           <Tile title={t("v3.marketToday")}>

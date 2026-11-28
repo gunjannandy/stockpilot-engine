@@ -94,6 +94,46 @@ function Chart({ fund, range }: { fund: Fund; range: Range }) {
   );
 }
 
+type FundCallWord = "keep" | "add" | "stop" | "switch" | "review";
+/** Made-up weekly fund call (the shape fundcall.py writes): the call, the chance of beating the
+ * category's middle fund over 12 months, the base rate with its sample, and one line. */
+function fundCall(f: Fund): { call: FundCallWord; chance: number; base: number; n: number } {
+  const k = f.id.charCodeAt(0) + f.id.length;
+  const calls: FundCallWord[] = ["keep", "add", "keep", "stop", "review", "keep", "switch"];
+  return {
+    call: calls[k % calls.length] as FundCallWord,
+    chance: 42 + (k % 7) * 5,
+    base: 48 + (k % 5) * 3,
+    n: 60 + (k % 9) * 12,
+  };
+}
+
+function FundCallStrip({ fund }: { fund: Fund }) {
+  const t = useWords();
+  const c = fundCall(fund);
+  return (
+    <section className="fd-call" aria-label={t("funds.fc.h")}>
+      <div className="fd-cw">
+        <span className="k-eyebrow">{t("fundcall.this")}</span>
+        <span className={`chip fc-${c.call}`}>{t(`fundcall.${c.call}`)}</span>
+      </div>
+      <div>
+        <span className="k-eyebrow">{t("fundcall.chance")}</span>
+        <b className="num fd-big">{c.chance}%</b>
+        <span className="fd-meter" aria-hidden="true">
+          <i className="k-grow" style={{ width: `${c.chance}%` }} />
+          <em style={{ left: `${c.base}%` }} />
+        </span>
+        <span className="k-note">
+          {t("fundcall.base").replace("{b}", String(c.base)).replace("{n}", String(c.n))}
+        </span>
+      </div>
+      <p className="fd-why">{t(`fundcall.why.${c.call}`)}</p>
+      <p className="k-note fd-needs">{t("fundcall.needs")}</p>
+    </section>
+  );
+}
+
 function Vs({ a, b }: { a: number | null; b: number | null }) {
   const t = useWords();
   const v = vs(a, b);
@@ -186,11 +226,7 @@ function FundPage({ fund }: { fund: Fund }) {
       </menu>
       <Chart fund={fund} range={range} />
 
-      <section className="fd-forecast" aria-label={t("funds.fc.h")}>
-        <h2>{t("funds.fc.h")}</h2>
-        <p className="note">{t("funds.fc.p")}</p>
-        <p className="fd-fc-ph">{t("funds.fc.needs")}</p>
-      </section>
+      <FundCallStrip fund={fund} />
 
       <h2>{t("funds.returns")}</h2>
       {headline?.f != null ? (
@@ -316,28 +352,13 @@ function FundPage({ fund }: { fund: Fund }) {
 
 export function FundsPane() {
   const t = useWords();
-  const [q, setQ] = useState("");
   const items: Item[] = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return FUNDS.filter(
-      (f) => !needle || `${f.name} ${f.amc} ${f.category}`.toLowerCase().includes(needle),
-    )
-      .map((f) => ({ ...f, call: callOf(f) }))
+    return FUNDS.map((f) => ({ ...f, call: callOf(f) }))
       .sort((a, b) => ORDER.indexOf(a.call) - ORDER.indexOf(b.call))
       .map((f) => ({ ...f, group: f.call, groupLabel: t(`funds.g.${f.call}`) }));
-  }, [q, t]);
+  }, [t]);
   return (
     <div className="funds">
-      <label className="fund-search">
-        <span className="visually-hidden">{t("funds.search")}</span>
-        <input
-          type="search"
-          value={q}
-          placeholder={t("funds.search.hint")}
-          aria-label={t("funds.search")}
-          onChange={(e) => setQ(e.target.value)}
-        />
-      </label>
       {items.length ? (
         <ListAndPane
           items={items}
@@ -352,7 +373,13 @@ export function FundsPane() {
               </span>
               <span className="num lp-price">
                 {pct(cagr(f.series, 3) ?? cagr(f.series, 1))}%
-                <span className={`fd-tag fd-${f.call}`}>{t(`funds.tag.${f.call}`)}</span>
+                {f.call === "own" ? (
+                  <span className={`fd-tag fc-${fundCall(f).call}`}>
+                    {t(`fundcall.${fundCall(f).call}`)}
+                  </span>
+                ) : (
+                  <span className={`fd-tag fd-${f.call}`}>{t(`funds.tag.${f.call}`)}</span>
+                )}
               </span>
             </>
           )}

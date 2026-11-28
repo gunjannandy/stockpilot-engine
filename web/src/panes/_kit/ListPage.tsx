@@ -42,7 +42,7 @@ export function ListPage({
   const t = useWords();
   const w = useWatch();
   const [chip, setChip] = useState("all");
-  const [q, setQ] = useState("");
+  const [q, _setQ] = useState("");
   const [view, setView] = useState<"list" | "table">("list");
   const [sel, setSel] = useState<string>("");
   const [full, setFull] = useState(false);

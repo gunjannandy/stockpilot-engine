@@ -198,20 +198,83 @@
 .wl-glance.fd-glance {
   margin: var(--sp-4) 0;
 }
-.fd-forecast {
-  margin: var(--sp-4) 0;
-  padding: var(--sp-4);
-  border: 1px dashed var(--line);
-  border-radius: var(--r-card);
-}
-.fd-forecast h2 {
-  margin-top: 0;
-}
-.fd-fc-ph {
-  margin: var(--sp-2) 0 0;
-  color: var(--warn);
-  font-weight: 600;
-}
 .wl-glance.fd-glance {
   grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+}
+/* this week's fund call: the call, the chance against the middle fund with the base rate marked, one line */
+.fd-call {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-5);
+  align-items: start;
+  margin: var(--sp-3) 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  background: var(--c1);
+}
+.fd-call > div {
+  display: grid;
+  gap: var(--sp-1);
+}
+.fd-call .k-eyebrow {
+  margin: 0;
+}
+.fd-big {
+  font-size: 1.375rem;
+  font-weight: 800;
+}
+.fd-meter {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: var(--r-chip);
+  background: var(--c3);
+}
+.fd-meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-chip);
+  background: var(--primary);
+}
+.fd-meter em {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--text);
+}
+.fd-why,
+.fd-needs {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.fd-why {
+  font-weight: 600;
+}
+.fc-keep {
+  --v: var(--hold);
+}
+.fc-add {
+  --v: var(--gain);
+}
+.fc-stop {
+  --v: var(--warn);
+}
+.fc-switch {
+  --v: var(--watch);
+}
+.fc-review {
+  --v: var(--loss);
+}
+.fd-tag.fc-keep,
+.fd-tag.fc-add,
+.fd-tag.fc-stop,
+.fd-tag.fc-switch,
+.fd-tag.fc-review {
+  background: var(--v);
+  color: var(--on-verdict);
+}
+.fd-cw .chip {
+  justify-self: start;
 }

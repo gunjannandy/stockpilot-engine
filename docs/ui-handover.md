@@ -94,7 +94,31 @@ Round 2 answers (paraphrased):
 - Yellow mark as built does not look good; the page needs animation; UI and UX both matter.
 - Verdict words: match the engine.
 Facts found: news score today = impact x closeness (holding 4, watchlist 3, sector 2) x freshness 1/(1+age_h/12) x sources (py/stockpilot/news_rank.py), so a 3-day-old item keeps about 1/7 of its score. Fund calls are weekly (Keep, Add, Stop adding, Switch, Review) with a chance against the category middle over 12 months (py/stockpilot/fundcall.py); no NAV path or range. Asks follow GitHub tickets by labels (api/src/feedback/feedback.ts); only the ticket number reaches the screen. No morning email renderer exists yet.
-Next: grilling round 3, then build.
+Round 3: owner agreed every recommendation; verdict words follow the engine (traders know the terms).
+
+## Round 4 build (done)
+- Shared: engine words Sell / Trim / Buy / Hold, Watch as a list label, also in Bengali; fund calls Keep / Add / Stop adding / Switch / Review. DESIGN.md motion rule is now "motion that never shifts layout" (fades, small rises, bars filling, one-time amber glow, card lift). Change mark redone: amber dot with one ping, a one-time row glow, and the change as numbers in the row (`Hold→Sell · 44→34%`) and as a chip in the pane; thick yellow edges and bands gone. Chart ranges 1M 3M 6M 1Y 5Y All.
+- Admin (both owners): header with the Pause releases switch; At a glance = Needs you chips, Running now cards (steps, moving bar), Asks board (New, Planned, Building, Done; ticket link; owner reviews New asks here with Plan it / Not planned), Jobs grid (one card per kind: status, last run, data age, schedule, error, Run now or Try again, Re-run days for recomputable datasets, Pause or Resume), never-run kinds as an "On demand" row. Details = filter chips over all runs, failed runs, page errors, held-back rows per dataset, usage. Flags, the menu layout editor and the made-up keys table are gone (`panes/adminctl` deleted).
+- Feedback: v2 shape, cleaner: one box (Ctrl+Enter sends), All / Open / Closed chips, cards with status, ticket, our understanding and an animated five-step track. No review controls.
+- Settings screen removed. Portfolio: value line and source switch; This month card (money left, budget edited in place, mix against target with an in-card editor, Kite last synced and Sync with Kite); tax-free room with sell-to-save lines; RSUs; Coming up; one holdings table with our chance. Returns, Risk, Dividends groups and the jump row dropped (`panes/moneytabs` deleted).
+- Record: one dense 12-column grid (four numbers, calibration beside value added and Smallcase line, misses beside months booked).
+- Market and news: Top stories (high impact, touches what we hold or watch, up to 5, kept 7 days) then Latest grouped by hour with filter chips; new items wait behind an "N new" pill and glow once when shown. Placeholder images and the Matters bar gone.
+- Funds: own search box removed (top search is the one search); This week's call strip (call, chance against the middle fund with base rate marker, one line); owned funds show their call in the list.
+
+## Next
+- Owner reviews this round; apply feedback the same way.
+
+## Decisions to confirm
+- Bengali screens also show the English call words (Sell, Trim, Hold…).
+- Admin keeps only kinds that have run or have data as cards; the rest sit in one "On demand" row.
+- Funds that are not held keep the placeholder Buy / Watch tag (the fund forecaster only calls held funds).
+
+## Needs data (round 4)
+- Admin: a person-readable key expiry list (`/api/secrets` is secret-guarded); GitHub issue title, pull request and check state per ask (only the ticket number arrives); expected time left per running job (`expected_seconds` is on job begin, not in `/api/admin`); next scheduled time per job kind for kinds without a dataset `run` entry.
+- Morning email: rendering and sending the At a glance view is backend work (no renderer exists).
+- News: a slower fade for high-impact stories so Top stories rank by impact over 7 days (today the score keeps about 1/7 after 3 days, `py/stockpilot/news_rank.py`); a news list route with hour, kind and touched stocks.
+- Funds: the weekly fund call per fund on the funds feed, and a NAV range for a shaded forecast on the chart.
+- Portfolio: budget, money left and target mix routes (still made-up in `panes/_kit/plan.ts`).
 
 ## Brief for the next (Opus) session
 Read all of `web/src`, `DESIGN.md`, `docs/prototypes/v2` and `docs/prototypes/ui/r10`, `legacy/web/public` and this file first. Then grill the owner about what each screen is for BEFORE designing. It may change, merge or drop anything, including layouts, keeping the existing theme (tokens, type, azure primary, graphite surfaces) and the DESIGN.md rules. Owner's direction: Portfolio, Admin and Record should be very simple. The design has hit a roadblock: aim for screens whose purpose is clear at a glance, dense and calm, cards that separate meanings, no hero blocks, one search (the top bar). Decide per screen only after reading the code and understanding the intent.

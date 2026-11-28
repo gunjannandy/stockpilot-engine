@@ -481,7 +481,7 @@ function Jobs({
   const seen = (k: string) =>
     d.runs.some((r) => r.kind === k) ||
     d.freshness.some((f) => f.job === k) ||
-    !!state?.paused_kinds.includes(k);
+    !!state?.paused_kinds.includes(k as JobKind);
   const cards = sorted.filter(seen);
   const quiet = sorted.filter((k) => !seen(k));
   return (
