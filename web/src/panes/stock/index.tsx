@@ -14,7 +14,7 @@ import {
 } from "./sample";
 
 const ORDER: Verdict[] = ["sell", "weak", "buy", "keep", "watch"];
-const inr0 = (v: number) =>
+const money = (v: number) =>
   `₹${v.toLocaleString("en-IN", { maximumFractionDigits: v < 1000 ? 1 : 0 })}`;
 
 function Spark({ closes }: { closes: number[] }) {
@@ -100,7 +100,7 @@ function Detail({ st, bars }: { st: SampleStock; bars: ReturnType<typeof history
           </p>
         </div>
         <div className="sk-hr">
-          <p className="px num">{inr0(last)}</p>
+          <p className="px num">{money(last)}</p>
           <p className="sk-pl">
             <span className={day >= 0 ? "up" : "dn"}>
               {day >= 0 ? "+" : "−"}
@@ -225,7 +225,7 @@ export function StockPane() {
                   <Spark closes={closes} />
                 </span>
                 <span className="lr num">
-                  {inr0(price)}
+                  {money(price)}
                   <Meter v={s.strength} />
                 </span>
               </button>

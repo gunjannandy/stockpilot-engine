@@ -91,7 +91,7 @@
   height: 26px;
   padding: 0 10px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -197,7 +197,7 @@ svg.sp.dn path.a {
   box-shadow: 0 0 0 2px var(--surface);
 }
 .sk-mw {
-  font-size: 11px;
+  font-size: var(--fs-note);
   font-weight: 600;
   color: var(--text-2);
 }
