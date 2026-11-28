@@ -14,6 +14,7 @@ export type AuthEnv = {
   SP_COOKIE_KEY?: string;
   SP_PREVIEW_COOKIE_KEY?: string;
   SP_ENV?: string;
+  SITE_URL?: string;
   GOOGLE_BRIDGE_URL?: string;
   GOOGLE_BRIDGE_KEY?: string;
   ASSETS?: { fetch(req: Request): Promise<Response> };
@@ -32,6 +33,19 @@ const EMAIL = /^[^\s@,&?=<>"'#%+]+@[^\s@,&?=<>"'#%+]+\.[^\s@,&?=<>"'#%+]+$/;
 export const TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
 const enc = new TextEncoder();
+
+/**
+ * The address people use when the App sits behind the front door (docs/cutover-v3.md): the origin of SITE_URL,
+ * a dashboard variable, https only. Null when unset or odd, so previews and local runs use the request's own origin.
+ */
+export function publicOrigin(env: AuthEnv): string | null {
+  try {
+    const url = new URL(env.SITE_URL ?? "");
+    return url.protocol === "https:" && !url.username ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Local development (Node, tests) sets SP_ENV=dev: guards let everyone in as the owner. The Worker never does. */
 export const devMode = (env: AuthEnv) => env.SP_ENV === "dev";
