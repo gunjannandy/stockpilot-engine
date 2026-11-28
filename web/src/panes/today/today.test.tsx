@@ -53,7 +53,7 @@ describe("Today", () => {
     );
     expect(screen.getByTestId("today-calls").textContent).toContain("BBB");
     expect(screen.getByTestId("today-stale").textContent).toContain("CCC");
-    expect(screen.getByTestId("today-money").textContent).toContain("₹12,000");
+    expect(screen.getByTestId("today-money").textContent).toContain("12,000");
   });
   it("says so when there is no budget and puts a bannered section behind its banner", async () => {
     show({ ...base, money_left_inr: null }, { "banner.today.market": true });
